@@ -1,0 +1,93 @@
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { FileSearch } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+const AuthPage = () => {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { display_name: displayName },
+        },
+      });
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Check your email", description: "We sent you a confirmation link." });
+      }
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        navigate("/dashboard");
+      }
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <Link to="/" className="flex items-center justify-center gap-2 mb-8">
+          <FileSearch className="h-7 w-7 text-accent" />
+          <span className="font-heading text-2xl font-bold text-foreground">Record Tracer</span>
+        </Link>
+
+        <div className="bg-card border border-border rounded-lg p-6">
+          <h2 className="font-heading text-xl font-semibold text-foreground text-center mb-6">
+            {isSignUp ? "Create an account" : "Sign in"}
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignUp && (
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">Display Name</label>
+                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Jane Doe" />
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Email</label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@newsroom.com" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Password</label>
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
+            </div>
+
+            <Button variant="accent" className="w-full" disabled={loading}>
+              {loading ? "Please wait…" : isSignUp ? "Create Account" : "Sign In"}
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+            <button onClick={() => setIsSignUp(!isSignUp)} className="text-accent hover:underline font-medium">
+              {isSignUp ? "Sign in" : "Sign up"}
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AuthPage;
