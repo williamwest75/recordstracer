@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { searchAll, type MockResult } from "@/lib/recordsApi";
+import { searchAll, type MockResult, type ApiDebugInfo } from "@/lib/recordsApi";
 
 
 interface Investigation {
@@ -38,6 +38,7 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [results, setResults] = useState<MockResult[]>([]);
+  const [debugInfo, setDebugInfo] = useState<ApiDebugInfo[]>([]);
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
   const [saveModalResult, setSaveModalResult] = useState<MockResult | null>(null);
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
@@ -55,7 +56,8 @@ const SearchResults = () => {
     searchAll(name, state)
       .then((data) => {
         if (!cancelled) {
-          setResults(data);
+          setResults(data.results);
+          setDebugInfo(data.debug);
           setLoading(false);
         }
       })
@@ -216,6 +218,25 @@ const SearchResults = () => {
                 </section>
               );
             })}
+          </div>
+        )}
+
+        {/* Debug Info Panel */}
+        {!loading && debugInfo.length > 0 && (
+          <div className="mt-12 border border-border rounded-lg p-4 bg-muted/30">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">🔧 Debug Info</h3>
+            <div className="space-y-2">
+              {debugInfo.map((d) => (
+                <div key={d.api} className="flex items-center gap-3 text-sm">
+                  <span className={`inline-block w-2 h-2 rounded-full ${d.status === "success" ? "bg-green-500" : "bg-red-500"}`} />
+                  <span className="font-medium text-foreground w-28">{d.api}</span>
+                  <span className="text-muted-foreground">
+                    {d.status === "success" ? `${d.resultCount} result(s)` : `Error: ${d.error}`}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">Check browser console for full request/response logs.</p>
           </div>
         )}
       </main>
