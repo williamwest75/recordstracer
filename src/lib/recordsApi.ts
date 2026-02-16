@@ -1,4 +1,4 @@
-const BASE_URL = "https://records-detective-ai.vercel.app/api";
+const BASE_URL = "https://records-detective-ai.vercel.app";
 
 export interface MockResult {
   id: string;
@@ -67,7 +67,7 @@ async function post<T>(endpoint: string, body: Record<string, string>): Promise<
 
 export async function searchSEC(name: string): Promise<MockResult[]> {
   try {
-    const data = await post<SECResponse>("/search-sec", { searchName: name });
+    const data = await post<SECResponse>("/api/search-sec", { searchName: name });
     if (!data.success || !data.companies?.length) return [];
 
     let id = 0;
@@ -100,7 +100,7 @@ export async function searchSEC(name: string): Promise<MockResult[]> {
 
 export async function searchFEC(name: string, state: string): Promise<MockResult[]> {
   try {
-    const data = await post<FECResponse>("/search-fec", { searchName: name, state });
+    const data = await post<FECResponse>("/api/search-fec", { searchName: name, state });
     if (!data.success || !data.results?.contributions?.length) return [];
 
     let id = 0;
@@ -146,7 +146,7 @@ export async function searchFEC(name: string, state: string): Promise<MockResult
 
 export async function searchSunBiz(name: string, state: string): Promise<MockResult[]> {
   try {
-    const data = await post<SunBizResponse>("/search-sunbiz", { searchName: name, state });
+    const data = await post<SunBizResponse>("/api/search-sunbiz", { searchName: name, state });
     if (!data.success) return [];
 
     // Transform whatever shape comes back into results
