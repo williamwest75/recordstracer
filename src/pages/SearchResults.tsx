@@ -1,5 +1,5 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus } from "lucide-react";
+import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -11,15 +11,8 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { searchAll, type MockResult } from "@/lib/recordsApi";
 
-interface MockResult {
-  id: string;
-  source: string;
-  description: string;
-  category: string;
-  details: Record<string, string>;
-  sourceUrl?: string;
-}
 
 interface Investigation {
   id: string;
@@ -34,18 +27,8 @@ const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> =
   licenses: { icon: BadgeCheck, label: "Professional Licenses" },
 };
 
-function generateMockResults(name: string, state: string): MockResult[] {
-  return [
-    { id: "1", source: `${state} Secretary of State`, category: "business", description: `Registered agent for ${name} Holdings LLC, filed 2021.`, sourceUrl: "#", details: { "Entity Name": `${name} Holdings LLC`, "Entity Type": "Limited Liability Company", "Status": "Active", "Filed Date": "03/15/2021", "Registered Agent": name, "Principal Address": `742 Evergreen Terrace, ${state}`, "Annual Report Due": "03/15/2026" } },
-    { id: "2", source: `${state} Division of Corporations`, category: "business", description: `Officer listed on ${name} Enterprises Inc., active status.`, sourceUrl: "#", details: { "Entity Name": `${name} Enterprises Inc.`, "Entity Type": "Corporation", "Status": "Active", "Role": "Officer / Director", "Incorporation Date": "11/02/2018", "State": state, "EIN": "XX-XXX4829" } },
-    { id: "3", source: "FEC Individual Contributions", category: "donations", description: `$2,800 contribution to PAC "Citizens for Progress", Q3 2023.`, sourceUrl: "https://www.fec.gov", details: { "Contributor": name, "Amount": "$2,800", "Recipient": "Citizens for Progress PAC", "Date": "09/12/2023", "Filing Period": "Q3 2023", "Employer": "Self-employed", "Occupation": "Real Estate" } },
-    { id: "4", source: "State Campaign Finance Board", category: "donations", description: `Multiple contributions totaling $5,200 in 2022 election cycle.`, details: { "Contributor": name, "Total Amount": "$5,200", "Election Cycle": "2022", "Number of Contributions": "4", "Recipients": "Various state candidates", "Largest Single": "$1,500" } },
-    { id: "5", source: `${state} Circuit Court`, category: "court", description: `Civil case #2022-CV-4521 — contract dispute, resolved.`, details: { "Case Number": "2022-CV-4521", "Court": `${state} Circuit Court`, "Type": "Civil — Contract Dispute", "Filed": "06/14/2022", "Status": "Resolved / Closed", "Parties": `${name} v. Greenfield Contractors Inc.`, "Disposition": "Settlement reached" } },
-    { id: "6", source: `${state} County Recorder`, category: "property", description: `Property deed recorded at 1420 Oak Ave, assessed value $385,000.`, details: { "Address": "1420 Oak Ave", "Owner": name, "Assessed Value": "$385,000", "Parcel ID": "12-34-56-789", "Recorded": "08/22/2020", "Type": "Single Family Residential", "Land Area": "0.28 acres" } },
-    { id: "7", source: `${state} Property Appraiser`, category: "property", description: `Two parcels registered under ${name}, total assessed $720,000.`, details: { "Owner": name, "Total Parcels": "2", "Combined Assessed Value": "$720,000", "Parcel 1": "1420 Oak Ave — $385,000", "Parcel 2": "980 Palm Dr — $335,000", "Tax Year": "2025" } },
-    { id: "8", source: `${state} Licensing Board`, category: "licenses", description: `Active real estate broker license #RB-88421, expires 2025.`, details: { "License Number": "RB-88421", "Type": "Real Estate Broker", "Status": "Active", "Issued": "01/10/2019", "Expires": "01/10/2025", "Holder": name, "Disciplinary Actions": "None" } },
-  ];
-}
+
+
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
@@ -53,6 +36,7 @@ const SearchResults = () => {
   const name = searchParams.get("name") || "Unknown";
   const state = searchParams.get("state") || "Unknown";
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [results, setResults] = useState<MockResult[]>([]);
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
   const [saveModalResult, setSaveModalResult] = useState<MockResult | null>(null);
@@ -65,11 +49,23 @@ const SearchResults = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setResults(generateMockResults(name, state));
-      setLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+    searchAll(name, state)
+      .then((data) => {
+        if (!cancelled) {
+          setResults(data);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError(true);
+          setLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
   }, [name, state]);
 
   const fetchInvestigations = async () => {
@@ -172,7 +168,17 @@ const SearchResults = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-accent" />
-            <p className="text-muted-foreground text-sm">Scanning databases…</p>
+            <p className="text-muted-foreground text-sm">Scanning SEC, FEC, and state databases…</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+            <p className="text-muted-foreground text-sm">Something went wrong. Please try again.</p>
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        ) : results.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <p className="text-muted-foreground text-sm">No public records found for this search.</p>
           </div>
         ) : (
           <div className="mt-8 space-y-8">
