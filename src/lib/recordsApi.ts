@@ -49,13 +49,18 @@ interface SunBizResponse {
 }
 
 async function post<T>(endpoint: string, body: Record<string, string>): Promise<T> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
+  const url = `${BASE_URL}${endpoint}`;
+  console.log(`[recordsApi] POST ${url}`, JSON.stringify(body));
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  console.log(`[recordsApi] ${endpoint} status: ${res.status}`);
   if (!res.ok) throw new Error(`API error ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  console.log(`[recordsApi] ${endpoint} response:`, JSON.stringify(data).slice(0, 500));
+  return data as T;
 }
 
 // --- Individual search functions ---
@@ -87,8 +92,8 @@ export async function searchSEC(name: string): Promise<MockResult[]> {
       });
     }
     return results;
-  } catch {
-    console.error("SEC search failed");
+  } catch (err) {
+    console.error("[recordsApi] SEC search failed:", err);
     return [];
   }
 }
@@ -133,8 +138,8 @@ export async function searchFEC(name: string, state: string): Promise<MockResult
     }
 
     return results;
-  } catch {
-    console.error("FEC search failed");
+  } catch (err) {
+    console.error("[recordsApi] FEC search failed:", err);
     return [];
   }
 }
@@ -186,17 +191,40 @@ export async function searchSunBiz(name: string, state: string): Promise<MockRes
     }
 
     return results;
-  } catch {
-    console.error("SunBiz search failed");
+  } catch (err) {
+    console.error("[recordsApi] SunBiz search failed:", err);
     return [];
   }
 }
 
-export async function searchAll(name: string, state: string): Promise<MockResult[]> {
+export interface ApiDebugInfo {
+  api: string;
+  status: "success" | "error";
+  resultCount: number;
+  error?: string;
+}
+
+export async function searchAll(name: string, state: string): Promise<{ results: MockResult[]; debug: ApiDebugInfo[] }> {
+  const debug: ApiDebugInfo[] = [];
+
+  const run = async (label: string, fn: () => Promise<MockResult[]>): Promise<MockResult[]> => {
+    try {
+      const r = await fn();
+      debug.push({ api: label, status: "success", resultCount: r.length });
+      return r;
+    } catch (err) {
+      debug.push({ api: label, status: "error", resultCount: 0, error: String(err) });
+      return [];
+    }
+  };
+
   const [sec, fec, sunbiz] = await Promise.all([
-    searchSEC(name),
-    searchFEC(name, state),
-    searchSunBiz(name, state),
+    run("SEC EDGAR", () => searchSEC(name)),
+    run("FEC", () => searchFEC(name, state)),
+    run("SunBiz", () => searchSunBiz(name, state)),
   ]);
-  return [...sec, ...fec, ...sunbiz];
+
+  const results = [...sec, ...fec, ...sunbiz];
+  console.log("[recordsApi] searchAll complete:", { totalResults: results.length, debug });
+  return { results, debug };
 }
