@@ -1,4 +1,4 @@
-const BASE_URL = "https://public-records-detective.vercel.app/api";
+const BASE_URL = "https://records-detective-ai.vercel.app/api";
 
 export interface MockResult {
   id: string;
