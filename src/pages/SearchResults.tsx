@@ -1,12 +1,16 @@
-import { useSearchParams, Link } from "react-router-dom";
-import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, X, FolderPlus } from "lucide-react";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MockResult {
   id: string;
@@ -15,6 +19,11 @@ interface MockResult {
   category: string;
   details: Record<string, string>;
   sourceUrl?: string;
+}
+
+interface Investigation {
+  id: string;
+  title: string;
 }
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
@@ -27,60 +36,33 @@ const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> =
 
 function generateMockResults(name: string, state: string): MockResult[] {
   return [
-    {
-      id: "1", source: `${state} Secretary of State`, category: "business",
-      description: `Registered agent for ${name} Holdings LLC, filed 2021.`,
-      sourceUrl: "#",
-      details: { "Entity Name": `${name} Holdings LLC`, "Entity Type": "Limited Liability Company", "Status": "Active", "Filed Date": "03/15/2021", "Registered Agent": name, "Principal Address": `742 Evergreen Terrace, ${state}`, "Annual Report Due": "03/15/2026" },
-    },
-    {
-      id: "2", source: `${state} Division of Corporations`, category: "business",
-      description: `Officer listed on ${name} Enterprises Inc., active status.`,
-      sourceUrl: "#",
-      details: { "Entity Name": `${name} Enterprises Inc.`, "Entity Type": "Corporation", "Status": "Active", "Role": "Officer / Director", "Incorporation Date": "11/02/2018", "State": state, "EIN": "XX-XXX4829" },
-    },
-    {
-      id: "3", source: "FEC Individual Contributions", category: "donations",
-      description: `$2,800 contribution to PAC "Citizens for Progress", Q3 2023.`,
-      sourceUrl: "https://www.fec.gov",
-      details: { "Contributor": name, "Amount": "$2,800", "Recipient": "Citizens for Progress PAC", "Date": "09/12/2023", "Filing Period": "Q3 2023", "Employer": "Self-employed", "Occupation": "Real Estate" },
-    },
-    {
-      id: "4", source: "State Campaign Finance Board", category: "donations",
-      description: `Multiple contributions totaling $5,200 in 2022 election cycle.`,
-      details: { "Contributor": name, "Total Amount": "$5,200", "Election Cycle": "2022", "Number of Contributions": "4", "Recipients": "Various state candidates", "Largest Single": "$1,500" },
-    },
-    {
-      id: "5", source: `${state} Circuit Court`, category: "court",
-      description: `Civil case #2022-CV-4521 — contract dispute, resolved.`,
-      details: { "Case Number": "2022-CV-4521", "Court": `${state} Circuit Court`, "Type": "Civil — Contract Dispute", "Filed": "06/14/2022", "Status": "Resolved / Closed", "Parties": `${name} v. Greenfield Contractors Inc.`, "Disposition": "Settlement reached" },
-    },
-    {
-      id: "6", source: `${state} County Recorder`, category: "property",
-      description: `Property deed recorded at 1420 Oak Ave, assessed value $385,000.`,
-      details: { "Address": "1420 Oak Ave", "Owner": name, "Assessed Value": "$385,000", "Parcel ID": "12-34-56-789", "Recorded": "08/22/2020", "Type": "Single Family Residential", "Land Area": "0.28 acres" },
-    },
-    {
-      id: "7", source: `${state} Property Appraiser`, category: "property",
-      description: `Two parcels registered under ${name}, total assessed $720,000.`,
-      details: { "Owner": name, "Total Parcels": "2", "Combined Assessed Value": "$720,000", "Parcel 1": "1420 Oak Ave — $385,000", "Parcel 2": "980 Palm Dr — $335,000", "Tax Year": "2025" },
-    },
-    {
-      id: "8", source: `${state} Licensing Board`, category: "licenses",
-      description: `Active real estate broker license #RB-88421, expires 2025.`,
-      details: { "License Number": "RB-88421", "Type": "Real Estate Broker", "Status": "Active", "Issued": "01/10/2019", "Expires": "01/10/2025", "Holder": name, "Disciplinary Actions": "None" },
-    },
+    { id: "1", source: `${state} Secretary of State`, category: "business", description: `Registered agent for ${name} Holdings LLC, filed 2021.`, sourceUrl: "#", details: { "Entity Name": `${name} Holdings LLC`, "Entity Type": "Limited Liability Company", "Status": "Active", "Filed Date": "03/15/2021", "Registered Agent": name, "Principal Address": `742 Evergreen Terrace, ${state}`, "Annual Report Due": "03/15/2026" } },
+    { id: "2", source: `${state} Division of Corporations`, category: "business", description: `Officer listed on ${name} Enterprises Inc., active status.`, sourceUrl: "#", details: { "Entity Name": `${name} Enterprises Inc.`, "Entity Type": "Corporation", "Status": "Active", "Role": "Officer / Director", "Incorporation Date": "11/02/2018", "State": state, "EIN": "XX-XXX4829" } },
+    { id: "3", source: "FEC Individual Contributions", category: "donations", description: `$2,800 contribution to PAC "Citizens for Progress", Q3 2023.`, sourceUrl: "https://www.fec.gov", details: { "Contributor": name, "Amount": "$2,800", "Recipient": "Citizens for Progress PAC", "Date": "09/12/2023", "Filing Period": "Q3 2023", "Employer": "Self-employed", "Occupation": "Real Estate" } },
+    { id: "4", source: "State Campaign Finance Board", category: "donations", description: `Multiple contributions totaling $5,200 in 2022 election cycle.`, details: { "Contributor": name, "Total Amount": "$5,200", "Election Cycle": "2022", "Number of Contributions": "4", "Recipients": "Various state candidates", "Largest Single": "$1,500" } },
+    { id: "5", source: `${state} Circuit Court`, category: "court", description: `Civil case #2022-CV-4521 — contract dispute, resolved.`, details: { "Case Number": "2022-CV-4521", "Court": `${state} Circuit Court`, "Type": "Civil — Contract Dispute", "Filed": "06/14/2022", "Status": "Resolved / Closed", "Parties": `${name} v. Greenfield Contractors Inc.`, "Disposition": "Settlement reached" } },
+    { id: "6", source: `${state} County Recorder`, category: "property", description: `Property deed recorded at 1420 Oak Ave, assessed value $385,000.`, details: { "Address": "1420 Oak Ave", "Owner": name, "Assessed Value": "$385,000", "Parcel ID": "12-34-56-789", "Recorded": "08/22/2020", "Type": "Single Family Residential", "Land Area": "0.28 acres" } },
+    { id: "7", source: `${state} Property Appraiser`, category: "property", description: `Two parcels registered under ${name}, total assessed $720,000.`, details: { "Owner": name, "Total Parcels": "2", "Combined Assessed Value": "$720,000", "Parcel 1": "1420 Oak Ave — $385,000", "Parcel 2": "980 Palm Dr — $335,000", "Tax Year": "2025" } },
+    { id: "8", source: `${state} Licensing Board`, category: "licenses", description: `Active real estate broker license #RB-88421, expires 2025.`, details: { "License Number": "RB-88421", "Type": "Real Estate Broker", "Status": "Active", "Issued": "01/10/2019", "Expires": "01/10/2025", "Holder": name, "Disciplinary Actions": "None" } },
   ];
 }
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const name = searchParams.get("name") || "Unknown";
   const state = searchParams.get("state") || "Unknown";
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<MockResult[]>([]);
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
+  const [saveModalResult, setSaveModalResult] = useState<MockResult | null>(null);
+  const [investigations, setInvestigations] = useState<Investigation[]>([]);
+  const [selectedInvestigationId, setSelectedInvestigationId] = useState("");
+  const [newInvestigationTitle, setNewInvestigationTitle] = useState("");
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -90,15 +72,87 @@ const SearchResults = () => {
     return () => clearTimeout(timer);
   }, [name, state]);
 
+  const fetchInvestigations = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("investigations")
+      .select("id, title")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false });
+    setInvestigations(data || []);
+  };
+
+  const openSaveModal = (result: MockResult) => {
+    if (!user) {
+      toast({ title: "Sign in to save", description: "Create an account to save results to investigations.", variant: "destructive" });
+      return;
+    }
+    setSaveModalResult(result);
+    setSelectedInvestigationId("");
+    setNewInvestigationTitle("");
+    setIsCreatingNew(false);
+    fetchInvestigations();
+  };
+
+  const handleSave = async () => {
+    if (!user || !saveModalResult) return;
+    setSaving(true);
+
+    let investigationId = selectedInvestigationId;
+    let investigationName = "";
+
+    if (isCreatingNew) {
+      if (!newInvestigationTitle.trim()) {
+        toast({ title: "Enter a name", description: "Please name your new investigation.", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("investigations")
+        .insert({ title: newInvestigationTitle.trim(), user_id: user.id })
+        .select("id, title")
+        .single();
+      if (error || !data) {
+        toast({ title: "Error", description: error?.message || "Could not create investigation.", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+      investigationId = data.id;
+      investigationName = data.title;
+    } else {
+      if (!investigationId) {
+        toast({ title: "Select an investigation", description: "Choose an investigation or create a new one.", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+      investigationName = investigations.find((i) => i.id === investigationId)?.title || "Investigation";
+    }
+
+    const { error } = await supabase.from("saved_results").insert({
+      user_id: user.id,
+      investigation_id: investigationId,
+      result_data: {
+        source: saveModalResult.source,
+        description: saveModalResult.description,
+        category: saveModalResult.category,
+        details: saveModalResult.details,
+        sourceUrl: saveModalResult.sourceUrl,
+      },
+    });
+
+    setSaving(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Saved", description: `Added to "${investigationName}"` });
+      setSaveModalResult(null);
+    }
+  };
+
   const grouped = results.reduce<Record<string, MockResult[]>>((acc, r) => {
     (acc[r.category] ??= []).push(r);
     return acc;
   }, {});
-
-  const handleSaveToInvestigation = (result: MockResult) => {
-    toast({ title: "Saved", description: `"${result.source}" added to your investigation.` });
-    setSelectedResult(null);
-  };
 
   const categoryForResult = (result: MockResult) => CATEGORY_META[result.category];
 
@@ -113,9 +167,7 @@ const SearchResults = () => {
         <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
           Results for: <span className="text-accent">{name}</span> in {state}
         </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Searching public records across multiple databases…
-        </p>
+        <p className="text-muted-foreground mt-1 text-sm">Searching public records across multiple databases…</p>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
@@ -133,7 +185,6 @@ const SearchResults = () => {
                     <h2 className="font-heading text-lg font-semibold text-foreground">{label}</h2>
                     <span className="text-xs text-muted-foreground ml-1">({items.length})</span>
                   </div>
-
                   {items.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic pl-7">No records found in this category.</p>
                   ) : (
@@ -148,7 +199,7 @@ const SearchResults = () => {
                             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectedResult(item)}>
                               <ExternalLink className="h-3.5 w-3.5" /> View Details
                             </Button>
-                            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => handleSaveToInvestigation(item)}>
+                            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => openSaveModal(item)}>
                               <Bookmark className="h-3.5 w-3.5" /> Save
                             </Button>
                           </div>
@@ -177,14 +228,10 @@ const SearchResults = () => {
                     <Icon className="h-4 w-4" />
                     <span className="text-xs font-medium uppercase tracking-wide">{meta?.label}</span>
                   </div>
-                  <DialogTitle className="font-heading text-lg leading-snug">
-                    {selectedResult.source}
-                  </DialogTitle>
+                  <DialogTitle className="font-heading text-lg leading-snug">{selectedResult.source}</DialogTitle>
                   <p className="text-sm text-muted-foreground mt-1">{selectedResult.description}</p>
                 </DialogHeader>
-
                 <Separator className="my-2" />
-
                 <div className="space-y-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Record Details</h3>
                   <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
@@ -196,37 +243,97 @@ const SearchResults = () => {
                     ))}
                   </dl>
                 </div>
-
                 {selectedResult.sourceUrl && (
                   <>
                     <Separator className="my-2" />
                     <div>
                       <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Source</h3>
-                      <a
-                        href={selectedResult.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline"
-                      >
+                      <a href={selectedResult.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline">
                         <ExternalLink className="h-3.5 w-3.5" /> View on {selectedResult.source}
                       </a>
                     </div>
                   </>
                 )}
-
                 <Separator className="my-2" />
-
                 <div className="flex items-center gap-2 justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedResult(null)}>
-                    Close
-                  </Button>
-                  <Button variant="accent" size="sm" className="gap-1.5" onClick={() => handleSaveToInvestigation(selectedResult)}>
+                  <Button variant="outline" size="sm" onClick={() => setSelectedResult(null)}>Close</Button>
+                  <Button variant="accent" size="sm" className="gap-1.5" onClick={() => { setSelectedResult(null); openSaveModal(selectedResult); }}>
                     <FolderPlus className="h-3.5 w-3.5" /> Save to Investigation
                   </Button>
                 </div>
               </>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Save to Investigation Modal */}
+      <Dialog open={!!saveModalResult} onOpenChange={(open) => !open && setSaveModalResult(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-lg">Save to Investigation</DialogTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Choose an investigation or create a new one.
+            </p>
+          </DialogHeader>
+
+          {saveModalResult && (
+            <div className="bg-muted/50 border border-border rounded-md p-3 text-sm">
+              <p className="font-medium text-foreground">{saveModalResult.source}</p>
+              <p className="text-muted-foreground text-xs mt-0.5">{saveModalResult.description}</p>
+            </div>
+          )}
+
+          <div className="space-y-4 mt-2">
+            {!isCreatingNew ? (
+              <>
+                <Select value={selectedInvestigationId} onValueChange={setSelectedInvestigationId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an investigation…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {investigations.map((inv) => (
+                      <SelectItem key={inv.id} value={inv.id}>{inv.title}</SelectItem>
+                    ))}
+                    {investigations.length === 0 && (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">No investigations yet</div>
+                    )}
+                  </SelectContent>
+                </Select>
+                <button
+                  onClick={() => setIsCreatingNew(true)}
+                  className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline font-medium"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Create new investigation
+                </button>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1">Investigation Name</label>
+                  <Input
+                    value={newInvestigationTitle}
+                    onChange={(e) => setNewInvestigationTitle(e.target.value)}
+                    placeholder="e.g. Byron Donalds — Florida Records"
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={() => setIsCreatingNew(false)}
+                  className="text-sm text-muted-foreground hover:underline"
+                >
+                  ← Back to existing investigations
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 justify-end mt-4">
+            <Button variant="outline" size="sm" onClick={() => setSaveModalResult(null)}>Cancel</Button>
+            <Button variant="accent" size="sm" className="gap-1.5" onClick={handleSave} disabled={saving}>
+              <Bookmark className="h-3.5 w-3.5" /> {saving ? "Saving…" : "Save"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
