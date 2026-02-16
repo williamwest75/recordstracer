@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/AuthPage";
 import SearchResults from "./pages/SearchResults";
 import Dashboard from "./pages/Dashboard";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/search-results" element={<SearchResults />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="*" element={<NotFound />} />
