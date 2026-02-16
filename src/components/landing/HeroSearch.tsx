@@ -9,6 +9,9 @@ import {
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const US_STATES = [
   "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
@@ -23,6 +26,30 @@ const US_STATES = [
 
 const HeroSearch = () => {
   const [showMore, setShowMore] = useState(false);
+  const [name, setName] = useState("");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
+  const [additionalInfo, setAdditionalInfo] = useState("");
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !state) return;
+
+    // Save search if logged in
+    if (user) {
+      await supabase.from("searches").insert({
+        user_id: user.id,
+        subject_name: name.trim(),
+        state,
+        city: city || null,
+        additional_info: additionalInfo || null,
+      });
+    }
+
+    navigate(`/search-results?name=${encodeURIComponent(name.trim())}&state=${encodeURIComponent(state)}`);
+  };
 
   return (
     <section className="relative py-20 lg:py-28">
@@ -36,27 +63,25 @@ const HeroSearch = () => {
         </p>
 
         {/* Search Form */}
-        <div className="mt-10 bg-card border border-border rounded-lg p-6 shadow-sm text-left">
+        <form onSubmit={handleSearch} className="mt-10 bg-card border border-border rounded-lg p-6 shadow-sm text-left">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
                 Subject Name
               </label>
-              <Input placeholder="e.g., John Smith" className="bg-background" />
+              <Input placeholder="e.g., John Smith" className="bg-background" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
                 State
               </label>
-              <Select>
+              <Select value={state} onValueChange={setState}>
                 <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Select a state" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover max-h-60">
-                  {US_STATES.map((state) => (
-                    <SelectItem key={state} value={state}>
-                      {state}
-                    </SelectItem>
+                  {US_STATES.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -69,13 +94,13 @@ const HeroSearch = () => {
                 <label className="block text-sm font-medium text-foreground mb-1.5">
                   City <span className="text-muted-foreground">(optional)</span>
                 </label>
-                <Input placeholder="e.g., Austin" className="bg-background" />
+                <Input placeholder="e.g., Austin" className="bg-background" value={city} onChange={(e) => setCity(e.target.value)} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">
                   Additional Info <span className="text-muted-foreground">(optional)</span>
                 </label>
-                <Input placeholder="e.g., date of birth, company name" className="bg-background" />
+                <Input placeholder="e.g., date of birth, company name" className="bg-background" value={additionalInfo} onChange={(e) => setAdditionalInfo(e.target.value)} />
               </div>
             </div>
           )}
@@ -88,12 +113,12 @@ const HeroSearch = () => {
             >
               {showMore ? "Fewer options" : "More options"}
             </button>
-            <Button variant="accent" size="lg" className="gap-2 text-base px-8">
+            <Button type="submit" variant="accent" size="lg" className="gap-2 text-base px-8">
               <Search className="h-4 w-4" />
               Search Records
             </Button>
           </div>
-        </div>
+        </form>
       </div>
     </section>
   );
