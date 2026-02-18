@@ -29,6 +29,8 @@ serve(async (req) => {
       }
     }
     if (source === "courtlistener") result = await fetchCourtListener(searchName);
+    if (source === "sanctions") result = await searchSanctions(searchName);
+    if (source === "icij") result = await searchOffshoreLeaks(searchName);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -277,6 +279,90 @@ async function searchOpenSecrets(name: string, state: string, apiKey: string) {
 // ═══════════════════════════════════════════════════════════════
 // CourtListener
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// OpenSanctions — Global sanctions, PEPs, and watchlists
+// ═══════════════════════════════════════════════════════════════
+async function searchSanctions(name: string) {
+  try {
+    const url = `https://api.opensanctions.org/search/default?q=${encodeURIComponent(name)}&limit=15`;
+    console.log("[Sanctions] Searching:", url);
+    const res = await fetch(url, {
+      headers: { "Accept": "application/json" },
+    });
+    console.log("[Sanctions] Response status:", res.status);
+    
+    if (res.ok) {
+      const data = await res.json();
+      const results = (data.results || []).map((r: any) => ({
+        id: r.id || "",
+        name: r.caption || r.name || "Unknown",
+        schema: r.schema || "",
+        datasets: (r.datasets || []).join(", "),
+        countries: (r.properties?.country || []).join(", "),
+        topics: (r.properties?.topics || []).join(", "),
+        birthDate: (r.properties?.birthDate || [])[0] || "",
+        address: (r.properties?.address || [])[0] || "",
+        notes: (r.properties?.notes || [])[0] || "",
+        sourceUrl: r.id ? `https://www.opensanctions.org/entities/${r.id}/` : "",
+        score: r.score || 0,
+      }));
+      return { success: true, results, total: data.total || results.length };
+    }
+    return { success: false, results: [], total: 0, error: `Status ${res.status}` };
+  } catch (err) {
+    console.error("[Sanctions] Search error:", err);
+    return { success: false, error: String(err), results: [], total: 0 };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ICIJ Offshore Leaks — Panama/Paradise/Pandora Papers
+// ═══════════════════════════════════════════════════════════════
+async function searchOffshoreLeaks(name: string) {
+  try {
+    const url = "https://offshoreleaks.icij.org/api/v1/reconcile";
+    const body = JSON.stringify({
+      queries: {
+        q0: { query: name, type: "Entity", limit: 10 },
+        q1: { query: name, type: "Officer", limit: 10 },
+        q2: { query: name, type: "Intermediary", limit: 5 },
+      },
+    });
+    console.log("[ICIJ] Searching:", name);
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body,
+    });
+    console.log("[ICIJ] Response status:", res.status);
+
+    if (res.ok) {
+      const data = await res.json();
+      const entities: any[] = [];
+      for (const key of ["q0", "q1", "q2"]) {
+        const queryResult = data[key];
+        if (queryResult?.result) {
+          for (const r of queryResult.result) {
+            entities.push({
+              id: r.id || "",
+              name: r.name || "Unknown",
+              type: key === "q0" ? "Offshore Entity" : key === "q1" ? "Officer/Beneficiary" : "Intermediary",
+              score: r.score || 0,
+              match: r.match || false,
+              description: r.description || "",
+            });
+          }
+        }
+      }
+      return { success: true, entities, total: entities.length };
+    }
+    return { success: false, entities: [], total: 0, error: `Status ${res.status}` };
+  } catch (err) {
+    console.error("[ICIJ] Search error:", err);
+    return { success: false, error: String(err), entities: [], total: 0 };
+  }
+}
+
 async function fetchCourtListener(name: string) {
   const token = Deno.env.get("COURTLISTENER_API_TOKEN");
   const headers: Record<string, string> = { Accept: "application/json" };
