@@ -1,7 +1,3 @@
-// supabase/functions/records-proxy/index.ts
-// This Edge Function acts as a "waiter" — it fetches data from APIs that
-// block direct browser requests (CORS), and passes the results back to your app.
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -11,7 +7,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,22 +16,10 @@ serve(async (req) => {
 
     let result: any = { success: false, error: "Unknown source" };
 
-    // ─── SEC EDGAR ───────────────────────────────────────────
-    if (source === "sec") {
-      result = await searchSEC(searchName);
-    }
-
-    // ─── ProPublica Nonprofits ───────────────────────────────
-    if (source === "propublica") {
-      result = await searchProPublica(searchName);
-    }
-
-    // ─── Florida SunBiz ──────────────────────────────────────
-    if (source === "sunbiz") {
-      result = await searchSunBiz(searchName);
-    }
-
-    // ─── OpenSecrets (if API key is set) ─────────────────────
+    if (source === "sec") result = await searchSEC(searchName);
+    if (source === "propublica") result = await searchProPublica(searchName);
+    if (source === "sunbiz") result = await searchSunBiz(searchName);
+    if (source === "fec") result = await searchFEC(searchName, state || "");
     if (source === "opensecrets") {
       const apiKey = Deno.env.get("OPENSECRETS_API_KEY");
       if (apiKey) {
@@ -45,11 +28,7 @@ serve(async (req) => {
         result = { success: false, error: "OpenSecrets API key not configured" };
       }
     }
-
-    // ─── CourtListener ───────────────────────────────────────
-    if (source === "courtlistener") {
-      result = await fetchCourtListener(searchName);
-    }
+    if (source === "courtlistener") result = await fetchCourtListener(searchName);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -63,11 +42,75 @@ serve(async (req) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// SEC EDGAR — Full-text search of corporate filings
+// FEC — Campaign finance (contributions, candidates, committees)
+// ═══════════════════════════════════════════════════════════════
+async function searchFEC(name: string, state: string) {
+  const apiKey = Deno.env.get("FEC_API_KEY") || "DEMO_KEY";
+  const stateParam = state ? `&contributor_state=${state}` : "";
+
+  const contributions: any[] = [];
+  const candidates: any[] = [];
+  const committees: any[] = [];
+
+  try {
+    // Individual contributions
+    const contribUrl = `https://api.open.fec.gov/v1/schedules/schedule_a/?contributor_name=${encodeURIComponent(name)}${stateParam}&per_page=20&sort=-contribution_receipt_date&api_key=${apiKey}`;
+    const contribRes = await fetch(contribUrl);
+    if (contribRes.ok) {
+      const data = await contribRes.json();
+      contributions.push(...(data.results || []));
+    } else {
+      console.error("[FEC] Contributions status:", contribRes.status);
+      await contribRes.text();
+    }
+  } catch (err) {
+    console.error("[FEC] Contributions error:", err);
+  }
+
+  try {
+    // Candidate search
+    const candidateStateParam = state ? `&state=${state}` : "";
+    const candidateUrl = `https://api.open.fec.gov/v1/candidates/search/?name=${encodeURIComponent(name)}${candidateStateParam}&per_page=10&api_key=${apiKey}`;
+    const candidateRes = await fetch(candidateUrl);
+    if (candidateRes.ok) {
+      const data = await candidateRes.json();
+      candidates.push(...(data.results || []));
+    } else {
+      console.error("[FEC] Candidates status:", candidateRes.status);
+      await candidateRes.text();
+    }
+  } catch (err) {
+    console.error("[FEC] Candidates error:", err);
+  }
+
+  try {
+    // Committee/PAC search
+    const committeeUrl = `https://api.open.fec.gov/v1/committees/?q=${encodeURIComponent(name)}&per_page=10&api_key=${apiKey}`;
+    const committeeRes = await fetch(committeeUrl);
+    if (committeeRes.ok) {
+      const data = await committeeRes.json();
+      committees.push(...(data.results || []));
+    } else {
+      console.error("[FEC] Committees status:", committeeRes.status);
+      await committeeRes.text();
+    }
+  } catch (err) {
+    console.error("[FEC] Committees error:", err);
+  }
+
+  return {
+    success: true,
+    contributions,
+    candidates,
+    committees,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEC EDGAR
 // ═══════════════════════════════════════════════════════════════
 async function searchSEC(name: string) {
   try {
-    // Try the EDGAR full-text search (EFTS)
     const url = `https://efts.sec.gov/LATEST/search-index?q=%22${encodeURIComponent(name)}%22&forms=10-K,10-Q,8-K,DEF%2014A,4,SC%2013D&from=0&size=20`;
     const res = await fetch(url, {
       headers: {
@@ -92,7 +135,6 @@ async function searchSEC(name: string) {
       };
     }
 
-    // Fallback: company search
     const fallbackUrl = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=${encodeURIComponent(name)}&type=&dateb=&owner=include&count=40&output=atom`;
     const fallbackRes = await fetch(fallbackUrl, {
       headers: {
@@ -131,30 +173,23 @@ async function searchSEC(name: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ProPublica Nonprofit Explorer — 990 tax filings
+// ProPublica Nonprofit Explorer
 // ═══════════════════════════════════════════════════════════════
 async function searchProPublica(name: string) {
   try {
     const url = `https://projects.propublica.org/nonprofits/api/v2/search.json?q=${encodeURIComponent(name)}`;
     const res = await fetch(url);
-
     if (res.ok) {
       const data = await res.json();
       return {
         success: true,
         organizations: (data.organizations || []).slice(0, 15).map((org: any) => ({
-          name: org.name,
-          ein: org.ein,
-          city: org.city,
-          state: org.state,
-          nteeCode: org.ntee_code,
-          income: org.income_amount,
-          subsection: org.subseccd,
+          name: org.name, ein: org.ein, city: org.city, state: org.state,
+          nteeCode: org.ntee_code, income: org.income_amount, subsection: org.subseccd,
         })),
         totalOrgs: data.total_results || 0,
       };
     }
-
     return { success: false, organizations: [], totalOrgs: 0 };
   } catch (err) {
     console.error("ProPublica search error:", err);
@@ -163,28 +198,18 @@ async function searchProPublica(name: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Florida SunBiz — Business registrations
+// Florida SunBiz
 // ═══════════════════════════════════════════════════════════════
 async function searchSunBiz(name: string) {
   try {
     const searchUrl = `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?inquiryType=OfficerRegisteredAgentName&searchNameOrder=true&searchTerm=${encodeURIComponent(name)}&listingType=active`;
-
     const res = await fetch(searchUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)",
-        Accept: "text/html",
-      },
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
     });
-
-    if (!res.ok) {
-      return { success: false, results: [], error: `Status ${res.status}` };
-    }
+    if (!res.ok) return { success: false, results: [], error: `Status ${res.status}` };
 
     const html = await res.text();
     const results: any[] = [];
-
-    // Parse the HTML table rows
-    // SunBiz results are in table rows with links
     const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
     let rowMatch;
     while ((rowMatch = rowRegex.exec(html)) !== null) {
@@ -193,30 +218,21 @@ async function searchSunBiz(name: string) {
       const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
       let cellMatch;
       while ((cellMatch = cellRegex.exec(row)) !== null) {
-        // Strip HTML tags from cell content
         cells.push(cellMatch[1].replace(/<[^>]+>/g, "").trim());
       }
-
-      // Extract link if present
       const linkMatch = row.match(/href="([^"]+)"/);
       const detailUrl = linkMatch ? linkMatch[1] : null;
-
       if (cells.length >= 3 && cells[0] && /^\w/.test(cells[0])) {
         results.push({
           entityName: cells[1] || cells[0],
           documentNumber: cells[0],
           status: cells[2] || "Unknown",
           filingDate: cells[3] || "",
-          detailUrl: detailUrl,
+          detailUrl,
         });
       }
     }
-
-    return {
-      success: true,
-      results: results.slice(0, 15),
-      totalResults: results.length,
-    };
+    return { success: true, results: results.slice(0, 15), totalResults: results.length };
   } catch (err) {
     console.error("SunBiz search error:", err);
     return { success: false, error: String(err), results: [], totalResults: 0 };
@@ -224,38 +240,30 @@ async function searchSunBiz(name: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// OpenSecrets — Money in politics (requires API key)
+// OpenSecrets
 // ═══════════════════════════════════════════════════════════════
 async function searchOpenSecrets(name: string, state: string, apiKey: string) {
   try {
-    // Search for legislators
     const url = `https://www.opensecrets.org/api/?method=getLegislators&id=${state}&apikey=${apiKey}&output=json`;
     const res = await fetch(url);
-
     if (res.ok) {
       const data = await res.json();
       const legislators = data?.response?.legislator || [];
-      // Filter by name match
       const nameLower = name.toLowerCase();
       const matched = legislators.filter((l: any) => {
         const fullName = (l["@attributes"]?.firstlast || "").toLowerCase();
         return fullName.includes(nameLower) || nameLower.includes(fullName.split(" ").pop() || "");
       });
-
       return {
         success: true,
         legislators: matched.map((l: any) => ({
-          name: l["@attributes"]?.firstlast,
-          cid: l["@attributes"]?.cid,
-          party: l["@attributes"]?.party,
-          office: l["@attributes"]?.office,
-          phone: l["@attributes"]?.phone,
-          website: l["@attributes"]?.website,
+          name: l["@attributes"]?.firstlast, cid: l["@attributes"]?.cid,
+          party: l["@attributes"]?.party, office: l["@attributes"]?.office,
+          phone: l["@attributes"]?.phone, website: l["@attributes"]?.website,
           bioguideId: l["@attributes"]?.bioguide_id,
         })),
       };
     }
-
     return { success: false, legislators: [] };
   } catch (err) {
     console.error("OpenSecrets search error:", err);
@@ -264,25 +272,17 @@ async function searchOpenSecrets(name: string, state: string, apiKey: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// CourtListener — Federal court records
+// CourtListener
 // ═══════════════════════════════════════════════════════════════
 async function fetchCourtListener(name: string) {
   const token = Deno.env.get("COURTLISTENER_API_TOKEN");
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-  };
-  if (token) {
-    headers["Authorization"] = `Token ${token}`;
-  }
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (token) headers["Authorization"] = `Token ${token}`;
 
   try {
     const searchUrl = `https://www.courtlistener.com/api/rest/v4/search/?q=${encodeURIComponent(name)}&format=json&order_by=score+desc`;
-    console.log("[CourtListener] Fetching search URL:", searchUrl);
     const searchRes = await fetch(searchUrl, { headers });
-    const searchStatus = searchRes.status;
     const searchBody = await searchRes.text();
-    console.log("[CourtListener] Search response status:", searchStatus);
-    console.log("[CourtListener] Search response body (first 2000 chars):", searchBody.slice(0, 2000));
 
     let cases: any[] = [];
     let totalCases = 0;
@@ -301,7 +301,6 @@ async function fetchCourtListener(name: string) {
           cause: r.cause || "",
           suitNature: r.suitNature || r.nature_of_suit || "",
           description: r.snippet || r.description || "",
-          docketUrl: r.absolute_url || r.docket_absolute_url || "",
         }));
       } catch (parseErr) {
         console.error("[CourtListener] Failed to parse search response:", parseErr);
@@ -312,9 +311,7 @@ async function fetchCourtListener(name: string) {
     let totalParties = 0;
     try {
       const partiesUrl = `https://www.courtlistener.com/api/rest/v4/parties/?name=${encodeURIComponent(name)}&format=json`;
-      console.log("[CourtListener] Fetching parties URL:", partiesUrl);
       const partiesRes = await fetch(partiesUrl, { headers });
-      console.log("[CourtListener] Parties response status:", partiesRes.status);
       if (partiesRes.ok) {
         const partiesData = await partiesRes.json();
         totalParties = partiesData.count || 0;
@@ -323,6 +320,8 @@ async function fetchCourtListener(name: string) {
           partyType: p.party_type || "",
           dateTerminated: p.date_terminated || "",
         }));
+      } else {
+        await partiesRes.text();
       }
     } catch (partyErr) {
       console.error("[CourtListener] Parties search error:", partyErr);
