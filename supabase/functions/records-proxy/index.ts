@@ -85,14 +85,17 @@ async function searchFEC(name: string, state: string) {
 
   try {
     // Committee/PAC search
+    console.log("[FEC] Searching committees for:", name);
     const committeeUrl = `https://api.open.fec.gov/v1/committees/?q=${encodeURIComponent(name)}&per_page=10&api_key=${apiKey}`;
+    console.log("[FEC] Committee URL:", committeeUrl.replace(apiKey, "***"));
     const committeeRes = await fetch(committeeUrl);
     if (committeeRes.ok) {
       const data = await committeeRes.json();
       committees.push(...(data.results || []));
+      console.log("[FEC] Committees found:", committees.length);
     } else {
-      console.error("[FEC] Committees status:", committeeRes.status);
-      await committeeRes.text();
+      const errText = await committeeRes.text();
+      console.error("[FEC] Committees status:", committeeRes.status, errText.slice(0, 200));
     }
   } catch (err) {
     console.error("[FEC] Committees error:", err);
