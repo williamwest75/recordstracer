@@ -46,6 +46,11 @@ serve(async (req) => {
       }
     }
 
+    // ─── CourtListener ───────────────────────────────────────
+    if (source === "courtlistener") {
+      result = await fetchCourtListener(searchName);
+    }
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -255,5 +260,77 @@ async function searchOpenSecrets(name: string, state: string, apiKey: string) {
   } catch (err) {
     console.error("OpenSecrets search error:", err);
     return { success: false, error: String(err), legislators: [] };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CourtListener — Federal court records
+// ═══════════════════════════════════════════════════════════════
+async function fetchCourtListener(name: string) {
+  const token = Deno.env.get("COURTLISTENER_API_TOKEN");
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Token ${token}`;
+  }
+
+  try {
+    const searchUrl = `https://www.courtlistener.com/api/rest/v4/search/?q=${encodeURIComponent(name)}&format=json&order_by=score+desc`;
+    console.log("[CourtListener] Fetching search URL:", searchUrl);
+    const searchRes = await fetch(searchUrl, { headers });
+    const searchStatus = searchRes.status;
+    const searchBody = await searchRes.text();
+    console.log("[CourtListener] Search response status:", searchStatus);
+    console.log("[CourtListener] Search response body (first 2000 chars):", searchBody.slice(0, 2000));
+
+    let cases: any[] = [];
+    let totalCases = 0;
+    if (searchRes.ok) {
+      try {
+        const searchData = JSON.parse(searchBody);
+        totalCases = searchData.count || 0;
+        cases = (searchData.results || []).slice(0, 15).map((r: any) => ({
+          caseName: r.caseName || r.case_name || r.caseNameFull || r.case_name_full || "Unknown Case",
+          court: r.court || r.court_id || "",
+          docketNumber: r.docketNumber || r.docket_number || "",
+          dateFiled: r.dateFiled || r.date_filed || "",
+          dateTerminated: r.dateTerminated || r.date_terminated || "",
+          status: r.status || "",
+          assignedTo: r.assignedTo || r.assigned_to_str || "",
+          cause: r.cause || "",
+          suitNature: r.suitNature || r.nature_of_suit || "",
+          description: r.snippet || r.description || "",
+          docketUrl: r.absolute_url || r.docket_absolute_url || "",
+        }));
+      } catch (parseErr) {
+        console.error("[CourtListener] Failed to parse search response:", parseErr);
+      }
+    }
+
+    let parties: any[] = [];
+    let totalParties = 0;
+    try {
+      const partiesUrl = `https://www.courtlistener.com/api/rest/v4/parties/?name=${encodeURIComponent(name)}&format=json`;
+      console.log("[CourtListener] Fetching parties URL:", partiesUrl);
+      const partiesRes = await fetch(partiesUrl, { headers });
+      console.log("[CourtListener] Parties response status:", partiesRes.status);
+      if (partiesRes.ok) {
+        const partiesData = await partiesRes.json();
+        totalParties = partiesData.count || 0;
+        parties = (partiesData.results || []).slice(0, 10).map((p: any) => ({
+          name: p.name || "Unknown",
+          partyType: p.party_type || "",
+          dateTerminated: p.date_terminated || "",
+        }));
+      }
+    } catch (partyErr) {
+      console.error("[CourtListener] Parties search error:", partyErr);
+    }
+
+    return { success: true, cases, totalCases, parties, totalParties };
+  } catch (err) {
+    console.error("[CourtListener] Search error:", err);
+    return { success: false, error: String(err), cases: [], totalCases: 0, parties: [], totalParties: 0 };
   }
 }
