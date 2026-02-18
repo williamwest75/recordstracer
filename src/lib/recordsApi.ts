@@ -131,10 +131,13 @@ export async function searchFEC(name: string, state: string): Promise<RecordResu
 
     // Search for committees/PACs (works for companies)
     const committeeUrl = `https://api.open.fec.gov/v1/committees/?q=${encodeURIComponent(name)}&per_page=10&api_key=${FEC_API_KEY}`;
+    console.log("[FEC] Searching committees:", committeeUrl);
     const committeeRes = await fetch(committeeUrl);
+    console.log("[FEC] Committee response status:", committeeRes.status);
     if (committeeRes.ok) {
-      const data = await committeeRes.json();
-      for (const c of data.results || []) {
+      const cdata = await committeeRes.json();
+      console.log("[FEC] Committees found:", cdata.results?.length || 0);
+      for (const c of cdata.results || []) {
         results.push({
           id: `fec-committee-${++id}`,
           source: "FEC Committee/PAC",
@@ -198,6 +201,7 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
       "Awarding Agency", "Awarding Sub Agency", "Award Type", "Description", "internal_id"];
 
     // Contracts: try recipient_search_text first, fallback to keywords
+    console.log("[USASpending] Searching contracts for:", name);
     const res = await fetch(endpoint, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -212,7 +216,7 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
       awards = data.results || [];
     }
     if (awards.length === 0) {
-      console.log("[USASpending] recipient_search_text returned 0, trying keywords fallback");
+      console.log("[USASpending] recipient_search_text returned 0 for:", name, "— trying keywords fallback");
       const fallbackRes = await fetch(endpoint, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -224,6 +228,25 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
       if (fallbackRes.ok) {
         const fallbackData = await fallbackRes.json();
         awards = fallbackData.results || [];
+        console.log("[USASpending] Keyword fallback returned:", awards.length, "results");
+      }
+    }
+
+    // Third fallback: log recipient autocomplete for debugging
+    if (awards.length === 0) {
+      console.log("[USASpending] Both searches returned 0 for:", name);
+      try {
+        const recipientRes = await fetch("https://api.usaspending.gov/api/v2/autocomplete/awarding_agency/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ search_text: name, limit: 10 }),
+        });
+        if (recipientRes.ok) {
+          const recipientData = await recipientRes.json();
+          console.log("[USASpending] Recipient autocomplete results:", JSON.stringify(recipientData).slice(0, 500));
+        }
+      } catch (e) {
+        console.error("[USASpending] Recipient autocomplete failed:", e);
       }
     }
 
