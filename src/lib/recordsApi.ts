@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const FEC_API_KEY = "DEMO_KEY";
+const FEC_API_KEY = "XGkRMDXXOGkcDsy6FfvEjBGqMHFtWv45hpMD3OHt";
 
 const STATE_ABBR: Record<string, string> = {
   Alabama:"AL",Alaska:"AK",Arizona:"AZ",Arkansas:"AR",California:"CA",Colorado:"CO",Connecticut:"CT",
