@@ -1,5 +1,5 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Building2, Vote, Scale, Home, BadgeCheck, Briefcase, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle } from "lucide-react";
+import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -20,9 +20,9 @@ interface Investigation {
 }
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
-  business: { icon: Building2, label: "Business & Corporate Records" },
-  donations: { icon: Vote, label: "Campaign Finance (FEC)" },
-  contracts: { icon: Briefcase, label: "Federal Contracts & Grants" },
+  business: { icon: Building2, label: "Business Registrations & Filings" },
+  donations: { icon: Vote, label: "Campaign Donations (FEC)" },
+  contracts: { icon: FileText, label: "Government Contracts & Grants" },
   court: { icon: Scale, label: "Court Records" },
   property: { icon: Home, label: "Property Records" },
   licenses: { icon: BadgeCheck, label: "Professional Licenses" },
@@ -171,7 +171,7 @@ const SearchResults = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-accent" />
-            <p className="text-muted-foreground text-sm">Scanning SEC, FEC, and state databases…</p>
+            <p className="text-muted-foreground text-sm">Scanning FEC, SEC EDGAR, USASpending.gov, ProPublica, and state databases…</p>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
@@ -230,9 +230,11 @@ const SearchResults = () => {
               {debugInfo.map((d) => (
                 <div key={d.api} className="flex items-center gap-3 text-sm">
                   <span className={`inline-block w-2 h-2 rounded-full ${d.status === "success" ? "bg-green-500" : "bg-red-500"}`} />
-                  <span className="font-medium text-foreground w-28">{d.api}</span>
+                  <span className="font-medium text-foreground w-40">{d.api}</span>
                   <span className="text-muted-foreground">
-                    {d.status === "success" ? `${d.resultCount} result(s)` : `Error: ${d.error}`}
+                    {d.status === "success"
+                      ? `${d.resultCount} result(s)${d.duration ? ` in ${(d.duration / 1000).toFixed(1)}s` : ""}`
+                      : `Error: ${d.error}`}
                   </span>
                 </div>
               ))}
