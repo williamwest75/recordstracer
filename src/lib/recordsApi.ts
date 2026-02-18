@@ -49,12 +49,14 @@ async function proxyFetch(source: string, searchName: string, state?: string): P
 }
 
 export async function searchFEC(name: string, state: string): Promise<RecordResult[]> {
-  const stateCode = toStateCode(state);
+  const isNational = !state || state === "All States / National";
+  const stateCode = isNational ? "" : toStateCode(state);
   const results: RecordResult[] = [];
   let id = 0;
 
   try {
-    const contribUrl = `https://api.open.fec.gov/v1/schedules/schedule_a/?contributor_name=${encodeURIComponent(name)}&contributor_state=${stateCode}&per_page=20&sort=-contribution_receipt_date&api_key=${FEC_API_KEY}`;
+    const stateParam = stateCode ? `&contributor_state=${stateCode}` : "";
+    const contribUrl = `https://api.open.fec.gov/v1/schedules/schedule_a/?contributor_name=${encodeURIComponent(name)}${stateParam}&per_page=20&sort=-contribution_receipt_date&api_key=${FEC_API_KEY}`;
     const contribRes = await fetch(contribUrl);
 
     if (contribRes.ok) {
@@ -103,7 +105,8 @@ export async function searchFEC(name: string, state: string): Promise<RecordResu
       }
     }
 
-    const candidateUrl = `https://api.open.fec.gov/v1/candidates/search/?name=${encodeURIComponent(name)}&state=${stateCode}&per_page=10&api_key=${FEC_API_KEY}`;
+    const candidateStateParam = stateCode ? `&state=${stateCode}` : "";
+    const candidateUrl = `https://api.open.fec.gov/v1/candidates/search/?name=${encodeURIComponent(name)}${candidateStateParam}&per_page=10&api_key=${FEC_API_KEY}`;
     const candidateRes = await fetch(candidateUrl);
 
     if (candidateRes.ok) {
@@ -285,13 +288,23 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
   try {
     const data = await proxyFetch("courtlistener", name);
     if (data.success && data.cases?.length > 0) {
+      const clSearchUrl = `https://www.courtlistener.com/?q=${encodeURIComponent(name)}&order_by=score+desc`;
+      const pacerUrl = `https://pcl.uscourts.gov/pcl/pages/search/results?fullName=${encodeURIComponent(name)}`;
       results.push({
         id: "court-summary", source: "Federal Court Records Summary", category: "court",
         description: `${data.totalCases} federal court case(s) found for "${name}"`,
-        details: { "Total Cases": String(data.totalCases), "Related Parties": String(data.totalParties || 0) },
-        sourceUrl: `https://www.courtlistener.com/?q=${encodeURIComponent(name)}&type=r`,
+        details: {
+          "Total Cases": String(data.totalCases),
+          "Related Parties": String(data.totalParties || 0),
+          "PACER Lookup": pacerUrl,
+        },
+        sourceUrl: clSearchUrl,
       });
       for (const c of data.cases.slice(0, 12)) {
+        // Build a working CourtListener opinion URL
+        const opinionUrl = c.docketUrl
+          ? `https://www.courtlistener.com${c.docketUrl}`
+          : `${clSearchUrl}`;
         results.push({
           id: `court-${++id}`, source: "Federal Court Case", category: "court",
           description: `${c.caseName} (${c.court || "Unknown Court"})`,
@@ -301,9 +314,10 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
             "Date Terminated": c.dateTerminated || "Ongoing", Status: c.status || "N/A",
             "Assigned To": c.assignedTo || "N/A", Cause: c.cause || "N/A",
             "Nature of Suit": c.suitNature || "N/A",
+            "PACER Lookup": pacerUrl,
             ...(c.description ? { Description: c.description.slice(0, 200) } : {}),
           },
-          sourceUrl: c.docketUrl ? `https://www.courtlistener.com${c.docketUrl}` : `https://www.courtlistener.com/?q=${encodeURIComponent(name)}&type=r`,
+          sourceUrl: opinionUrl,
         });
       }
     }
@@ -313,7 +327,7 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
           id: `court-party-${++id}`, source: "Court Party Record", category: "court",
           description: `${p.name} — ${p.partyType || "Party"} in federal case`,
           details: { Name: p.name || "N/A", "Party Type": p.partyType || "N/A", "Date Terminated": p.dateTerminated || "N/A" },
-          sourceUrl: `https://www.courtlistener.com/?q=${encodeURIComponent(name)}&type=r`,
+          sourceUrl: `https://www.courtlistener.com/?q=${encodeURIComponent(name)}&order_by=score+desc`,
         });
       }
     }
