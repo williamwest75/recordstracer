@@ -401,6 +401,98 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
 }
 
 // ═══════════════════════════════════════════════════════════════
+// OpenSanctions — Global sanctions, PEPs, and watchlists
+// ═══════════════════════════════════════════════════════════════
+export async function searchSanctions(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("sanctions", name);
+    if (data.success && data.results?.length > 0) {
+      results.push({
+        id: "sanctions-summary",
+        source: "Global Sanctions & PEPs Summary",
+        category: "sanctions",
+        description: `${data.total} record(s) found across global sanctions lists and PEP databases`,
+        details: {
+          "Total Matches": String(data.total),
+          "Source": "OpenSanctions (OFAC, UN, EU, and 100+ other lists)",
+          "Disclaimer": "Inclusion does not imply wrongdoing — verify identities carefully",
+        },
+        sourceUrl: `https://www.opensanctions.org/search/?q=${encodeURIComponent(name)}`,
+      });
+      for (const r of data.results.slice(0, 12)) {
+        results.push({
+          id: `sanctions-${++id}`,
+          source: "Sanctions/PEP Record",
+          category: "sanctions",
+          description: `${r.name} — ${r.schema || "Entity"} (${r.datasets || "Unknown list"})`,
+          details: {
+            Name: r.name || "N/A",
+            Type: r.schema || "N/A",
+            "Sanctions Lists": r.datasets || "N/A",
+            Countries: r.countries || "N/A",
+            Topics: r.topics || "N/A",
+            "Birth Date": r.birthDate || "N/A",
+            Address: r.address || "N/A",
+            Notes: r.notes ? r.notes.slice(0, 300) : "N/A",
+          },
+          sourceUrl: r.sourceUrl || `https://www.opensanctions.org/search/?q=${encodeURIComponent(name)}`,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[Sanctions] Search failed:", err);
+  }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ICIJ Offshore Leaks — Panama/Paradise/Pandora Papers
+// ═══════════════════════════════════════════════════════════════
+export async function searchOffshoreLeaks(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("icij", name);
+    if (data.success && data.entities?.length > 0) {
+      results.push({
+        id: "icij-summary",
+        source: "ICIJ Offshore Leaks Summary",
+        category: "offshore",
+        description: `${data.total} offshore record(s) found in Panama Papers, Paradise Papers, Pandora Papers & more`,
+        details: {
+          "Total Records": String(data.total),
+          "Source": "International Consortium of Investigative Journalists (ICIJ)",
+          "Datasets": "Panama Papers, Paradise Papers, Pandora Papers, Bahamas Leaks, Offshore Leaks",
+          "Disclaimer": "Inclusion does not imply illegal or improper conduct",
+        },
+        sourceUrl: `https://offshoreleaks.icij.org/search?q=${encodeURIComponent(name)}`,
+      });
+      for (const e of data.entities.slice(0, 12)) {
+        results.push({
+          id: `icij-${++id}`,
+          source: `ICIJ ${e.type || "Record"}`,
+          category: "offshore",
+          description: `${e.name} — ${e.type || "Offshore Entity"}${e.match ? " (Strong Match)" : ""}`,
+          details: {
+            Name: e.name || "N/A",
+            Type: e.type || "N/A",
+            "Match Score": e.score ? `${Math.round(e.score * 100)}%` : "N/A",
+            Description: e.description || "N/A",
+            "Strong Match": e.match ? "Yes" : "No",
+          },
+          sourceUrl: e.id ? `https://offshoreleaks.icij.org/nodes/${e.id}` : `https://offshoreleaks.icij.org/search?q=${encodeURIComponent(name)}`,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[ICIJ] Search failed:", err);
+  }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Search All
 // ═══════════════════════════════════════════════════════════════
 export async function searchAll(
@@ -419,16 +511,18 @@ export async function searchAll(
     }
   };
 
-  const [fec, sec, usaSpending, nonprofits, sunbiz, courts] = await Promise.all([
+  const [fec, sec, usaSpending, nonprofits, sunbiz, courts, sanctions, offshore] = await Promise.all([
     run("FEC Campaign Finance", () => searchFEC(name, state)),
     run("SEC EDGAR", () => searchSEC(name)),
     run("USASpending.gov", () => searchUSASpending(name, state)),
     run("ProPublica Nonprofits", () => searchProPublicaNonprofits(name)),
     run("Florida SunBiz", () => searchSunBiz(name)),
     run("CourtListener", () => searchCourtListener(name)),
+    run("OpenSanctions", () => searchSanctions(name)),
+    run("ICIJ Offshore Leaks", () => searchOffshoreLeaks(name)),
   ]);
 
-  const results = [...fec, ...sec, ...usaSpending, ...nonprofits, ...sunbiz, ...courts];
+  const results = [...fec, ...sec, ...usaSpending, ...nonprofits, ...sunbiz, ...courts, ...sanctions, ...offshore];
   return { results, debug };
 }
 
