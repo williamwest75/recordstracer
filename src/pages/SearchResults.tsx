@@ -164,7 +164,7 @@ const SearchResults = () => {
         </Link>
 
         <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
-          Results for: <span className="text-accent">{name}</span> in {state}
+          Results for: <span className="text-accent">{name}</span>{state !== "All States / National" ? ` in ${state}` : " (National)"}
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">Searching public records across multiple databases…</p>
 
