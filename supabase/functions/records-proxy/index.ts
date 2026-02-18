@@ -31,6 +31,8 @@ serve(async (req) => {
     if (source === "courtlistener") result = await fetchCourtListener(searchName);
     if (source === "sanctions") result = await searchSanctions(searchName);
     if (source === "icij") result = await searchOffshoreLeaks(searchName);
+    if (source === "lobbying") result = await searchLobbying(searchName);
+    if (source === "faa") result = await searchFAA(searchName);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -284,8 +286,12 @@ async function searchOpenSecrets(name: string, state: string, apiKey: string) {
 // ═══════════════════════════════════════════════════════════════
 async function searchSanctions(name: string) {
   try {
-    const url = `https://api.opensanctions.org/search/default?q=${encodeURIComponent(name)}&limit=15`;
-    console.log("[Sanctions] Searching:", url);
+    const rawKey = Deno.env.get("OPENSANCTIONS_API_KEY") || "";
+    const apiKey = rawKey.replace(/[^\x20-\x7E]/g, "").trim();
+    const url = apiKey
+      ? `https://api.opensanctions.org/search/default?q=${encodeURIComponent(name)}&limit=15&api_key=${encodeURIComponent(apiKey)}`
+      : `https://api.opensanctions.org/search/default?q=${encodeURIComponent(name)}&limit=15`;
+    console.log("[Sanctions] Searching:", url.replace(apiKey, "***"), "hasKey:", !!apiKey);
     const res = await fetch(url, {
       headers: { "Accept": "application/json" },
     });
@@ -360,6 +366,88 @@ async function searchOffshoreLeaks(name: string) {
   } catch (err) {
     console.error("[ICIJ] Search error:", err);
     return { success: false, error: String(err), entities: [], total: 0 };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Senate Lobbying Disclosures (LDA)
+// ═══════════════════════════════════════════════════════════════
+async function searchLobbying(name: string) {
+  try {
+    const url = `https://lda.senate.gov/api/v1/filings/?filing_year=2024&client_name=${encodeURIComponent(name)}&page_size=15`;
+    console.log("[Lobbying] Searching:", url);
+    const res = await fetch(url, {
+      headers: { "Accept": "application/json" },
+    });
+    console.log("[Lobbying] Response status:", res.status);
+
+    if (res.ok) {
+      const data = await res.json();
+      const rawFilings = data.results || [];
+      const filings = rawFilings.map((f: any) => ({
+        registrantName: f.registrant?.name || f.registrant_name || "Unknown",
+        clientName: f.client?.name || f.client_name || "Unknown",
+        filingType: f.filing_type_display || f.filing_type || "N/A",
+        amount: f.income || f.expenses || null,
+        filingYear: f.filing_year || "N/A",
+        filingPeriod: f.filing_period_display || f.filing_period || "N/A",
+        filingDate: f.dt_posted || "N/A",
+        filingUuid: f.filing_uuid || "",
+      }));
+      return { success: true, filings, total: data.count || filings.length };
+    }
+    return { success: false, filings: [], total: 0, error: `Status ${res.status}` };
+  } catch (err) {
+    console.error("[Lobbying] Search error:", err);
+    return { success: false, error: String(err), filings: [], total: 0 };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FAA Aircraft Registry
+// ═══════════════════════════════════════════════════════════════
+async function searchFAA(name: string) {
+  try {
+    const url = `https://registry.faa.gov/AircraftInquiry/Search/NameResult?Nametxt=${encodeURIComponent(name)}&sort_option=1&PageSize=20`;
+    console.log("[FAA] Searching:", url);
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
+    });
+    console.log("[FAA] Response status:", res.status);
+
+    if (!res.ok) return { success: false, aircraft: [], total: 0, error: `Status ${res.status}` };
+
+    const html = await res.text();
+    const aircraft: any[] = [];
+    const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    let rowMatch;
+    while ((rowMatch = rowRegex.exec(html)) !== null) {
+      const row = rowMatch[1];
+      if (!row.includes("<td")) continue;
+      const cells: string[] = [];
+      const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+      let cellMatch;
+      while ((cellMatch = cellRegex.exec(row)) !== null) {
+        cells.push(cellMatch[1].replace(/<[^>]+>/g, "").trim());
+      }
+      if (cells.length >= 7 && /^N?\d/.test(cells[0])) {
+        aircraft.push({
+          nNumber: cells[0] || "",
+          serialNumber: cells[1] || "",
+          manufacturer: cells[2] || "",
+          model: cells[3] || "",
+          yearMfr: cells[4] || "",
+          registrant: cells[5] || "",
+          city: cells[6] || "",
+          state: cells[7] || "",
+        });
+      }
+    }
+    console.log("[FAA] Aircraft found:", aircraft.length);
+    return { success: true, aircraft, total: aircraft.length };
+  } catch (err) {
+    console.error("[FAA] Search error:", err);
+    return { success: false, error: String(err), aircraft: [], total: 0 };
   }
 }
 

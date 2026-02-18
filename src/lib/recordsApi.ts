@@ -493,6 +493,98 @@ export async function searchOffshoreLeaks(name: string): Promise<RecordResult[]>
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Senate Lobbying Disclosures (LDA)
+// ═══════════════════════════════════════════════════════════════
+export async function searchLobbying(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("lobbying", name);
+    if (data.success && data.filings?.length > 0) {
+      const totalAmount = data.filings.reduce((sum: number, f: any) => sum + (parseFloat(f.amount) || 0), 0);
+      results.push({
+        id: "lobbying-summary",
+        source: "Senate Lobbying Disclosures Summary",
+        category: "lobbying",
+        description: `${data.total} lobbying filing(s) found${totalAmount > 0 ? ` totaling ${formatMoney(totalAmount)}` : ""}`,
+        details: {
+          "Total Filings": String(data.total),
+          "Source": "Senate Office of Public Records (LDA)",
+        },
+        sourceUrl: `https://lda.senate.gov/filings/public/filing/search/?client_name=${encodeURIComponent(name)}`,
+      });
+      for (const f of data.filings.slice(0, 12)) {
+        results.push({
+          id: `lobbying-${++id}`,
+          source: "Lobbying Filing",
+          category: "lobbying",
+          description: `${f.registrantName} lobbying for ${f.clientName} — ${f.filingType} (${f.filingPeriod} ${f.filingYear})`,
+          details: {
+            Registrant: f.registrantName || "N/A",
+            Client: f.clientName || "N/A",
+            "Filing Type": f.filingType || "N/A",
+            Amount: f.amount ? formatMoney(parseFloat(f.amount)) : "N/A",
+            Year: String(f.filingYear) || "N/A",
+            Period: f.filingPeriod || "N/A",
+            "Date Posted": f.filingDate || "N/A",
+          },
+          sourceUrl: f.filingUuid ? `https://lda.senate.gov/filings/public/filing/${f.filingUuid}/` : undefined,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[Lobbying] Search failed:", err);
+  }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FAA Aircraft Registry
+// ═══════════════════════════════════════════════════════════════
+export async function searchFAA(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("faa", name);
+    if (data.success && data.aircraft?.length > 0) {
+      results.push({
+        id: "faa-summary",
+        source: "FAA Aircraft Registry Summary",
+        category: "assets",
+        description: `${data.total} aircraft registration(s) found`,
+        details: {
+          "Total Aircraft": String(data.total),
+          "Source": "FAA Aircraft Registry",
+        },
+        sourceUrl: `https://registry.faa.gov/AircraftInquiry/Search/NameResult?Nametxt=${encodeURIComponent(name)}`,
+      });
+      for (const a of data.aircraft.slice(0, 12)) {
+        results.push({
+          id: `faa-${++id}`,
+          source: "FAA Aircraft Registration",
+          category: "assets",
+          description: `N${a.nNumber} — ${a.manufacturer} ${a.model} (${a.yearMfr})`,
+          details: {
+            "N-Number": a.nNumber || "N/A",
+            "Serial Number": a.serialNumber || "N/A",
+            Manufacturer: a.manufacturer || "N/A",
+            Model: a.model || "N/A",
+            "Year Manufactured": a.yearMfr || "N/A",
+            Registrant: a.registrant || "N/A",
+            City: a.city || "N/A",
+            State: a.state || "N/A",
+          },
+          sourceUrl: `https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=${a.nNumber}`,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[FAA] Search failed:", err);
+  }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Search All
 // ═══════════════════════════════════════════════════════════════
 export async function searchAll(
@@ -511,7 +603,7 @@ export async function searchAll(
     }
   };
 
-  const [fec, sec, usaSpending, nonprofits, sunbiz, courts, sanctions, offshore] = await Promise.all([
+  const [fec, sec, usaSpending, nonprofits, sunbiz, courts, sanctions, offshore, lobbying, faa] = await Promise.all([
     run("FEC Campaign Finance", () => searchFEC(name, state)),
     run("SEC EDGAR", () => searchSEC(name)),
     run("USASpending.gov", () => searchUSASpending(name, state)),
@@ -520,9 +612,11 @@ export async function searchAll(
     run("CourtListener", () => searchCourtListener(name)),
     run("OpenSanctions", () => searchSanctions(name)),
     run("ICIJ Offshore Leaks", () => searchOffshoreLeaks(name)),
+    run("Senate Lobbying (LDA)", () => searchLobbying(name)),
+    run("FAA Aircraft Registry", () => searchFAA(name)),
   ]);
 
-  const results = [...fec, ...sec, ...usaSpending, ...nonprofits, ...sunbiz, ...courts, ...sanctions, ...offshore];
+  const results = [...fec, ...sec, ...usaSpending, ...nonprofits, ...sunbiz, ...courts, ...sanctions, ...offshore, ...lobbying, ...faa];
   return { results, debug };
 }
 

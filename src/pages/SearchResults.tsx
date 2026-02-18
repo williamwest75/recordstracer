@@ -24,8 +24,10 @@ const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> =
   donations: { icon: Vote, label: "Campaign Donations (FEC)" },
   contracts: { icon: FileText, label: "Government Contracts & Grants" },
   court: { icon: Scale, label: "Court Records" },
+  lobbying: { icon: FileText, label: "Lobbying Disclosures" },
   sanctions: { icon: AlertCircle, label: "Sanctions & Watchlists" },
   offshore: { icon: ExternalLink, label: "Offshore Leaks (ICIJ)" },
+  assets: { icon: Home, label: "Asset Records" },
   property: { icon: Home, label: "Property Records" },
   licenses: { icon: BadgeCheck, label: "Professional Licenses" },
 };
