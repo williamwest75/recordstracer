@@ -1,7 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const FEC_API_KEY = "XGkRMDXXOGkcDsy6FfvEjBGqMHFtWv45hpMD3OHt";
-
 const STATE_ABBR: Record<string, string> = {
   Alabama:"AL",Alaska:"AK",Arizona:"AZ",Arkansas:"AR",California:"CA",Colorado:"CO",Connecticut:"CT",
   Delaware:"DE",Florida:"FL",Georgia:"GA",Hawaii:"HI",Idaho:"ID",Illinois:"IL",Indiana:"IN",Iowa:"IA",
@@ -48,6 +46,9 @@ async function proxyFetch(source: string, searchName: string, state?: string): P
   return data;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// FEC — now routed through edge function proxy
+// ═══════════════════════════════════════════════════════════════
 export async function searchFEC(name: string, state: string): Promise<RecordResult[]> {
   const isNational = !state || state === "All States / National";
   const stateCode = isNational ? "" : toStateCode(state);
@@ -55,108 +56,90 @@ export async function searchFEC(name: string, state: string): Promise<RecordResu
   let id = 0;
 
   try {
-    const stateParam = stateCode ? `&contributor_state=${stateCode}` : "";
-    const contribUrl = `https://api.open.fec.gov/v1/schedules/schedule_a/?contributor_name=${encodeURIComponent(name)}${stateParam}&per_page=20&sort=-contribution_receipt_date&api_key=${FEC_API_KEY}`;
-    const contribRes = await fetch(contribUrl);
-
-    if (contribRes.ok) {
-      const data = await contribRes.json();
-      const contributions = data.results || [];
-
-      if (contributions.length > 0) {
-        const totalAmount = contributions.reduce((sum: number, c: any) => sum + (c.contribution_receipt_amount || 0), 0);
-        const uniqueRecipients = new Set(contributions.map((c: any) => c.committee?.name || c.committee_id)).size;
-
-        results.push({
-          id: "fec-summary",
-          source: "FEC Campaign Finance Summary",
-          category: "donations",
-          description: `${contributions.length} contributions totaling ${formatMoney(totalAmount)} to ${uniqueRecipients} recipient(s)`,
-          details: {
-            "Total Contributions": String(contributions.length),
-            "Total Amount": formatMoney(totalAmount),
-            "Unique Recipients": String(uniqueRecipients),
-            "Date Range": `${contributions[contributions.length - 1]?.contribution_receipt_date || "N/A"} to ${contributions[0]?.contribution_receipt_date || "N/A"}`,
-          },
-          sourceUrl: `https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=${encodeURIComponent(name)}&contributor_state=${stateCode}`,
-        });
-
-        for (const c of contributions.slice(0, 10)) {
-          const amount = c.contribution_receipt_amount || 0;
-          const recipient = c.committee?.name || c.committee_id || "Unknown";
-          results.push({
-            id: `fec-${++id}`,
-            source: "FEC Individual Contribution",
-            category: "donations",
-            description: `${formatMoney(amount)} to ${recipient} on ${c.contribution_receipt_date || "N/A"}`,
-            details: {
-              Contributor: c.contributor_name || name,
-              Amount: formatMoney(amount),
-              Recipient: recipient,
-              Date: c.contribution_receipt_date || "N/A",
-              City: c.contributor_city || "N/A",
-              State: c.contributor_state || "N/A",
-              Employer: c.contributor_employer || "N/A",
-              Occupation: c.contributor_occupation || "N/A",
-            },
-            sourceUrl: `https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=${encodeURIComponent(name)}`,
-          });
-        }
-      }
+    const data = await proxyFetch("fec", name, stateCode);
+    if (!data.success) {
+      console.error("[FEC] Proxy returned error:", data.error);
+      return results;
     }
 
-    const candidateStateParam = stateCode ? `&state=${stateCode}` : "";
-    const candidateUrl = `https://api.open.fec.gov/v1/candidates/search/?name=${encodeURIComponent(name)}${candidateStateParam}&per_page=10&api_key=${FEC_API_KEY}`;
-    const candidateRes = await fetch(candidateUrl);
+    const contributions = data.contributions || [];
+    if (contributions.length > 0) {
+      const totalAmount = contributions.reduce((sum: number, c: any) => sum + (c.contribution_receipt_amount || 0), 0);
+      const uniqueRecipients = new Set(contributions.map((c: any) => c.committee?.name || c.committee_id)).size;
 
-    if (candidateRes.ok) {
-      const data = await candidateRes.json();
-      for (const c of data.results || []) {
+      results.push({
+        id: "fec-summary",
+        source: "FEC Campaign Finance Summary",
+        category: "donations",
+        description: `${contributions.length} contributions totaling ${formatMoney(totalAmount)} to ${uniqueRecipients} recipient(s)`,
+        details: {
+          "Total Contributions": String(contributions.length),
+          "Total Amount": formatMoney(totalAmount),
+          "Unique Recipients": String(uniqueRecipients),
+          "Date Range": `${contributions[contributions.length - 1]?.contribution_receipt_date || "N/A"} to ${contributions[0]?.contribution_receipt_date || "N/A"}`,
+        },
+        sourceUrl: `https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=${encodeURIComponent(name)}&contributor_state=${stateCode}`,
+      });
+
+      for (const c of contributions.slice(0, 10)) {
+        const amount = c.contribution_receipt_amount || 0;
+        const recipient = c.committee?.name || c.committee_id || "Unknown";
         results.push({
-          id: `fec-cand-${++id}`,
-          source: "FEC Candidate Record",
+          id: `fec-${++id}`,
+          source: "FEC Individual Contribution",
           category: "donations",
-          description: `${c.name} — ${c.office_full || "Unknown Office"} (${c.party_full || "Unknown Party"})`,
+          description: `${formatMoney(amount)} to ${recipient} on ${c.contribution_receipt_date || "N/A"}`,
           details: {
-            Name: c.name, Office: c.office_full || "N/A", State: c.state || "N/A",
-            District: c.district || "N/A", Party: c.party_full || "N/A",
-            "Candidate ID": c.candidate_id || "N/A",
-            "Election Cycles": (c.cycles || []).join(", "),
-            "Has Raised Funds": c.has_raised_funds ? "Yes" : "No",
+            Contributor: c.contributor_name || name,
+            Amount: formatMoney(amount),
+            Recipient: recipient,
+            Date: c.contribution_receipt_date || "N/A",
+            City: c.contributor_city || "N/A",
+            State: c.contributor_state || "N/A",
+            Employer: c.contributor_employer || "N/A",
+            Occupation: c.contributor_occupation || "N/A",
           },
-          sourceUrl: `https://www.fec.gov/data/candidate/${c.candidate_id}/`,
+          sourceUrl: `https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=${encodeURIComponent(name)}`,
         });
       }
     }
 
-    // Search for committees/PACs (works for companies)
-    const committeeUrl = `https://api.open.fec.gov/v1/committees/?q=${encodeURIComponent(name)}&per_page=10&api_key=${FEC_API_KEY}`;
-    console.log("[FEC] Searching committees:", committeeUrl);
-    const committeeRes = await fetch(committeeUrl);
-    console.log("[FEC] Committee response status:", committeeRes.status);
-    if (committeeRes.ok) {
-      const cdata = await committeeRes.json();
-      console.log("[FEC] Committees found:", cdata.results?.length || 0);
-      for (const c of cdata.results || []) {
-        results.push({
-          id: `fec-committee-${++id}`,
-          source: "FEC Committee/PAC",
-          category: "donations",
-          description: `${c.name} — ${c.committee_type_full || "Committee"} (${c.party_full || "N/A"})`,
-          details: {
-            Name: c.name || "N/A",
-            "Committee Type": c.committee_type_full || "N/A",
-            Designation: c.designation_full || "N/A",
-            "Filing Frequency": c.filing_frequency || "N/A",
-            "First Filing Date": c.first_file_date || "N/A",
-            "Last Filing Date": c.last_file_date || "N/A",
-            Treasurer: c.treasurer_name || "N/A",
-            "Total Receipts": c.total_receipts ? `$${c.total_receipts.toLocaleString()}` : "N/A",
-            "Total Disbursements": c.total_disbursements ? `$${c.total_disbursements.toLocaleString()}` : "N/A",
-          },
-          sourceUrl: `https://www.fec.gov/data/committee/${c.committee_id}/`,
-        });
-      }
+    for (const c of (data.candidates || [])) {
+      results.push({
+        id: `fec-cand-${++id}`,
+        source: "FEC Candidate Record",
+        category: "donations",
+        description: `${c.name} — ${c.office_full || "Unknown Office"} (${c.party_full || "Unknown Party"})`,
+        details: {
+          Name: c.name, Office: c.office_full || "N/A", State: c.state || "N/A",
+          District: c.district || "N/A", Party: c.party_full || "N/A",
+          "Candidate ID": c.candidate_id || "N/A",
+          "Election Cycles": (c.cycles || []).join(", "),
+          "Has Raised Funds": c.has_raised_funds ? "Yes" : "No",
+        },
+        sourceUrl: `https://www.fec.gov/data/candidate/${c.candidate_id}/`,
+      });
+    }
+
+    for (const c of (data.committees || [])) {
+      results.push({
+        id: `fec-committee-${++id}`,
+        source: "FEC Committee/PAC",
+        category: "donations",
+        description: `${c.name} — ${c.committee_type_full || "Committee"} (${c.party_full || "N/A"})`,
+        details: {
+          Name: c.name || "N/A",
+          "Committee Type": c.committee_type_full || "N/A",
+          Designation: c.designation_full || "N/A",
+          "Filing Frequency": c.filing_frequency || "N/A",
+          "First Filing Date": c.first_file_date || "N/A",
+          "Last Filing Date": c.last_file_date || "N/A",
+          Treasurer: c.treasurer_name || "N/A",
+          "Total Receipts": c.total_receipts ? `$${c.total_receipts.toLocaleString()}` : "N/A",
+          "Total Disbursements": c.total_disbursements ? `$${c.total_disbursements.toLocaleString()}` : "N/A",
+        },
+        sourceUrl: `https://www.fec.gov/data/committee/${c.committee_id}/`,
+      });
     }
   } catch (err) {
     console.error("[FEC] Search failed:", err);
@@ -164,12 +147,14 @@ export async function searchFEC(name: string, state: string): Promise<RecordResu
   return results;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// SEC EDGAR
+// ═══════════════════════════════════════════════════════════════
 export async function searchSEC(name: string): Promise<RecordResult[]> {
   const results: RecordResult[] = [];
   let id = 0;
   try {
     const data = await proxyFetch("sec", name);
-    if (data._sampleSource) console.log("[SEC] Raw field names:", data._sampleSource);
     if (data.success && data.filings?.length > 0) {
       for (const f of data.filings.slice(0, 15)) {
         const entityName = f.entityName !== "Unknown Entity" ? f.entityName : "SEC Filing";
@@ -182,7 +167,6 @@ export async function searchSEC(name: string): Promise<RecordResult[]> {
           details: {
             Entity: entityName, "Form Type": formType, "Filing Date": f.fileDate || "N/A",
             "File Number": f.fileNum || "N/A", "Period of Report": f.periodOfReport || "N/A",
-            ...(entityName === "SEC Filing" && f._rawKeys ? { "Debug — Available Fields": f._rawKeys.join(", ") } : {}),
           },
           sourceUrl: `https://www.sec.gov/cgi-bin/browse-edgar?company=${encodeURIComponent(name)}&CIK=&type=&dateb=&owner=include&count=40&search_text=&action=getcompany`,
         });
@@ -192,6 +176,9 @@ export async function searchSEC(name: string): Promise<RecordResult[]> {
   return results;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// USASpending
+// ═══════════════════════════════════════════════════════════════
 export async function searchUSASpending(name: string, state: string): Promise<RecordResult[]> {
   const results: RecordResult[] = [];
   let id = 0;
@@ -200,8 +187,7 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
     const baseFields = ["Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount",
       "Awarding Agency", "Awarding Sub Agency", "Award Type", "Description", "internal_id"];
 
-    // Contracts: try recipient_search_text first, fallback to keywords
-    console.log("[USASpending] Searching contracts for:", name);
+    // Contracts
     const res = await fetch(endpoint, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -216,7 +202,6 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
       awards = data.results || [];
     }
     if (awards.length === 0) {
-      console.log("[USASpending] recipient_search_text returned 0 for:", name, "— trying keywords fallback");
       const fallbackRes = await fetch(endpoint, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -228,25 +213,6 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
       if (fallbackRes.ok) {
         const fallbackData = await fallbackRes.json();
         awards = fallbackData.results || [];
-        console.log("[USASpending] Keyword fallback returned:", awards.length, "results");
-      }
-    }
-
-    // Third fallback: log recipient autocomplete for debugging
-    if (awards.length === 0) {
-      console.log("[USASpending] Both searches returned 0 for:", name);
-      try {
-        const recipientRes = await fetch("https://api.usaspending.gov/api/v2/autocomplete/awarding_agency/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ search_text: name, limit: 10 }),
-        });
-        if (recipientRes.ok) {
-          const recipientData = await recipientRes.json();
-          console.log("[USASpending] Recipient autocomplete results:", JSON.stringify(recipientData).slice(0, 500));
-        }
-      } catch (e) {
-        console.error("[USASpending] Recipient autocomplete failed:", e);
       }
     }
 
@@ -275,7 +241,7 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
       }
     }
 
-    // Grants: try recipient_search_text first, fallback to keywords
+    // Grants
     const grantRes = await fetch(endpoint, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -292,7 +258,6 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
       grants = grantData.results || [];
     }
     if (grants.length === 0) {
-      console.log("[USASpending] grant recipient_search_text returned 0, trying keywords fallback");
       const grantFallback = await fetch(endpoint, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -325,6 +290,9 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
   return results;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// ProPublica Nonprofits
+// ═══════════════════════════════════════════════════════════════
 export async function searchProPublicaNonprofits(name: string): Promise<RecordResult[]> {
   const results: RecordResult[] = [];
   let id = 0;
@@ -350,6 +318,9 @@ export async function searchProPublicaNonprofits(name: string): Promise<RecordRe
   return results;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Florida SunBiz
+// ═══════════════════════════════════════════════════════════════
 export async function searchSunBiz(name: string): Promise<RecordResult[]> {
   const results: RecordResult[] = [];
   let id = 0;
@@ -372,6 +343,9 @@ export async function searchSunBiz(name: string): Promise<RecordResult[]> {
   return results;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// CourtListener
+// ═══════════════════════════════════════════════════════════════
 export async function searchCourtListener(name: string): Promise<RecordResult[]> {
   const results: RecordResult[] = [];
   let id = 0;
@@ -426,6 +400,9 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
   return results;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Search All
+// ═══════════════════════════════════════════════════════════════
 export async function searchAll(
   name: string, state: string
 ): Promise<{ results: RecordResult[]; debug: ApiDebugInfo[] }> {
@@ -452,7 +429,6 @@ export async function searchAll(
   ]);
 
   const results = [...fec, ...sec, ...usaSpending, ...nonprofits, ...sunbiz, ...courts];
-  console.log("[recordsApi] searchAll complete:", { totalResults: results.length, debug });
   return { results, debug };
 }
 
