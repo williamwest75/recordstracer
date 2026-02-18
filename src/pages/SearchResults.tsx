@@ -1,5 +1,5 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle } from "lucide-react";
+import { Building2, Vote, Scale, Home, BadgeCheck, Briefcase, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -20,8 +20,9 @@ interface Investigation {
 }
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
-  business: { icon: Building2, label: "Business Registrations" },
-  donations: { icon: Vote, label: "Campaign Donations (FEC)" },
+  business: { icon: Building2, label: "Business & Corporate Records" },
+  donations: { icon: Vote, label: "Campaign Finance (FEC)" },
+  contracts: { icon: Briefcase, label: "Federal Contracts & Grants" },
   court: { icon: Scale, label: "Court Records" },
   property: { icon: Home, label: "Property Records" },
   licenses: { icon: BadgeCheck, label: "Professional Licenses" },
