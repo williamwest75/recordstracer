@@ -28,10 +28,27 @@ export interface ApiDebugInfo {
 }
 
 // ============================================================
-// HELPER
+// HELPERS
 // ============================================================
 function formatMoney(amount: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+}
+
+const STATE_ABBR: Record<string, string> = {
+  Alabama:"AL",Alaska:"AK",Arizona:"AZ",Arkansas:"AR",California:"CA",Colorado:"CO",Connecticut:"CT",
+  Delaware:"DE",Florida:"FL",Georgia:"GA",Hawaii:"HI",Idaho:"ID",Illinois:"IL",Indiana:"IN",Iowa:"IA",
+  Kansas:"KS",Kentucky:"KY",Louisiana:"LA",Maine:"ME",Maryland:"MD",Massachusetts:"MA",Michigan:"MI",
+  Minnesota:"MN",Mississippi:"MS",Missouri:"MO",Montana:"MT",Nebraska:"NE",Nevada:"NV",
+  "New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY","North Carolina":"NC",
+  "North Dakota":"ND",Ohio:"OH",Oklahoma:"OK",Oregon:"OR",Pennsylvania:"PA","Rhode Island":"RI",
+  "South Carolina":"SC","South Dakota":"SD",Tennessee:"TN",Texas:"TX",Utah:"UT",Vermont:"VT",
+  Virginia:"VA",Washington:"WA","West Virginia":"WV",Wisconsin:"WI",Wyoming:"WY",
+  "District of Columbia":"DC",
+};
+
+function toStateCode(state: string): string {
+  if (state.length === 2) return state.toUpperCase();
+  return STATE_ABBR[state] || state;
 }
 
 // ============================================================
@@ -44,7 +61,8 @@ export async function searchFEC(name: string, state: string): Promise<RecordResu
 
   try {
     // Search individual contributions
-    const contribUrl = `https://api.open.fec.gov/v1/schedules/schedule_a/?contributor_name=${encodeURIComponent(name)}&contributor_state=${state}&per_page=20&sort=-contribution_receipt_date&api_key=${FEC_API_KEY}`;
+    const stateCode = toStateCode(state);
+    const contribUrl = `https://api.open.fec.gov/v1/schedules/schedule_a/?contributor_name=${encodeURIComponent(name)}&contributor_state=${stateCode}&per_page=20&sort=-contribution_receipt_date&api_key=${FEC_API_KEY}`;
     const contribRes = await fetch(contribUrl);
 
     if (contribRes.ok) {
@@ -99,7 +117,7 @@ export async function searchFEC(name: string, state: string): Promise<RecordResu
     }
 
     // Also search if this person is/was a candidate
-    const candidateUrl = `https://api.open.fec.gov/v1/candidates/search/?name=${encodeURIComponent(name)}&state=${state}&per_page=10&api_key=${FEC_API_KEY}`;
+    const candidateUrl = `https://api.open.fec.gov/v1/candidates/search/?name=${encodeURIComponent(name)}&state=${toStateCode(state)}&per_page=10&api_key=${FEC_API_KEY}`;
     const candidateRes = await fetch(candidateUrl);
 
     if (candidateRes.ok) {
@@ -230,7 +248,7 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
       body: JSON.stringify({
         filters: {
           recipient_search_text: [name],
-          award_type_codes: ["A", "B", "C", "D", "IDV_A", "IDV_B", "IDV_B_A", "IDV_B_B", "IDV_B_C", "IDV_C", "IDV_D", "IDV_E"],
+          award_type_codes: ["A", "B", "C", "D"],
           time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }],
         },
         fields: [
@@ -310,7 +328,7 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
       body: JSON.stringify({
         filters: {
           recipient_search_text: [name],
-          award_type_codes: ["02", "03", "04", "05", "06", "10", "07", "08", "09", "11"],
+          award_type_codes: ["02", "03", "04", "05"],
           time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }],
         },
         fields: [
