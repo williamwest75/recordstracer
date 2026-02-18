@@ -128,6 +128,33 @@ export async function searchFEC(name: string, state: string): Promise<RecordResu
         });
       }
     }
+
+    // Search for committees/PACs (works for companies)
+    const committeeUrl = `https://api.open.fec.gov/v1/committees/?q=${encodeURIComponent(name)}&per_page=10&api_key=${FEC_API_KEY}`;
+    const committeeRes = await fetch(committeeUrl);
+    if (committeeRes.ok) {
+      const data = await committeeRes.json();
+      for (const c of data.results || []) {
+        results.push({
+          id: `fec-committee-${++id}`,
+          source: "FEC Committee/PAC",
+          category: "donations",
+          description: `${c.name} — ${c.committee_type_full || "Committee"} (${c.party_full || "N/A"})`,
+          details: {
+            Name: c.name || "N/A",
+            "Committee Type": c.committee_type_full || "N/A",
+            Designation: c.designation_full || "N/A",
+            "Filing Frequency": c.filing_frequency || "N/A",
+            "First Filing Date": c.first_file_date || "N/A",
+            "Last Filing Date": c.last_file_date || "N/A",
+            Treasurer: c.treasurer_name || "N/A",
+            "Total Receipts": c.total_receipts ? `$${c.total_receipts.toLocaleString()}` : "N/A",
+            "Total Disbursements": c.total_disbursements ? `$${c.total_disbursements.toLocaleString()}` : "N/A",
+          },
+          sourceUrl: `https://www.fec.gov/data/committee/${c.committee_id}/`,
+        });
+      }
+    }
   } catch (err) {
     console.error("[FEC] Search failed:", err);
   }
@@ -167,44 +194,65 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
   let id = 0;
   try {
     const endpoint = "https://api.usaspending.gov/api/v2/search/spending_by_award/";
+    const baseFields = ["Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount",
+      "Awarding Agency", "Awarding Sub Agency", "Award Type", "Description", "internal_id"];
+
+    // Contracts: try recipient_search_text first, fallback to keywords
     const res = await fetch(endpoint, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         filters: { recipient_search_text: [name], award_type_codes: ["A", "B", "C", "D"],
           time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }] },
-        fields: ["Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount",
-          "Awarding Agency", "Awarding Sub Agency", "Award Type", "Description", "internal_id"],
-        page: 1, limit: 15, sort: "Award Amount", order: "desc",
+        fields: baseFields, page: 1, limit: 15, sort: "Award Amount", order: "desc",
       }),
     });
+    let awards: any[] = [];
     if (res.ok) {
       const data = await res.json();
-      const awards = data.results || [];
-      if (awards.length > 0) {
-        const totalAmount = awards.reduce((sum: number, a: any) => sum + (parseFloat(a["Award Amount"]) || 0), 0);
-        const agencies = new Set(awards.map((a: any) => a["Awarding Agency"])).size;
-        results.push({
-          id: "usa-summary", source: "Federal Contracts Summary", category: "contracts",
-          description: `${awards.length} federal contract(s) worth ${formatMoney(totalAmount)} from ${agencies} agency/agencies`,
-          details: { "Total Awards": String(awards.length), "Total Value": formatMoney(totalAmount), "Awarding Agencies": String(agencies) },
-          sourceUrl: `https://www.usaspending.gov/search/?hash=recipient-${encodeURIComponent(name)}`,
-        });
-        for (const a of awards.slice(0, 10)) {
-          const amount = parseFloat(a["Award Amount"]) || 0;
-          results.push({
-            id: `usa-${++id}`, source: "Federal Contract", category: "contracts",
-            description: `${formatMoney(amount)} from ${a["Awarding Agency"] || "Unknown"} — ${(a["Description"] || "No description").slice(0, 100)}`,
-            details: {
-              Recipient: a["Recipient Name"] || name, "Award Amount": formatMoney(amount),
-              "Awarding Agency": a["Awarding Agency"] || "N/A", "Sub Agency": a["Awarding Sub Agency"] || "N/A",
-              "Award Type": a["Award Type"] || "N/A", "Start Date": a["Start Date"] || "N/A",
-              "End Date": a["End Date"] || "N/A", Description: a["Description"] || "N/A", "Award ID": a["Award ID"] || "N/A",
-            },
-            sourceUrl: a["internal_id"] ? `https://www.usaspending.gov/award/${a["internal_id"]}` : "https://www.usaspending.gov/search",
-          });
-        }
+      awards = data.results || [];
+    }
+    if (awards.length === 0) {
+      console.log("[USASpending] recipient_search_text returned 0, trying keywords fallback");
+      const fallbackRes = await fetch(endpoint, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filters: { keywords: [name], award_type_codes: ["A", "B", "C", "D"],
+            time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }] },
+          fields: baseFields, page: 1, limit: 15, sort: "Award Amount", order: "desc",
+        }),
+      });
+      if (fallbackRes.ok) {
+        const fallbackData = await fallbackRes.json();
+        awards = fallbackData.results || [];
       }
     }
+
+    if (awards.length > 0) {
+      const totalAmount = awards.reduce((sum: number, a: any) => sum + (parseFloat(a["Award Amount"]) || 0), 0);
+      const agencies = new Set(awards.map((a: any) => a["Awarding Agency"])).size;
+      results.push({
+        id: "usa-summary", source: "Federal Contracts Summary", category: "contracts",
+        description: `${awards.length} federal contract(s) worth ${formatMoney(totalAmount)} from ${agencies} agency/agencies`,
+        details: { "Total Awards": String(awards.length), "Total Value": formatMoney(totalAmount), "Awarding Agencies": String(agencies) },
+        sourceUrl: `https://www.usaspending.gov/search/?hash=recipient-${encodeURIComponent(name)}`,
+      });
+      for (const a of awards.slice(0, 10)) {
+        const amount = parseFloat(a["Award Amount"]) || 0;
+        results.push({
+          id: `usa-${++id}`, source: "Federal Contract", category: "contracts",
+          description: `${formatMoney(amount)} from ${a["Awarding Agency"] || "Unknown"} — ${(a["Description"] || "No description").slice(0, 100)}`,
+          details: {
+            Recipient: a["Recipient Name"] || name, "Award Amount": formatMoney(amount),
+            "Awarding Agency": a["Awarding Agency"] || "N/A", "Sub Agency": a["Awarding Sub Agency"] || "N/A",
+            "Award Type": a["Award Type"] || "N/A", "Start Date": a["Start Date"] || "N/A",
+            "End Date": a["End Date"] || "N/A", Description: a["Description"] || "N/A", "Award ID": a["Award ID"] || "N/A",
+          },
+          sourceUrl: a["internal_id"] ? `https://www.usaspending.gov/award/${a["internal_id"]}` : "https://www.usaspending.gov/search",
+        });
+      }
+    }
+
+    // Grants: try recipient_search_text first, fallback to keywords
     const grantRes = await fetch(endpoint, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -215,21 +263,40 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
         page: 1, limit: 10, sort: "Award Amount", order: "desc",
       }),
     });
+    let grants: any[] = [];
     if (grantRes.ok) {
       const grantData = await grantRes.json();
-      for (const a of (grantData.results || []).slice(0, 5)) {
-        const amount = parseFloat(a["Award Amount"]) || 0;
-        results.push({
-          id: `usa-grant-${++id}`, source: "Federal Grant", category: "contracts",
-          description: `${formatMoney(amount)} grant from ${a["Awarding Agency"] || "Unknown"} — ${(a["Description"] || "").slice(0, 100)}`,
-          details: {
-            Recipient: a["Recipient Name"] || name, "Grant Amount": formatMoney(amount),
-            Agency: a["Awarding Agency"] || "N/A", Type: a["Award Type"] || "N/A",
-            "Start Date": a["Start Date"] || "N/A", "End Date": a["End Date"] || "N/A", Description: a["Description"] || "N/A",
-          },
-          sourceUrl: a["internal_id"] ? `https://www.usaspending.gov/award/${a["internal_id"]}` : "https://www.usaspending.gov/search",
-        });
+      grants = grantData.results || [];
+    }
+    if (grants.length === 0) {
+      console.log("[USASpending] grant recipient_search_text returned 0, trying keywords fallback");
+      const grantFallback = await fetch(endpoint, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filters: { keywords: [name], award_type_codes: ["02", "03", "04", "05"],
+            time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }] },
+          fields: ["Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount",
+            "Awarding Agency", "Award Type", "Description", "internal_id"],
+          page: 1, limit: 10, sort: "Award Amount", order: "desc",
+        }),
+      });
+      if (grantFallback.ok) {
+        const grantFallbackData = await grantFallback.json();
+        grants = grantFallbackData.results || [];
       }
+    }
+    for (const a of grants.slice(0, 5)) {
+      const amount = parseFloat(a["Award Amount"]) || 0;
+      results.push({
+        id: `usa-grant-${++id}`, source: "Federal Grant", category: "contracts",
+        description: `${formatMoney(amount)} grant from ${a["Awarding Agency"] || "Unknown"} — ${(a["Description"] || "").slice(0, 100)}`,
+        details: {
+          Recipient: a["Recipient Name"] || name, "Grant Amount": formatMoney(amount),
+          Agency: a["Awarding Agency"] || "N/A", Type: a["Award Type"] || "N/A",
+          "Start Date": a["Start Date"] || "N/A", "End Date": a["End Date"] || "N/A", Description: a["Description"] || "N/A",
+        },
+        sourceUrl: a["internal_id"] ? `https://www.usaspending.gov/award/${a["internal_id"]}` : "https://www.usaspending.gov/search",
+      });
     }
   } catch (err) { console.error("[USASpending] Search failed:", err); }
   return results;
@@ -274,7 +341,7 @@ export async function searchSunBiz(name: string): Promise<RecordResult[]> {
             "Entity Name": entity.entityName || "N/A", "Document Number": entity.documentNumber || "N/A",
             Status: entity.status || "N/A", "Filing Date": entity.filingDate || "N/A",
           },
-          sourceUrl: entity.detailUrl ? `https://search.sunbiz.org${entity.detailUrl}` : "https://search.sunbiz.org",
+          sourceUrl: "https://search.sunbiz.org/Inquiry/CorporationSearch/ByName",
         });
       }
     }
@@ -288,8 +355,8 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
   try {
     const data = await proxyFetch("courtlistener", name);
     if (data.success && data.cases?.length > 0) {
-      const clSearchUrl = `https://www.courtlistener.com/?q=${encodeURIComponent(name)}&order_by=score+desc`;
-      const pacerUrl = `https://pcl.uscourts.gov/pcl/pages/search/results?fullName=${encodeURIComponent(name)}`;
+      const clSearchUrl = `https://www.courtlistener.com/?q=${encodeURIComponent(name)}&type=r&order_by=score+desc`;
+      const pacerUrl = "https://www.pacer.gov/";
       results.push({
         id: "court-summary", source: "Federal Court Records Summary", category: "court",
         description: `${data.totalCases} federal court case(s) found for "${name}"`,
@@ -301,15 +368,12 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
         sourceUrl: clSearchUrl,
       });
       for (const c of data.cases.slice(0, 12)) {
-        // Build a working CourtListener opinion URL
-        const opinionUrl = c.docketUrl
-          ? `https://www.courtlistener.com${c.docketUrl}`
-          : `${clSearchUrl}`;
+        const caseName = c.caseName || "Unknown Case";
         results.push({
           id: `court-${++id}`, source: "Federal Court Case", category: "court",
-          description: `${c.caseName} (${c.court || "Unknown Court"})`,
+          description: `${caseName} (${c.court || "Unknown Court"})`,
           details: {
-            "Case Name": c.caseName || "N/A", Court: c.court || "N/A",
+            "Case Name": caseName, Court: c.court || "N/A",
             "Docket Number": c.docketNumber || "N/A", "Date Filed": c.dateFiled || "N/A",
             "Date Terminated": c.dateTerminated || "Ongoing", Status: c.status || "N/A",
             "Assigned To": c.assignedTo || "N/A", Cause: c.cause || "N/A",
@@ -317,7 +381,7 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
             "PACER Lookup": pacerUrl,
             ...(c.description ? { Description: c.description.slice(0, 200) } : {}),
           },
-          sourceUrl: opinionUrl,
+          sourceUrl: `https://www.courtlistener.com/?q=${encodeURIComponent(caseName)}&type=r&order_by=score+desc`,
         });
       }
     }
@@ -326,8 +390,12 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
         results.push({
           id: `court-party-${++id}`, source: "Court Party Record", category: "court",
           description: `${p.name} — ${p.partyType || "Party"} in federal case`,
-          details: { Name: p.name || "N/A", "Party Type": p.partyType || "N/A", "Date Terminated": p.dateTerminated || "N/A" },
-          sourceUrl: `https://www.courtlistener.com/?q=${encodeURIComponent(name)}&order_by=score+desc`,
+          details: {
+            Name: p.name || "N/A", "Party Type": p.partyType || "N/A",
+            "Date Terminated": p.dateTerminated || "N/A",
+            "PACER Lookup": "https://www.pacer.gov/",
+          },
+          sourceUrl: `https://www.courtlistener.com/?q=${encodeURIComponent(p.name || name)}&type=r&order_by=score+desc`,
         });
       }
     }
