@@ -24,10 +24,10 @@ const FoundingMember = () => {
   }, []);
 
   const fetchSpots = async () => {
-    const { count } = await supabase
-      .from("founding_members")
-      .select("*", { count: "exact", head: true });
-    setSpotsRemaining(TOTAL_SPOTS - (count ?? 0));
+    const { data, error } = await supabase.rpc("get_founding_member_count");
+    if (!error && data !== null) {
+      setSpotsRemaining(TOTAL_SPOTS - data);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
