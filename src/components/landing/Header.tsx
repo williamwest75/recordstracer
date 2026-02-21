@@ -25,6 +25,10 @@ const Header = () => {
         <nav className="hidden md:flex items-center gap-8">
           <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Home</Link>
           <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
+          <Link to="/founding-member" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5">
+            Founding Members
+            <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">OPEN</span>
+          </Link>
           {user ? (
             <>
               <Link to="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Dashboard</Link>
@@ -48,6 +52,10 @@ const Header = () => {
       {mobileOpen && (
         <nav className="md:hidden border-t border-border bg-card px-4 py-4 space-y-3">
           <Link to="/" className="block text-sm font-medium text-muted-foreground hover:text-foreground">Home</Link>
+          <Link to="/founding-member" className="block text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
+            Founding Members
+            <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">OPEN</span>
+          </Link>
           {user ? (
             <>
               <Link to="/dashboard" className="block text-sm font-medium text-muted-foreground hover:text-foreground">Dashboard</Link>
