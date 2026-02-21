@@ -272,13 +272,10 @@ async function searchSunBiz(name: string) {
 async function searchSanctions(name: string) {
   try {
     const apiKey = (Deno.env.get("OPENSANCTIONS_API_KEY") || "").replace(/[^\x20-\x7E]/g, "").trim();
-    const url = `https://api.opensanctions.org/search/default?q=${encodeURIComponent(name)}&limit=15`;
-    console.log("[Sanctions] Searching:", url, "hasKey:", !!apiKey);
-    const headers: Record<string, string> = { "Accept": "application/json" };
-    if (apiKey) {
-      headers["Authorization"] = `ApiKey ${apiKey}`;
-    }
-    const res = await fetch(url, { headers });
+    const apiKeyParam = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : "";
+    const url = `https://api.opensanctions.org/search/default?q=${encodeURIComponent(name)}&limit=15${apiKeyParam}`;
+    console.log("[Sanctions] Searching:", url.replace(apiKey, "***"), "hasKey:", !!apiKey);
+    const res = await fetch(url, { headers: { "Accept": "application/json" } });
     console.log("[Sanctions] Response status:", res.status);
     
     if (res.ok) {
