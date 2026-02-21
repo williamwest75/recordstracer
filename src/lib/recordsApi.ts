@@ -336,7 +336,7 @@ export async function searchSunBiz(name: string): Promise<RecordResult[]> {
             "Entity Name": entity.entityName || "N/A", "Document Number": entity.documentNumber || "N/A",
             Status: entity.status || "N/A", "Filing Date": entity.filingDate || "N/A",
           },
-          sourceUrl: "https://search.sunbiz.org/Inquiry/CorporationSearch/ByName",
+          sourceUrl: `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?inquiryType=OfficerRegisteredAgentName&searchNameOrder=true&searchTerm=${encodeURIComponent(name)}`,
         });
       }
     }
@@ -367,6 +367,9 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
       });
       for (const c of data.cases.slice(0, 12)) {
         const caseName = c.caseName || "Unknown Case";
+        const caseUrl = c.absoluteUrl
+          ? `https://www.courtlistener.com${c.absoluteUrl}`
+          : `https://www.courtlistener.com/?q=${encodeURIComponent(caseName)}&type=r&order_by=score+desc`;
         results.push({
           id: `court-${++id}`, source: "Federal Court Case", category: "court",
           description: `${caseName} (${c.court || "Unknown Court"})`,
@@ -379,7 +382,7 @@ export async function searchCourtListener(name: string): Promise<RecordResult[]>
             "PACER Lookup": pacerUrl,
             ...(c.description ? { Description: c.description.slice(0, 200) } : {}),
           },
-          sourceUrl: `https://www.courtlistener.com/?q=${encodeURIComponent(caseName)}&type=r&order_by=score+desc`,
+          sourceUrl: caseUrl,
         });
       }
     }

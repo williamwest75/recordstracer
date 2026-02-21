@@ -641,7 +641,7 @@ async function fetchCourtListener(name: string) {
       try {
         const searchData = JSON.parse(searchBody);
         totalCases = searchData.count || 0;
-        cases = (searchData.results || []).slice(0, 15).map((r: any) => ({
+      cases = (searchData.results || []).slice(0, 15).map((r: any) => ({
           caseName: r.caseName || r.case_name || r.caseNameFull || r.case_name_full || "Unknown Case",
           court: r.court || r.court_id || "",
           docketNumber: r.docketNumber || r.docket_number || "",
@@ -652,6 +652,7 @@ async function fetchCourtListener(name: string) {
           cause: r.cause || "",
           suitNature: r.suitNature || r.nature_of_suit || "",
           description: r.snippet || r.description || "",
+          absoluteUrl: r.absolute_url || r.absoluteUrl || "",
         }));
       } catch (parseErr) {
         console.error("[CourtListener] Failed to parse search response:", parseErr);
