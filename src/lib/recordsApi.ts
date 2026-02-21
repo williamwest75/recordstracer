@@ -322,21 +322,73 @@ export async function searchProPublicaNonprofits(name: string): Promise<RecordRe
 // ═══════════════════════════════════════════════════════════════
 // Florida SunBiz
 // ═══════════════════════════════════════════════════════════════
+
+function looksLikeBusinessName(name: string): boolean {
+  const bizPatterns = /\b(llc|l\.l\.c|inc|corp|corporation|company|co\b|ltd|limited|lp|l\.p\.|llp|pllc|pa|p\.a\.|plc|group|holdings|enterprises|associates|partners|foundation|trust|fund|ventures|capital|management|consulting|services|solutions|technologies|properties|investments|realty|development)\b/i;
+  return bizPatterns.test(name);
+}
+
+function sunbizNameMatch(searchName: string, resultText: string, isBusiness: boolean): boolean {
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+  const search = normalize(searchName);
+  const result = normalize(resultText);
+
+  if (isBusiness) {
+    const coreName = search.replace(/\b(llc|inc|corp|corporation|company|co|ltd|limited|lp|llp|pllc|pa|plc)\b/g, "").trim();
+    return coreName.length >= 3 && result.includes(coreName);
+  }
+
+  // For person: parse "LASTNAME, FIRSTNAME" format from SunBiz officer field
+  const searchParts = search.split(" ").filter(p => p.length >= 2);
+  if (searchParts.length === 0) return false;
+  
+  // SunBiz returns officer names like "WILLIAM, WEST" or "WILLIAM WEST"
+  const resultParts = result.replace(",", " ").split(" ").filter(p => p.length >= 2);
+  
+  const searchLast = searchParts[searchParts.length - 1];
+  const searchFirst = searchParts[0];
+  
+  // Check if result contains EXACTLY the last name (not just starts with it)
+  const hasExactLast = resultParts.some(p => p === searchLast);
+  const hasFirst = resultParts.some(p => p === searchFirst || p.startsWith(searchFirst));
+  
+  return hasExactLast && hasFirst;
+}
+
 export async function searchSunBiz(name: string): Promise<RecordResult[]> {
   const results: RecordResult[] = [];
   let id = 0;
+  const isBusiness = looksLikeBusinessName(name);
   try {
     const data = await proxyFetch("sunbiz", name);
     if (data.success && data.results?.length > 0) {
-      for (const entity of data.results.slice(0, 10)) {
+      const filtered = data.results.filter((entity: any) => {
+        const textToCheck = isBusiness
+          ? (entity.entityName || "")
+          : (entity.officerName || entity.documentNumber || "");
+        return sunbizNameMatch(name, textToCheck, isBusiness);
+      });
+
+      const inquiryType = data.inquiryType || (isBusiness ? "EntityName" : "OfficerRegisteredAgentName");
+      
+      for (const entity of filtered.slice(0, 10)) {
+        const detailLink = entity.detailUrl
+          ? `https://search.sunbiz.org${entity.detailUrl.replace(/&amp;/g, "&")}`
+          : `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?inquiryType=${inquiryType}&searchNameOrder=true&searchTerm=${encodeURIComponent(name)}`;
+        
         results.push({
           id: `sunbiz-${++id}`, source: "Florida SunBiz", category: "business",
-          description: entity.entityName || `Business record for ${name}`,
+          description: isBusiness
+            ? `${entity.entityName || "Unknown"} (${entity.status || "N/A"})`
+            : `${entity.entityName || "Unknown"} — Officer: ${entity.officerName || "N/A"}`,
           details: {
-            "Entity Name": entity.entityName || "N/A", "Document Number": entity.documentNumber || "N/A",
-            Status: entity.status || "N/A", "Filing Date": entity.filingDate || "N/A",
+            "Entity Name": entity.entityName || "N/A",
+            ...(isBusiness ? {} : { "Officer/Agent": entity.officerName || "N/A" }),
+            "Document Number": entity.documentNumber || "N/A",
+            Status: entity.status || "N/A",
+            "Filing Date": entity.filingDate || "N/A",
           },
-          sourceUrl: `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?inquiryType=OfficerRegisteredAgentName&searchNameOrder=true&searchTerm=${encodeURIComponent(name)}`,
+          sourceUrl: detailLink,
         });
       }
     }
