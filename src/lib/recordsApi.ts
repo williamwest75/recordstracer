@@ -24,6 +24,7 @@ export interface RecordResult {
   category: string;
   details: Record<string, string>;
   sourceUrl?: string;
+  relevance?: number; // 0-100, higher = better match
 }
 
 export interface ApiDebugInfo {
@@ -638,7 +639,63 @@ export async function searchAll(
 
   const allResults = await Promise.all(tasks);
   const results = allResults.flat();
-  return { results, debug };
+
+  // Score relevance for each result
+  const scored = results.map(r => ({
+    ...r,
+    relevance: computeRelevance(r, name, state),
+  }));
+
+  // Sort by relevance descending
+  scored.sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
+
+  return { results: scored, debug };
+}
+
+/**
+ * Compute a relevance score (0-100) based on how closely a result matches the search name.
+ */
+function computeRelevance(result: RecordResult, searchName: string, searchState: string): number {
+  const search = searchName.toLowerCase().trim();
+  const searchParts = search.split(/\s+/);
+  let score = 50; // baseline
+
+  // Check all text fields in the result
+  const textFields = [
+    result.source, result.description,
+    ...Object.values(result.details),
+  ].map(v => (v || "").toLowerCase());
+
+  const allText = textFields.join(" ");
+
+  // Exact full-name match in any field → big boost
+  if (allText.includes(search)) {
+    score += 30;
+  }
+
+  // All name parts present → good match
+  const partsFound = searchParts.filter(p => allText.includes(p)).length;
+  score += Math.round((partsFound / searchParts.length) * 15);
+
+  // State match bonus
+  if (searchState && searchState !== "All States / National") {
+    const stateLC = searchState.toLowerCase();
+    if (allText.includes(stateLC)) {
+      score += 5;
+    }
+  }
+
+  // Summary records get a small boost (they aggregate info)
+  if (result.id.endsWith("-summary")) {
+    score += 5;
+  }
+
+  // Penalize very generic descriptions
+  if (result.description.length < 20) {
+    score -= 10;
+  }
+
+  return Math.max(0, Math.min(100, score));
 }
 
 export type MockResult = RecordResult;
