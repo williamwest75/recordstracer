@@ -60,9 +60,12 @@ export const TOGGLE_LABELS: Record<string, string> = {
   occrp: "Investigative Documents / OCCRP",
 };
 
+const NAME_SUFFIXES = ["", "Jr.", "Sr.", "II", "III", "IV", "V", "Esq."];
+
 const HeroSearch = () => {
   const [panelOpen, setPanelOpen] = useState(false);
   const [name, setName] = useState("");
+  const [suffix, setSuffix] = useState("");
   const [state, setState] = useState("All States / National");
 
   // Advanced filters
@@ -78,6 +81,7 @@ const HeroSearch = () => {
   const { user } = useAuth();
 
   const resetFilters = () => {
+    setSuffix("");
     setMiddleInitial("");
     setDob(undefined);
     setEmail("");
@@ -88,17 +92,20 @@ const HeroSearch = () => {
   };
 
   const isDefault =
-    !middleInitial && !dob && !email && !streetAddress && !city && !additionalInfo &&
+    !suffix && !middleInitial && !dob && !email && !streetAddress && !city && !additionalInfo &&
     Object.keys(DEFAULT_TOGGLES).every((k) => toggles[k] === DEFAULT_TOGGLES[k]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
+    const actualSuffix = suffix && suffix !== "none" ? suffix : "";
+    const fullName = actualSuffix ? `${name.trim()} ${actualSuffix}` : name.trim();
+
     if (user) {
       await supabase.from("searches").insert({
         user_id: user.id,
-        subject_name: name.trim(),
+        subject_name: fullName,
         state,
         city: city || null,
         additional_info: additionalInfo || null,
@@ -106,7 +113,7 @@ const HeroSearch = () => {
     }
 
     const params = new URLSearchParams();
-    params.set("name", name.trim());
+    params.set("name", fullName);
     params.set("state", state);
     if (middleInitial) params.set("mi", middleInitial);
     if (dob) params.set("dob", format(dob, "yyyy-MM-dd"));
@@ -142,12 +149,27 @@ const HeroSearch = () => {
         </p>
 
         <form onSubmit={handleSearch} className="mt-10 bg-card border border-border rounded-lg p-6 shadow-sm text-left">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
                 Subject Name
               </label>
               <Input placeholder="e.g., John Smith" className="bg-background" value={name} onChange={(e) => setName(e.target.value)} required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Suffix
+              </label>
+              <Select value={suffix} onValueChange={setSuffix}>
+                <SelectTrigger className="bg-background w-24">
+                  <SelectValue placeholder="—" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {NAME_SUFFIXES.map((s) => (
+                    <SelectItem key={s || "none"} value={s || "none"}>{s || "None"}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">

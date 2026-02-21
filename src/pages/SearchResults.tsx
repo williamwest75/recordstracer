@@ -1,5 +1,5 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle, FileText } from "lucide-react";
+import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle, FileText, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -9,6 +9,7 @@ import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import SubjectProfile from "@/components/search/SubjectProfile";
 import ContactIntelligence from "@/components/search/ContactIntelligence";
+import AiSubjectSummary from "@/components/search/AiSubjectSummary";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +38,8 @@ const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> =
 
 
 
+const DEFAULT_VISIBLE = 3;
+
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -53,6 +56,7 @@ const SearchResults = () => {
   const [newInvestigationTitle, setNewInvestigationTitle] = useState("");
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -202,10 +206,14 @@ const SearchResults = () => {
           </div>
         ) : (
           <div className="mt-8 space-y-8">
+            <AiSubjectSummary name={name} state={state} results={results} />
             <SubjectProfile name={name} state={state} results={results} />
             <ContactIntelligence searchName={name} state={state} />
             {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
-              const items = grouped[key] || [];
+              const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
+              const isExpanded = expandedCategories.has(key);
+              const visibleItems = isExpanded ? items : items.slice(0, DEFAULT_VISIBLE);
+              const hasMore = items.length > DEFAULT_VISIBLE;
               return (
                 <section key={key} id={`category-${key}`}>
                   <div className="flex items-center gap-2 mb-3">
@@ -217,10 +225,21 @@ const SearchResults = () => {
                     <p className="text-sm text-muted-foreground italic pl-7">No records found in this category.</p>
                   ) : (
                     <div className="space-y-3 pl-7">
-                      {items.map((item) => (
+                      {visibleItems.map((item) => (
                         <div key={item.id} className="border border-border rounded-lg p-4 bg-card flex flex-col sm:flex-row sm:items-center gap-3">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-foreground">{item.source}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-semibold text-foreground">{item.source}</p>
+                              {item.relevance != null && (
+                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                                  item.relevance >= 80 ? "bg-accent/15 text-accent" :
+                                  item.relevance >= 60 ? "bg-muted text-foreground" :
+                                  "bg-muted text-muted-foreground"
+                                }`}>
+                                  {item.relevance}% match
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm text-muted-foreground mt-0.5">{item.description}</p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
@@ -233,6 +252,15 @@ const SearchResults = () => {
                           </div>
                         </div>
                       ))}
+                      {hasMore && !isExpanded && (
+                        <button
+                          onClick={() => setExpandedCategories(prev => new Set(prev).add(key))}
+                          className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline font-medium pt-1"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                          Show all {items.length} results
+                        </button>
+                      )}
                     </div>
                   )}
                 </section>
