@@ -2,3 +2,6 @@ project_id = "xsknebhsscviwkvjdgux"
 
 [functions.subject-summary]
 verify_jwt = false
+
+[functions.founding-member-signup]
+verify_jwt = false

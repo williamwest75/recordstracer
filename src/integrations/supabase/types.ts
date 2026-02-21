@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      founding_member_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string
+        }
+        Relationships: []
+      }
       founding_members: {
         Row: {
           created_at: string
