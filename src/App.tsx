@@ -10,6 +10,7 @@ import AuthPage from "./pages/AuthPage";
 import SearchResults from "./pages/SearchResults";
 import Dashboard from "./pages/Dashboard";
 import AuthCallback from "./pages/AuthCallback";
+import FoundingMember from "./pages/FoundingMember";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/search-results" element={<SearchResults />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/founding-member" element={<FoundingMember />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
