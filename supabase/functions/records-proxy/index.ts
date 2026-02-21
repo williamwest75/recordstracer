@@ -201,9 +201,18 @@ async function searchProPublica(name: string) {
 // ═══════════════════════════════════════════════════════════════
 // Florida SunBiz
 // ═══════════════════════════════════════════════════════════════
+function looksLikeBusinessName(name: string): boolean {
+  const bizPatterns = /\b(llc|l\.l\.c|inc|corp|corporation|company|co\b|ltd|limited|lp|l\.p\.|llp|pllc|pa|p\.a\.|plc|group|holdings|enterprises|associates|partners|foundation|trust|fund|ventures|capital|management|consulting|services|solutions|technologies|properties|investments|realty|development)\b/i;
+  return bizPatterns.test(name);
+}
+
 async function searchSunBiz(name: string) {
   try {
-    const searchUrl = `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?inquiryType=OfficerRegisteredAgentName&searchNameOrder=true&searchTerm=${encodeURIComponent(name)}&listingType=active`;
+    const isBusiness = looksLikeBusinessName(name);
+    const inquiryType = isBusiness ? "EntityName" : "OfficerRegisteredAgentName";
+    console.log(`[SunBiz] Searching as ${isBusiness ? "entity" : "officer"}: "${name}"`);
+    
+    const searchUrl = `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?inquiryType=${inquiryType}&searchNameOrder=true&searchTerm=${encodeURIComponent(name)}&listingType=active`;
     const res = await fetch(searchUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
     });
@@ -224,16 +233,29 @@ async function searchSunBiz(name: string) {
       const linkMatch = row.match(/href="([^"]+)"/);
       const detailUrl = linkMatch ? linkMatch[1] : null;
       if (cells.length >= 3 && cells[0] && /^\w/.test(cells[0])) {
-        results.push({
-          entityName: cells[1] || cells[0],
-          documentNumber: cells[0],
-          status: cells[2] || "Unknown",
-          filingDate: cells[3] || "",
-          detailUrl,
-        });
+        if (isBusiness) {
+          // Entity search: col0=entityName, col1=docNumber, col2=status
+          results.push({
+            entityName: cells[0],
+            documentNumber: cells[1] || "",
+            status: cells[2] || "Unknown",
+            filingDate: cells[3] || "",
+            detailUrl,
+          });
+        } else {
+          // Officer search: col0=officerName, col1=entityName, col2=docNumber
+          results.push({
+            officerName: cells[0],
+            entityName: cells[1] || "",
+            documentNumber: cells[2] || "",
+            status: "Active",
+            filingDate: "",
+            detailUrl,
+          });
+        }
       }
     }
-    return { success: true, results: results.slice(0, 15), totalResults: results.length };
+    return { success: true, results: results.slice(0, 30), totalResults: results.length, inquiryType };
   } catch (err) {
     console.error("SunBiz search error:", err);
     return { success: false, error: String(err), results: [], totalResults: 0 };
