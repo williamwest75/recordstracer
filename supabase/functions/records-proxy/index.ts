@@ -43,7 +43,8 @@ serve(async (req) => {
 // ═══════════════════════════════════════════════════════════════
 async function searchFEC(name: string, state: string) {
   const apiKey = Deno.env.get("FEC_API_KEY") || "DEMO_KEY";
-  const stateParam = state ? `&contributor_state=${state}` : "";
+  const stateCode = toStateAbbr(state);
+  const stateParam = stateCode ? `&contributor_state=${stateCode}` : "";
 
   const contributions: any[] = [];
   const candidates: any[] = [];
@@ -66,7 +67,7 @@ async function searchFEC(name: string, state: string) {
 
   try {
     // Candidate search
-    const candidateStateParam = state ? `&state=${state}` : "";
+    const candidateStateParam = stateCode ? `&state=${stateCode}` : "";
     const candidateUrl = `https://api.open.fec.gov/v1/candidates/search/?name=${encodeURIComponent(name)}${candidateStateParam}&per_page=10&api_key=${apiKey}`;
     const candidateRes = await fetch(candidateUrl);
     if (candidateRes.ok) {
@@ -415,19 +416,43 @@ async function searchFAA(name: string) {
 // ═══════════════════════════════════════════════════════════════
 // Contact Intelligence — FEC candidate addresses, FL Elections, SunBiz addresses
 // ═══════════════════════════════════════════════════════════════
+
+const STATE_ABBR: Record<string, string> = {
+  "Alabama":"AL","Alaska":"AK","Arizona":"AZ","Arkansas":"AR","California":"CA",
+  "Colorado":"CO","Connecticut":"CT","Delaware":"DE","District of Columbia":"DC",
+  "Florida":"FL","Georgia":"GA","Hawaii":"HI","Idaho":"ID","Illinois":"IL",
+  "Indiana":"IN","Iowa":"IA","Kansas":"KS","Kentucky":"KY","Louisiana":"LA",
+  "Maine":"ME","Maryland":"MD","Massachusetts":"MA","Michigan":"MI","Minnesota":"MN",
+  "Mississippi":"MS","Missouri":"MO","Montana":"MT","Nebraska":"NE","Nevada":"NV",
+  "New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY",
+  "North Carolina":"NC","North Dakota":"ND","Ohio":"OH","Oklahoma":"OK","Oregon":"OR",
+  "Pennsylvania":"PA","Rhode Island":"RI","South Carolina":"SC","South Dakota":"SD",
+  "Tennessee":"TN","Texas":"TX","Utah":"UT","Vermont":"VT","Virginia":"VA",
+  "Washington":"WA","West Virginia":"WV","Wisconsin":"WI","Wyoming":"WY",
+};
+
+function toStateAbbr(state: string): string {
+  if (!state || state === "All States / National") return "";
+  if (state.length === 2) return state.toUpperCase();
+  return STATE_ABBR[state] || "";
+}
+
 async function searchContactIntel(name: string, state: string) {
   const contacts: any[] = [];
+  const stateCode = toStateAbbr(state);
+  console.log("[ContactIntel] Searching for:", name, "state:", state, "code:", stateCode);
+  const apiKey = Deno.env.get("FEC_API_KEY") || "DEMO_KEY";
 
   // 1. FEC Candidate filings — address info from candidate detail
   try {
-    const apiKey = Deno.env.get("FEC_API_KEY") || "DEMO_KEY";
-    const stateParam = state ? `&state=${state}` : "";
+    const stateParam = stateCode ? `&state=${stateCode}` : "";
     const url = `https://api.open.fec.gov/v1/candidates/search/?name=${encodeURIComponent(name)}${stateParam}&per_page=5&api_key=${apiKey}`;
+    console.log("[ContactIntel] FEC candidate search…");
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
+      console.log("[ContactIntel] FEC candidates found:", (data.results || []).length);
       for (const c of (data.results || [])) {
-        // Fetch detailed candidate info which may include address
         try {
           const detailUrl = `https://api.open.fec.gov/v1/candidate/${c.candidate_id}/?api_key=${apiKey}`;
           const detailRes = await fetch(detailUrl);
@@ -451,7 +476,6 @@ async function searchContactIntel(name: string, state: string) {
           } else { await detailRes.text(); }
         } catch (e) { console.error("[ContactIntel] FEC detail error:", e); }
 
-        // Also check principal campaign committee for treasurer address
         if (c.principal_committees?.length > 0) {
           for (const comm of c.principal_committees) {
             try {
@@ -474,72 +498,58 @@ async function searchContactIntel(name: string, state: string) {
                   });
                 }
               } else { await commRes.text(); }
-            } catch (e) { console.error("[ContactIntel] FEC committee detail error:", e); }
+            } catch (e) { console.error("[ContactIntel] FEC committee error:", e); }
           }
         }
       }
     } else { await res.text(); }
-  } catch (err) { console.error("[ContactIntel] FEC error:", err); }
+  } catch (err) { console.error("[ContactIntel] FEC candidate error:", err); }
 
-  // 2. Florida Division of Elections — candidate qualifying records
+  // 2. FEC Individual Contributions — contributor addresses from Schedule A
   try {
-    const url = `https://dos.elections.myflorida.com/candidates/CanList.asp?CanNameSrch=${encodeURIComponent(name)}&CanSrchType=2&office=&cty=&party=&race=&dist=&elecyear=`;
-    console.log("[ContactIntel] FL Elections URL:", url);
-    const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
-    });
+    const stateParam = stateCode ? `&contributor_state=${stateCode}` : "";
+    const url = `https://api.open.fec.gov/v1/schedules/schedule_a/?contributor_name=${encodeURIComponent(name)}${stateParam}&per_page=5&sort=-contribution_receipt_date&api_key=${apiKey}`;
+    console.log("[ContactIntel] FEC contributions search…");
+    const res = await fetch(url);
     if (res.ok) {
-      const html = await res.text();
-      // Parse table rows for candidate records with addresses/phones
-      const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-      let rowMatch;
-      while ((rowMatch = rowRegex.exec(html)) !== null) {
-        const row = rowMatch[1];
-        if (!row.includes("<td")) continue;
-        const cells: string[] = [];
-        const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-        let cellMatch;
-        while ((cellMatch = cellRegex.exec(row)) !== null) {
-          cells.push(cellMatch[1].replace(/<[^>]+>/g, "").replace(/&nbsp;/gi, " ").trim());
-        }
-        // FL Elections table typically has: Name, Party, Office, Address, Phone, etc.
-        if (cells.length >= 4) {
-          const cellName = cells[0] || "";
-          if (cellName.toLowerCase().includes(name.split(" ").pop()?.toLowerCase() || "___")) {
-            const address = cells.find(c => /\d{5}/.test(c) && c.length > 10) || null;
-            const phone = cells.find(c => /\(\d{3}\)\s?\d{3}[- ]?\d{4}|\d{3}[- .]\d{3}[- .]\d{4}/.test(c)) || null;
-            if (address || phone) {
-              contacts.push({
-                source: "FL Division of Elections",
-                name: cellName,
-                address: address || null,
-                phone: phone || null,
-                office: cells[2] || null,
-                party: cells[1] || null,
-                sourceUrl: "https://dos.elections.myflorida.com/candidates/",
-              });
-            }
-          }
+      const data = await res.json();
+      console.log("[ContactIntel] FEC contributions found:", (data.results || []).length);
+      const seen = new Set<string>();
+      for (const c of (data.results || [])) {
+        const addr = [c.contributor_street_1, c.contributor_street_2, c.contributor_city, c.contributor_state, c.contributor_zip]
+          .filter(Boolean).join(", ");
+        if (addr && !seen.has(addr)) {
+          seen.add(addr);
+          contacts.push({
+            source: "FEC Contribution Filing",
+            name: c.contributor_name || name,
+            address: addr,
+            phone: null,
+            role: c.contributor_employer ? `${c.contributor_occupation || ""} at ${c.contributor_employer}`.trim() : c.contributor_occupation || null,
+            sourceUrl: `https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=${encodeURIComponent(name)}`,
+          });
         }
       }
-    }
-  } catch (err) { console.error("[ContactIntel] FL Elections error:", err); }
+    } else { await res.text(); }
+  } catch (err) { console.error("[ContactIntel] FEC contributions error:", err); }
 
   // 3. SunBiz — registered agent address from detail pages
   try {
     const searchUrl = `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?inquiryType=OfficerRegisteredAgentName&searchNameOrder=true&searchTerm=${encodeURIComponent(name)}&listingType=active`;
+    console.log("[ContactIntel] SunBiz search…");
     const res = await fetch(searchUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
     });
     if (res.ok) {
       const html = await res.text();
-      // Extract detail URLs to fetch registered agent addresses
+      // Extract detail URLs
       const linkRegex = /href="(\/Inquiry\/CorporationSearch\/SearchResultDetail[^"]+)"/gi;
       const detailUrls: string[] = [];
       let linkMatch;
       while ((linkMatch = linkRegex.exec(html)) !== null && detailUrls.length < 3) {
         detailUrls.push(`https://search.sunbiz.org${linkMatch[1]}`);
       }
+      console.log("[ContactIntel] SunBiz detail URLs found:", detailUrls.length);
       for (const detailUrl of detailUrls) {
         try {
           const detailRes = await fetch(detailUrl, {
@@ -547,26 +557,23 @@ async function searchContactIntel(name: string, state: string) {
           });
           if (detailRes.ok) {
             const detailHtml = await detailRes.text();
-            // Look for registered agent section address
-            const agentMatch = detailHtml.match(/Registered Agent.*?<div[^>]*>([\s\S]*?)<\/div>/i);
-            if (agentMatch) {
-              const agentSection = agentMatch[1].replace(/<[^>]+>/g, "\n").replace(/\n{2,}/g, "\n").trim();
-              const lines = agentSection.split("\n").map(l => l.trim()).filter(Boolean);
-              if (lines.length > 0) {
-                const addressLines = lines.filter(l => /\d/.test(l) || /FL|Florida/i.test(l));
-                if (addressLines.length > 0) {
-                  // Get entity name from detail page
-                  const entityMatch = detailHtml.match(/<div class="detailSection"[^>]*>[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/i);
-                  const entityName = entityMatch ? entityMatch[1].replace(/<[^>]+>/g, "").trim() : "Unknown Entity";
-                  contacts.push({
-                    source: "FL SunBiz (Registered Agent)",
-                    name: entityName,
-                    address: addressLines.join(", "),
-                    phone: null,
-                    sourceUrl: "https://search.sunbiz.org/Inquiry/CorporationSearch/ByName",
-                  });
-                }
-              }
+            // Extract entity name
+            const titleMatch = detailHtml.match(/Document Number[\s\S]*?Filing Information[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/i)
+              || detailHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+            const entityName = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, "").trim().split(" - ")[0] : "Unknown Entity";
+
+            // Look for any address pattern in the page — registered agent or principal address
+            const addressRegex = /(\d+\s+[\w\s.]+(?:ST|AVE|BLVD|DR|RD|LN|CT|WAY|PL|CIR|PKWY|HWY)\b[\s\S]{0,80}?FL\s+\d{5})/gi;
+            const addrMatches = detailHtml.replace(/<[^>]+>/g, " ").match(addressRegex);
+            if (addrMatches && addrMatches.length > 0) {
+              const addr = addrMatches[0].replace(/\s+/g, " ").trim();
+              contacts.push({
+                source: "FL SunBiz (Registered Agent)",
+                name: entityName,
+                address: addr,
+                phone: null,
+                sourceUrl: "https://search.sunbiz.org/Inquiry/CorporationSearch/ByName",
+              });
             }
           }
         } catch (e) { console.error("[ContactIntel] SunBiz detail error:", e); }
@@ -577,6 +584,7 @@ async function searchContactIntel(name: string, state: string) {
   // 4. Property appraiser search links by state
   const propertyLinks = getPropertyAppraiserLinks(state);
 
+  console.log("[ContactIntel] Total contacts found:", contacts.length);
   return {
     success: true,
     contacts,
@@ -594,6 +602,9 @@ function getPropertyAppraiserLinks(state: string): any[] {
       { county: "Palm Beach", url: "https://www.pbcgov.org/papa/", label: "Palm Beach County Property Appraiser" },
       { county: "Orange", url: "https://www.ocpafl.org/Searches/ParcelSearch.aspx", label: "Orange County Property Appraiser" },
       { county: "Hillsborough", url: "https://gis.hcpafl.org/propertysearch/", label: "Hillsborough County Property Appraiser" },
+      { county: "Pinellas", url: "https://www.pcpao.gov/", label: "Pinellas County Property Appraiser" },
+      { county: "Duval", url: "https://apps.coj.net/PAO_PropertySearch/", label: "Duval County (Jacksonville) Property Appraiser" },
+      { county: "Lee", url: "https://www.leepa.org/Search/PropertySearch.aspx", label: "Lee County Property Appraiser" },
     ],
     Texas: [
       { county: "Harris", url: "https://public.hcad.org/records/quicksearch.asp", label: "Harris County (Houston) Appraisal District" },
