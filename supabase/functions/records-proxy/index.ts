@@ -20,14 +20,6 @@ serve(async (req) => {
     if (source === "propublica") result = await searchProPublica(searchName);
     if (source === "sunbiz") result = await searchSunBiz(searchName);
     if (source === "fec") result = await searchFEC(searchName, state || "");
-    if (source === "opensecrets") {
-      const apiKey = Deno.env.get("OPENSECRETS_API_KEY");
-      if (apiKey) {
-        result = await searchOpenSecrets(searchName, state || "FL", apiKey);
-      } else {
-        result = { success: false, error: "OpenSecrets API key not configured" };
-      }
-    }
     if (source === "courtlistener") result = await fetchCourtListener(searchName);
     if (source === "sanctions") result = await searchSanctions(searchName);
     if (source === "icij") result = await searchOffshoreLeaks(searchName);
@@ -246,37 +238,6 @@ async function searchSunBiz(name: string) {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// OpenSecrets
-// ═══════════════════════════════════════════════════════════════
-async function searchOpenSecrets(name: string, state: string, apiKey: string) {
-  try {
-    const url = `https://www.opensecrets.org/api/?method=getLegislators&id=${state}&apikey=${apiKey}&output=json`;
-    const res = await fetch(url);
-    if (res.ok) {
-      const data = await res.json();
-      const legislators = data?.response?.legislator || [];
-      const nameLower = name.toLowerCase();
-      const matched = legislators.filter((l: any) => {
-        const fullName = (l["@attributes"]?.firstlast || "").toLowerCase();
-        return fullName.includes(nameLower) || nameLower.includes(fullName.split(" ").pop() || "");
-      });
-      return {
-        success: true,
-        legislators: matched.map((l: any) => ({
-          name: l["@attributes"]?.firstlast, cid: l["@attributes"]?.cid,
-          party: l["@attributes"]?.party, office: l["@attributes"]?.office,
-          phone: l["@attributes"]?.phone, website: l["@attributes"]?.website,
-          bioguideId: l["@attributes"]?.bioguide_id,
-        })),
-      };
-    }
-    return { success: false, legislators: [] };
-  } catch (err) {
-    console.error("OpenSecrets search error:", err);
-    return { success: false, error: String(err), legislators: [] };
-  }
-}
 
 // ═══════════════════════════════════════════════════════════════
 // CourtListener
