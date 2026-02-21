@@ -7,11 +7,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Search, ChevronDown, ChevronUp, CalendarIcon, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const US_STATES = [
   "All States / National",
@@ -25,20 +31,70 @@ const US_STATES = [
   "West Virginia","Wisconsin","Wyoming",
 ];
 
+export interface SearchFilters {
+  middleInitial: string;
+  dob: string;
+  email: string;
+  streetAddress: string;
+  city: string;
+  toggles: Record<string, boolean>;
+}
+
+export const DEFAULT_TOGGLES: Record<string, boolean> = {
+  business: true,
+  fec: true,
+  court: true,
+  contracts: true,
+  sunbiz: true,
+  contact: true,
+  occrp: true,
+};
+
+export const TOGGLE_LABELS: Record<string, string> = {
+  business: "Business Filings & SEC",
+  fec: "Campaign Finance / FEC",
+  court: "Federal Court Records",
+  contracts: "Federal Contracts / USASpending",
+  sunbiz: "Florida State Records / SunBiz",
+  contact: "Contact Intelligence",
+  occrp: "Investigative Documents / OCCRP",
+};
+
 const HeroSearch = () => {
-  const [showMore, setShowMore] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [name, setName] = useState("");
-  const [state, setState] = useState("");
+  const [state, setState] = useState("All States / National");
+
+  // Advanced filters
+  const [middleInitial, setMiddleInitial] = useState("");
+  const [dob, setDob] = useState<Date | undefined>();
+  const [email, setEmail] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
   const [city, setCity] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
+  const [toggles, setToggles] = useState<Record<string, boolean>>({ ...DEFAULT_TOGGLES });
+
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const resetFilters = () => {
+    setMiddleInitial("");
+    setDob(undefined);
+    setEmail("");
+    setStreetAddress("");
+    setCity("");
+    setAdditionalInfo("");
+    setToggles({ ...DEFAULT_TOGGLES });
+  };
+
+  const isDefault =
+    !middleInitial && !dob && !email && !streetAddress && !city && !additionalInfo &&
+    Object.keys(DEFAULT_TOGGLES).every((k) => toggles[k] === DEFAULT_TOGGLES[k]);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !state) return;
+    if (!name.trim()) return;
 
-    // Save search if logged in
     if (user) {
       await supabase.from("searches").insert({
         user_id: user.id,
@@ -49,7 +105,29 @@ const HeroSearch = () => {
       });
     }
 
-    navigate(`/search-results?name=${encodeURIComponent(name.trim())}&state=${encodeURIComponent(state)}`);
+    const params = new URLSearchParams();
+    params.set("name", name.trim());
+    params.set("state", state);
+    if (middleInitial) params.set("mi", middleInitial);
+    if (dob) params.set("dob", format(dob, "yyyy-MM-dd"));
+    if (email) params.set("email", email);
+    if (streetAddress) params.set("address", streetAddress);
+    if (city) params.set("city", city);
+    if (additionalInfo) params.set("info", additionalInfo);
+
+    // Only encode disabled toggles
+    const disabledToggles = Object.entries(toggles)
+      .filter(([, v]) => !v)
+      .map(([k]) => k);
+    if (disabledToggles.length > 0) {
+      params.set("skip", disabledToggles.join(","));
+    }
+
+    navigate(`/search-results?${params.toString()}`);
+  };
+
+  const handleToggle = (key: string, checked: boolean) => {
+    setToggles((prev) => ({ ...prev, [key]: checked }));
   };
 
   return (
@@ -63,7 +141,6 @@ const HeroSearch = () => {
           court records, campaign donations, and more — across all 50 states.
         </p>
 
-        {/* Search Form */}
         <form onSubmit={handleSearch} className="mt-10 bg-card border border-border rounded-lg p-6 shadow-sm text-left">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -89,36 +166,142 @@ const HeroSearch = () => {
             </div>
           </div>
 
-          {showMore && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">
-                  City <span className="text-muted-foreground">(optional)</span>
-                </label>
-                <Input placeholder="e.g., Austin" className="bg-background" value={city} onChange={(e) => setCity(e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">
-                  Additional Info <span className="text-muted-foreground">(optional)</span>
-                </label>
-                <Input placeholder="e.g., date of birth, company name" className="bg-background" value={additionalInfo} onChange={(e) => setAdditionalInfo(e.target.value)} />
-              </div>
+          {/* Collapsible Refine Search Panel */}
+          <Collapsible open={panelOpen} onOpenChange={setPanelOpen}>
+            <div className="flex items-center justify-between mt-5">
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
+                >
+                  Refine Search {panelOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                </button>
+              </CollapsibleTrigger>
+              <Button type="submit" variant="accent" size="lg" className="gap-2 text-base px-8">
+                <Search className="h-4 w-4" />
+                Search Records
+              </Button>
             </div>
-          )}
 
-          <div className="flex items-center justify-between mt-5">
-            <button
-              type="button"
-              onClick={() => setShowMore(!showMore)}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-            >
-              {showMore ? "Fewer options" : "More options"}
-            </button>
-            <Button type="submit" variant="accent" size="lg" className="gap-2 text-base px-8">
-              <Search className="h-4 w-4" />
-              Search Records
-            </Button>
-          </div>
+            <CollapsibleContent className="mt-5 space-y-6 border-t border-border pt-5">
+              {/* Identify the Person */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Identify the Person</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Middle Initial <span className="text-muted-foreground">(opt.)</span>
+                    </label>
+                    <Input
+                      placeholder="e.g., J"
+                      className="bg-background"
+                      maxLength={1}
+                      value={middleInitial}
+                      onChange={(e) => setMiddleInitial(e.target.value.toUpperCase().slice(0, 1))}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Date of Birth <span className="text-muted-foreground">(opt.)</span>
+                    </label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal bg-background",
+                            !dob && "text-muted-foreground"
+                          )}
+                          type="button"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dob ? format(dob, "PPP") : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dob}
+                          onSelect={setDob}
+                          disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Email Address <span className="text-muted-foreground">(opt.)</span>
+                    </label>
+                    <Input
+                      placeholder="e.g., john@example.com"
+                      type="email"
+                      className="bg-background"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Narrow the Location */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Narrow the Location</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Street Address <span className="text-muted-foreground">(opt.)</span>
+                    </label>
+                    <Input
+                      placeholder="e.g., 123 Main St"
+                      className="bg-background"
+                      value={streetAddress}
+                      onChange={(e) => setStreetAddress(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      City <span className="text-muted-foreground">(opt.)</span>
+                    </label>
+                    <Input
+                      placeholder="e.g., Austin"
+                      className="bg-background"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Search Scope Toggles */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Search These Records</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {Object.entries(TOGGLE_LABELS).map(([key, label]) => (
+                    <label key={key} className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2.5 cursor-pointer">
+                      <span className="text-sm text-foreground">{label}</span>
+                      <Switch
+                        checked={toggles[key]}
+                        onCheckedChange={(checked) => handleToggle(key, checked)}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Reset */}
+              {!isDefault && (
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Reset Filters
+                </button>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         </form>
       </div>
     </section>

@@ -587,10 +587,21 @@ export async function searchFAA(name: string): Promise<RecordResult[]> {
 // ═══════════════════════════════════════════════════════════════
 // Search All
 // ═══════════════════════════════════════════════════════════════
+export interface SearchOptions {
+  skip?: string[];  // database keys to skip: business, fec, court, contracts, sunbiz, contact, occrp
+  middleInitial?: string;
+  dob?: string;
+  email?: string;
+  streetAddress?: string;
+  city?: string;
+}
+
 export async function searchAll(
-  name: string, state: string
+  name: string, state: string, options?: SearchOptions
 ): Promise<{ results: RecordResult[]; debug: ApiDebugInfo[] }> {
   const debug: ApiDebugInfo[] = [];
+  const skip = new Set(options?.skip || []);
+
   const run = async (label: string, fn: () => Promise<RecordResult[]>): Promise<RecordResult[]> => {
     const start = Date.now();
     try {
@@ -603,20 +614,30 @@ export async function searchAll(
     }
   };
 
-  const [fec, sec, usaSpending, nonprofits, sunbiz, courts, sanctions, offshore, lobbying, faa] = await Promise.all([
-    run("FEC Campaign Finance", () => searchFEC(name, state)),
-    run("SEC EDGAR", () => searchSEC(name)),
-    run("USASpending.gov", () => searchUSASpending(name, state)),
-    run("ProPublica Nonprofits", () => searchProPublicaNonprofits(name)),
-    run("Florida SunBiz", () => searchSunBiz(name)),
-    run("CourtListener", () => searchCourtListener(name)),
-    run("OpenSanctions", () => searchSanctions(name)),
-    run("ICIJ Offshore Leaks", () => searchOffshoreLeaks(name)),
-    run("Senate Lobbying (LDA)", () => searchLobbying(name)),
-    run("FAA Aircraft Registry", () => searchFAA(name)),
-  ]);
+  const skipRun = (key: string, label: string): Promise<RecordResult[]> => {
+    if (skip.has(key)) {
+      debug.push({ api: label, status: "success", resultCount: 0 });
+      return Promise.resolve([]);
+    }
+    return Promise.resolve(null as any); // sentinel — not used
+  };
 
-  const results = [...fec, ...sec, ...usaSpending, ...nonprofits, ...sunbiz, ...courts, ...sanctions, ...offshore, ...lobbying, ...faa];
+  const tasks: Promise<RecordResult[]>[] = [];
+
+  // business = SEC + ProPublica + SunBiz (sunbiz also has its own toggle)
+  tasks.push(skip.has("fec") ? skipRun("fec", "FEC Campaign Finance") : run("FEC Campaign Finance", () => searchFEC(name, state)));
+  tasks.push(skip.has("business") ? skipRun("business", "SEC EDGAR") : run("SEC EDGAR", () => searchSEC(name)));
+  tasks.push(skip.has("contracts") ? skipRun("contracts", "USASpending.gov") : run("USASpending.gov", () => searchUSASpending(name, state)));
+  tasks.push(skip.has("business") ? skipRun("business-np", "ProPublica Nonprofits") : run("ProPublica Nonprofits", () => searchProPublicaNonprofits(name)));
+  tasks.push(skip.has("sunbiz") ? skipRun("sunbiz", "Florida SunBiz") : run("Florida SunBiz", () => searchSunBiz(name)));
+  tasks.push(skip.has("court") ? skipRun("court", "CourtListener") : run("CourtListener", () => searchCourtListener(name)));
+  tasks.push(run("OpenSanctions", () => searchSanctions(name)));
+  tasks.push(run("ICIJ Offshore Leaks", () => searchOffshoreLeaks(name)));
+  tasks.push(run("Senate Lobbying (LDA)", () => searchLobbying(name)));
+  tasks.push(run("FAA Aircraft Registry", () => searchFAA(name)));
+
+  const allResults = await Promise.all(tasks);
+  const results = allResults.flat();
   return { results, debug };
 }
 

@@ -13,7 +13,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { searchAll, type MockResult, type ApiDebugInfo } from "@/lib/recordsApi";
+import { searchAll, type MockResult, type ApiDebugInfo, type SearchOptions } from "@/lib/recordsApi";
 
 
 interface Investigation {
@@ -60,7 +60,18 @@ const SearchResults = () => {
     let cancelled = false;
     setLoading(true);
     setError(false);
-    searchAll(name, state)
+
+    const skipParam = searchParams.get("skip");
+    const options: SearchOptions = {
+      skip: skipParam ? skipParam.split(",") : undefined,
+      middleInitial: searchParams.get("mi") || undefined,
+      dob: searchParams.get("dob") || undefined,
+      email: searchParams.get("email") || undefined,
+      streetAddress: searchParams.get("address") || undefined,
+      city: searchParams.get("city") || undefined,
+    };
+
+    searchAll(name, state, options)
       .then((data) => {
         if (!cancelled) {
           setResults(data.results);
@@ -75,7 +86,7 @@ const SearchResults = () => {
         }
       });
     return () => { cancelled = true; };
-  }, [name, state]);
+  }, [name, state, searchParams]);
 
   const fetchInvestigations = async () => {
     if (!user) return;
