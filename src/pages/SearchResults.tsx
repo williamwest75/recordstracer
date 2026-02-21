@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import SubjectProfile from "@/components/search/SubjectProfile";
+import ContactIntelligence from "@/components/search/ContactIntelligence";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -191,6 +192,7 @@ const SearchResults = () => {
         ) : (
           <div className="mt-8 space-y-8">
             <SubjectProfile name={name} state={state} results={results} />
+            <ContactIntelligence searchName={name} state={state} />
             {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
               const items = grouped[key] || [];
               return (
