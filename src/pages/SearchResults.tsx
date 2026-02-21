@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
+import SubjectProfile from "@/components/search/SubjectProfile";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -189,10 +190,11 @@ const SearchResults = () => {
           </div>
         ) : (
           <div className="mt-8 space-y-8">
+            <SubjectProfile name={name} state={state} results={results} />
             {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
               const items = grouped[key] || [];
               return (
-                <section key={key}>
+                <section key={key} id={`category-${key}`}>
                   <div className="flex items-center gap-2 mb-3">
                     <Icon className="h-5 w-5 text-accent" />
                     <h2 className="font-heading text-lg font-semibold text-foreground">{label}</h2>
