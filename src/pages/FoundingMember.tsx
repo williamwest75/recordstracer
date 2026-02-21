@@ -16,8 +16,9 @@ const FoundingMember = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
+  const [website, setWebsite] = useState(""); // honeypot field
   const [spotsRemaining, setSpotsRemaining] = useState<number | null>(null);
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "duplicate" | "full">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "duplicate" | "full" | "rate_limited">("idle");
 
   useEffect(() => {
     fetchSpots();
@@ -40,22 +41,39 @@ const FoundingMember = () => {
       return;
     }
 
-    const { error } = await supabase
-      .from("founding_members")
-      .insert({ name: name.trim(), email: email.trim().toLowerCase(), role });
+    try {
+      const { data, error } = await supabase.functions.invoke("founding-member-signup", {
+        body: { name: name.trim(), email: email.trim().toLowerCase(), role, website },
+      });
 
-    if (error) {
-      if (error.code === "23505") {
+      if (error) {
+        // Check for rate limiting or other HTTP errors
+        const errorBody = typeof error === "object" && "context" in error
+          ? error
+          : null;
+        
+        console.error("Signup error:", error);
+        setStatus("idle");
+        return;
+      }
+
+      if (data?.error === "duplicate") {
         setStatus("duplicate");
-      } else {
-        console.error(error);
+      } else if (data?.error === "full") {
+        setStatus("full");
+      } else if (data?.error?.includes("Too many")) {
+        setStatus("rate_limited");
+      } else if (data?.success) {
+        setStatus("success");
+        fetchSpots();
+      } else if (data?.error) {
+        console.error("Signup error:", data.error);
         setStatus("idle");
       }
-      return;
+    } catch (err) {
+      console.error("Signup error:", err);
+      setStatus("idle");
     }
-
-    setStatus("success");
-    fetchSpots();
   };
 
   return (
@@ -121,6 +139,13 @@ const FoundingMember = () => {
                 <p className="text-sm text-muted-foreground">We'll be in touch.</p>
               </CardContent>
             </Card>
+          ) : status === "rate_limited" ? (
+            <Card className="border-destructive/30 bg-destructive/5">
+              <CardContent className="pt-6 text-center space-y-3">
+                <h2 className="text-xl font-semibold text-foreground">Too many attempts</h2>
+                <p className="text-sm text-muted-foreground">Please try again in an hour.</p>
+              </CardContent>
+            </Card>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -130,6 +155,19 @@ const FoundingMember = () => {
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jane@newsroom.com" required />
+              </div>
+              {/* Honeypot field — hidden from real users, filled by bots */}
+              <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", top: "-9999px", opacity: 0, height: 0, overflow: "hidden" }}>
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  name="website"
+                  type="text"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
               </div>
               <div className="space-y-2">
                 <Label>I am a...</Label>
