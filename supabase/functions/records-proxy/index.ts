@@ -25,6 +25,7 @@ serve(async (req) => {
     if (source === "icij") result = await searchOffshoreLeaks(searchName);
     if (source === "lobbying") result = await searchLobbying(searchName);
     if (source === "faa") result = await searchFAA(searchName);
+    if (source === "contact-intel") result = await searchContactIntel(searchName, state || "");
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -409,6 +410,208 @@ async function searchFAA(name: string) {
     console.error("[FAA] Search error:", err);
     return { success: false, error: String(err), aircraft: [], total: 0 };
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Contact Intelligence — FEC candidate addresses, FL Elections, SunBiz addresses
+// ═══════════════════════════════════════════════════════════════
+async function searchContactIntel(name: string, state: string) {
+  const contacts: any[] = [];
+
+  // 1. FEC Candidate filings — address info from candidate detail
+  try {
+    const apiKey = Deno.env.get("FEC_API_KEY") || "DEMO_KEY";
+    const stateParam = state ? `&state=${state}` : "";
+    const url = `https://api.open.fec.gov/v1/candidates/search/?name=${encodeURIComponent(name)}${stateParam}&per_page=5&api_key=${apiKey}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      for (const c of (data.results || [])) {
+        // Fetch detailed candidate info which may include address
+        try {
+          const detailUrl = `https://api.open.fec.gov/v1/candidate/${c.candidate_id}/?api_key=${apiKey}`;
+          const detailRes = await fetch(detailUrl);
+          if (detailRes.ok) {
+            const detail = await detailRes.json();
+            const info = detail.results?.[0] || {};
+            const address = [info.address_street_1, info.address_street_2, info.address_city, info.address_state, info.address_zip]
+              .filter(Boolean).join(", ");
+            if (address) {
+              contacts.push({
+                source: "FEC Candidate Filing",
+                name: c.name || name,
+                address,
+                phone: null,
+                office: c.office_full || null,
+                party: c.party_full || null,
+                candidateId: c.candidate_id,
+                sourceUrl: `https://www.fec.gov/data/candidate/${c.candidate_id}/`,
+              });
+            }
+          } else { await detailRes.text(); }
+        } catch (e) { console.error("[ContactIntel] FEC detail error:", e); }
+
+        // Also check principal campaign committee for treasurer address
+        if (c.principal_committees?.length > 0) {
+          for (const comm of c.principal_committees) {
+            try {
+              const commUrl = `https://api.open.fec.gov/v1/committee/${comm.committee_id}/?api_key=${apiKey}`;
+              const commRes = await fetch(commUrl);
+              if (commRes.ok) {
+                const commData = await commRes.json();
+                const ci = commData.results?.[0] || {};
+                const commAddr = [ci.street_1, ci.street_2, ci.city, ci.state, ci.zip]
+                  .filter(Boolean).join(", ");
+                if (commAddr) {
+                  contacts.push({
+                    source: "FEC Committee Filing",
+                    name: ci.treasurer_name || ci.name || comm.committee_id,
+                    address: commAddr,
+                    phone: null,
+                    role: "Treasurer / Committee",
+                    committeeId: comm.committee_id,
+                    sourceUrl: `https://www.fec.gov/data/committee/${comm.committee_id}/`,
+                  });
+                }
+              } else { await commRes.text(); }
+            } catch (e) { console.error("[ContactIntel] FEC committee detail error:", e); }
+          }
+        }
+      }
+    } else { await res.text(); }
+  } catch (err) { console.error("[ContactIntel] FEC error:", err); }
+
+  // 2. Florida Division of Elections — candidate qualifying records
+  try {
+    const url = `https://dos.elections.myflorida.com/candidates/CanList.asp?CanNameSrch=${encodeURIComponent(name)}&CanSrchType=2&office=&cty=&party=&race=&dist=&elecyear=`;
+    console.log("[ContactIntel] FL Elections URL:", url);
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
+    });
+    if (res.ok) {
+      const html = await res.text();
+      // Parse table rows for candidate records with addresses/phones
+      const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+      let rowMatch;
+      while ((rowMatch = rowRegex.exec(html)) !== null) {
+        const row = rowMatch[1];
+        if (!row.includes("<td")) continue;
+        const cells: string[] = [];
+        const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+        let cellMatch;
+        while ((cellMatch = cellRegex.exec(row)) !== null) {
+          cells.push(cellMatch[1].replace(/<[^>]+>/g, "").replace(/&nbsp;/gi, " ").trim());
+        }
+        // FL Elections table typically has: Name, Party, Office, Address, Phone, etc.
+        if (cells.length >= 4) {
+          const cellName = cells[0] || "";
+          if (cellName.toLowerCase().includes(name.split(" ").pop()?.toLowerCase() || "___")) {
+            const address = cells.find(c => /\d{5}/.test(c) && c.length > 10) || null;
+            const phone = cells.find(c => /\(\d{3}\)\s?\d{3}[- ]?\d{4}|\d{3}[- .]\d{3}[- .]\d{4}/.test(c)) || null;
+            if (address || phone) {
+              contacts.push({
+                source: "FL Division of Elections",
+                name: cellName,
+                address: address || null,
+                phone: phone || null,
+                office: cells[2] || null,
+                party: cells[1] || null,
+                sourceUrl: "https://dos.elections.myflorida.com/candidates/",
+              });
+            }
+          }
+        }
+      }
+    }
+  } catch (err) { console.error("[ContactIntel] FL Elections error:", err); }
+
+  // 3. SunBiz — registered agent address from detail pages
+  try {
+    const searchUrl = `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?inquiryType=OfficerRegisteredAgentName&searchNameOrder=true&searchTerm=${encodeURIComponent(name)}&listingType=active`;
+    const res = await fetch(searchUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
+    });
+    if (res.ok) {
+      const html = await res.text();
+      // Extract detail URLs to fetch registered agent addresses
+      const linkRegex = /href="(\/Inquiry\/CorporationSearch\/SearchResultDetail[^"]+)"/gi;
+      const detailUrls: string[] = [];
+      let linkMatch;
+      while ((linkMatch = linkRegex.exec(html)) !== null && detailUrls.length < 3) {
+        detailUrls.push(`https://search.sunbiz.org${linkMatch[1]}`);
+      }
+      for (const detailUrl of detailUrls) {
+        try {
+          const detailRes = await fetch(detailUrl, {
+            headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
+          });
+          if (detailRes.ok) {
+            const detailHtml = await detailRes.text();
+            // Look for registered agent section address
+            const agentMatch = detailHtml.match(/Registered Agent.*?<div[^>]*>([\s\S]*?)<\/div>/i);
+            if (agentMatch) {
+              const agentSection = agentMatch[1].replace(/<[^>]+>/g, "\n").replace(/\n{2,}/g, "\n").trim();
+              const lines = agentSection.split("\n").map(l => l.trim()).filter(Boolean);
+              if (lines.length > 0) {
+                const addressLines = lines.filter(l => /\d/.test(l) || /FL|Florida/i.test(l));
+                if (addressLines.length > 0) {
+                  // Get entity name from detail page
+                  const entityMatch = detailHtml.match(/<div class="detailSection"[^>]*>[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/i);
+                  const entityName = entityMatch ? entityMatch[1].replace(/<[^>]+>/g, "").trim() : "Unknown Entity";
+                  contacts.push({
+                    source: "FL SunBiz (Registered Agent)",
+                    name: entityName,
+                    address: addressLines.join(", "),
+                    phone: null,
+                    sourceUrl: "https://search.sunbiz.org/Inquiry/CorporationSearch/ByName",
+                  });
+                }
+              }
+            }
+          }
+        } catch (e) { console.error("[ContactIntel] SunBiz detail error:", e); }
+      }
+    }
+  } catch (err) { console.error("[ContactIntel] SunBiz error:", err); }
+
+  // 4. Property appraiser search links by state
+  const propertyLinks = getPropertyAppraiserLinks(state);
+
+  return {
+    success: true,
+    contacts,
+    propertyLinks,
+    totalContacts: contacts.length,
+  };
+}
+
+function getPropertyAppraiserLinks(state: string): any[] {
+  // Major county property appraiser search links
+  const links: Record<string, any[]> = {
+    Florida: [
+      { county: "Miami-Dade", url: "https://www.miamidade.gov/pa/property-search.asp", label: "Miami-Dade Property Appraiser" },
+      { county: "Broward", url: "https://web.bcpa.net/BcpaClient/", label: "Broward County Property Appraiser" },
+      { county: "Palm Beach", url: "https://www.pbcgov.org/papa/", label: "Palm Beach County Property Appraiser" },
+      { county: "Orange", url: "https://www.ocpafl.org/Searches/ParcelSearch.aspx", label: "Orange County Property Appraiser" },
+      { county: "Hillsborough", url: "https://gis.hcpafl.org/propertysearch/", label: "Hillsborough County Property Appraiser" },
+    ],
+    Texas: [
+      { county: "Harris", url: "https://public.hcad.org/records/quicksearch.asp", label: "Harris County (Houston) Appraisal District" },
+      { county: "Dallas", url: "https://www.dallascad.org/SearchAddr.aspx", label: "Dallas Central Appraisal District" },
+      { county: "Travis", url: "https://www.traviscad.org/property-search/", label: "Travis County (Austin) Appraisal District" },
+    ],
+    "New York": [
+      { county: "NYC", url: "https://a836-acris.nyc.gov/DS/DocumentSearch/Index", label: "NYC ACRIS Property Records" },
+    ],
+    California: [
+      { county: "Los Angeles", url: "https://portal.assessor.lacounty.gov/", label: "LA County Assessor" },
+      { county: "San Francisco", url: "https://www.sfassessor.org/property-information/homeowners/property-search", label: "SF Assessor-Recorder" },
+    ],
+  };
+  if (state === "All States / National") {
+    return Object.values(links).flat();
+  }
+  return links[state] || [];
 }
 
 async function fetchCourtListener(name: string) {
