@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FileSearch } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,6 +12,8 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [termsError, setTermsError] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -18,6 +21,13 @@ const AuthPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    if (isSignUp && !agreedToTerms) {
+      setTermsError(true);
+      setLoading(false);
+      return;
+    }
+    setTermsError(false);
 
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({
@@ -72,6 +82,33 @@ const AuthPage = () => {
               <label className="block text-sm font-medium text-foreground mb-1">Password</label>
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
             </div>
+
+            {isSignUp && (
+              <div className="space-y-1">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="terms"
+                    checked={agreedToTerms}
+                    onCheckedChange={(checked) => {
+                      setAgreedToTerms(checked === true);
+                      if (checked) setTermsError(false);
+                    }}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="terms" className="text-sm text-foreground leading-snug">
+                    I have read and agree to the{" "}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Terms of Service</a>
+                    {" "}and{" "}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Privacy Policy</a>.
+                  </label>
+                </div>
+                {termsError && (
+                  <p className="text-sm text-destructive font-medium">
+                    You must agree to the Terms of Service and Privacy Policy to continue.
+                  </p>
+                )}
+              </div>
+            )}
 
             <Button variant="accent" className="w-full" disabled={loading}>
               {loading ? "Please wait…" : isSignUp ? "Create Account" : "Sign In"}

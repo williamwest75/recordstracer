@@ -11,6 +11,8 @@ import SearchResults from "./pages/SearchResults";
 import Dashboard from "./pages/Dashboard";
 import AuthCallback from "./pages/AuthCallback";
 import FoundingMember from "./pages/FoundingMember";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,8 @@ const App = () => (
             <Route path="/search-results" element={<SearchResults />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/founding-member" element={<FoundingMember />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
