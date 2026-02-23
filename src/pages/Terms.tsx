@@ -16,7 +16,7 @@ const Terms = () => (
       <div className="prose prose-sm max-w-none space-y-6 text-foreground [&_h2]:font-heading [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_h3]:font-heading [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-6 [&_h3]:mb-2 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-1 [&_li]:leading-relaxed">
 
         <h2>1. Agreement and Parties</h2>
-        <p>These Terms of Service ("Terms") constitute a legally binding agreement between you ("User," "you," or "your") and Gran Casa LLC, a Florida limited liability company operating Records Tracer ("Company," "we," "us," or "our"). Records Tracer is an investigative public records research platform accessible at recordstracer.com and related subdomains (the "Platform").</p>
+        <p>These Terms of Service ("Terms") constitute a legally binding agreement between you ("User," "you," or "your") and Gran Casa LLC, a Florida limited liability company operating Record Tracer ("Company," "we," "us," or "our"). Record Tracer is an investigative public records research platform accessible at recordtracer.com and related subdomains (the "Platform").</p>
         <p>If you are accessing Records Tracer on behalf of a news organization, company, or other entity, you represent that you have the authority to bind that entity to these Terms, and all references to "you" include that entity.</p>
 
         <h2>2. Eligibility and Permitted Users</h2>
@@ -118,7 +118,7 @@ const Terms = () => (
 
         <h2>15. Contact Information</h2>
         <p>For questions about these Terms of Service, to report suspected misuse, or for general inquiries:</p>
-        <p>Gran Casa LLC — Records Tracer<br />Tampa Bay, Florida<br />recordstracer.com</p>
+        <p>Gran Casa LLC — Record Tracer<br />Tampa Bay, Florida<br />recordtracer.com</p>
 
         <p>By using Records Tracer, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.</p>
 

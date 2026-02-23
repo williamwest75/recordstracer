@@ -5,8 +5,8 @@ const Privacy = () => (
   <div className="min-h-screen flex flex-col bg-background">
     <Header />
     <main className="flex-1 container mx-auto px-4 lg:px-8 py-12 max-w-3xl">
-      <h1 className="font-heading text-3xl font-bold text-foreground mb-2">Privacy Policy — Records Tracer</h1>
-      <p className="text-sm text-muted-foreground mb-8">recordstracer.com · Effective Date: February 2026</p>
+      <h1 className="font-heading text-3xl font-bold text-foreground mb-2">Privacy Policy — Record Tracer</h1>
+      <p className="text-sm text-muted-foreground mb-8">recordtracer.com · Effective Date: February 2026</p>
 
       <p className="text-foreground mb-8 leading-relaxed">
         This Privacy Policy describes how we collect, use, store, and protect your personal information when you use this Service. By using the Service, you consent to the practices described in this policy.
@@ -61,7 +61,7 @@ const Privacy = () => (
           <li><strong>Deletion:</strong> You may request deletion of your personal information, subject to legal retention requirements</li>
           <li><strong>Portability:</strong> You may request your data in a portable format</li>
         </ul>
-        <p>To exercise any of these rights, contact us at: <a href="mailto:privacy@recordstracer.com" className="text-accent hover:underline">privacy@recordstracer.com</a></p>
+        <p>To exercise any of these rights, contact us at: <a href="mailto:privacy@recordtracer.com" className="text-accent hover:underline">privacy@recordtracer.com</a></p>
 
         <h2>7. Cookies</h2>
         <p>We use essential cookies necessary for the Service to function, including session cookies that keep you logged in. We do not use advertising or tracking cookies. You may disable cookies in your browser settings but doing so may affect the functionality of the Service.</p>
@@ -85,7 +85,7 @@ const Privacy = () => (
         <p>This Privacy Policy is governed by the laws of the State of Florida. Any disputes arising from this policy shall be resolved in Pinellas County, Florida.</p>
 
         <h2>12. Contact</h2>
-        <p>For privacy questions or requests, contact us at: <a href="mailto:privacy@recordstracer.com" className="text-accent hover:underline">privacy@recordstracer.com</a></p>
+        <p>For privacy questions or requests, contact us at: <a href="mailto:privacy@recordtracer.com" className="text-accent hover:underline">privacy@recordtracer.com</a></p>
       </div>
     </main>
     <Footer />
