@@ -83,6 +83,54 @@ export type Database = {
         }
         Relationships: []
       }
+      news_posts: {
+        Row: {
+          content: string
+          created_at: string
+          excerpt: string
+          headline: string
+          id: string
+          published_at: string
+          slug: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          excerpt: string
+          headline: string
+          id?: string
+          published_at?: string
+          slug: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          excerpt?: string
+          headline?: string
+          id?: string
+          published_at?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      news_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
