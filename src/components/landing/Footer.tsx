@@ -8,7 +8,9 @@ const Footer = () => (
         <FileSearch className="h-5 w-5 text-accent" />
         <span className="font-heading text-lg font-bold text-foreground">Record Tracer</span>
       </div>
-      <nav className="flex items-center gap-4 text-sm text-muted-foreground">
+      <nav className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+        <Link to="/about" className="hover:text-foreground transition-colors">About Us</Link>
+        <Link to="/news" className="hover:text-foreground transition-colors">News</Link>
         <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
         <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
         <span className="font-semibold text-accent">#SaveJournalism</span>
