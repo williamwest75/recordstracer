@@ -10,6 +10,7 @@ import Footer from "@/components/landing/Footer";
 import SubjectProfile from "@/components/search/SubjectProfile";
 import ContactIntelligence from "@/components/search/ContactIntelligence";
 import AiSubjectSummary from "@/components/search/AiSubjectSummary";
+import DeepResearchAnalyst from "@/components/search/DeepResearchAnalyst";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -266,6 +267,7 @@ const SearchResults = () => {
                 </section>
               );
             })}
+            <DeepResearchAnalyst name={name} state={state} results={results} />
           </div>
         )}
 
