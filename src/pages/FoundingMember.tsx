@@ -107,7 +107,7 @@ const FoundingMember = () => {
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-start gap-3">
                 <Shield className="h-5 w-5 text-accent mt-0.5 shrink-0" />
-                <p className="text-sm text-foreground">Full access to all Records Tracer databases at launch.</p>
+                <p className="text-sm text-foreground">Full access to all Record Tracer databases at launch.</p>
               </div>
               <div className="flex items-start gap-3">
                 <Star className="h-5 w-5 text-accent mt-0.5 shrink-0" />
@@ -127,7 +127,7 @@ const FoundingMember = () => {
                 <CheckCircle className="h-10 w-10 text-accent mx-auto" />
                 <h2 className="text-xl font-semibold text-foreground">You're in.</h2>
                 <p className="text-sm text-muted-foreground">
-                  Watch your inbox — we'll email you the moment Records Tracer launches with your personal founding member access link.
+                  Watch your inbox — we'll email you the moment Record Tracer launches with your personal founding member access link.
                 </p>
               </CardContent>
             </Card>

@@ -6,12 +6,12 @@ const About = () => (
     <Header />
     <main className="flex-1">
       {/* Hero */}
-      <section className="py-16 md:py-24" style={{ backgroundColor: "hsl(210, 36%, 23%)" }}>
+      <section className="py-16 md:py-24 bg-primary">
         <div className="container mx-auto px-4 lg:px-8 text-center">
-          <h1 className="font-heading text-4xl md:text-5xl font-bold text-white mb-4">
+          <h1 className="font-heading text-4xl md:text-5xl font-bold text-primary-foreground mb-4">
             About Record Tracer
           </h1>
-          <p className="text-lg md:text-xl max-w-2xl mx-auto" style={{ color: "hsl(43, 100%, 38%)" }}>
+          <p className="text-lg md:text-xl max-w-2xl mx-auto text-accent">
             Built by a journalist. For journalists.
           </p>
         </div>
@@ -38,7 +38,7 @@ const About = () => (
           </div>
 
           {/* Quote */}
-          <blockquote className="border-l-4 pl-6 py-4 italic text-xl font-heading text-foreground/80" style={{ borderColor: "hsl(43, 100%, 38%)" }}>
+          <blockquote className="border-l-4 border-accent pl-6 py-4 italic text-xl font-heading text-foreground/80">
             "AI is not here to replace you as a journalist. But you, as a journalist, can use AI to save journalism."
           </blockquote>
 
@@ -69,7 +69,7 @@ const About = () => (
             <p className="font-heading text-2xl font-bold text-foreground mb-2">
               One tool. One journalist. One community at a time.
             </p>
-            <p className="text-lg font-semibold" style={{ color: "hsl(43, 100%, 38%)" }}>
+            <p className="text-lg font-semibold text-accent">
               #SaveJournalism
             </p>
           </div>
