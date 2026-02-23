@@ -1,4 +1,5 @@
 import Header from "@/components/landing/Header";
+import AnnouncementHero from "@/components/landing/AnnouncementHero";
 import HeroSearch from "@/components/landing/HeroSearch";
 import Badges from "@/components/landing/Badges";
 import FeatureGrid from "@/components/landing/FeatureGrid";
@@ -8,6 +9,7 @@ const Index = () => (
   <div className="min-h-screen flex flex-col bg-background">
     <Header />
     <main className="flex-1">
+      <AnnouncementHero />
       <HeroSearch />
       <Badges />
       <FeatureGrid />
