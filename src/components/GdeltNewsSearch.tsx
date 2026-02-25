@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, Search, Newspaper, BarChart3, Users, Globe, Copy, Download, Info } from "lucide-react";
+import { ExternalLink, Search, Newspaper, BarChart3, Users, Globe, Copy, Download, Info, TrendingUp, TrendingDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -166,15 +166,23 @@ const GdeltNewsSearch = () => {
 
   const topActors = useMemo(() => {
     if (!results.length) return [];
-    const counts: Record<string, number> = {};
+    const actorStats: Record<string, { count: number; totalTone: number }> = {};
     results.forEach((row: any) => {
       const name = row.Actor1Name;
       if (name && name !== "UNITED STATES") {
-        counts[name] = (counts[name] || 0) + 1;
+        if (!actorStats[name]) actorStats[name] = { count: 0, totalTone: 0 };
+        actorStats[name].count += 1;
+        actorStats[name].totalTone += parseFloat(row.AvgTone || 0);
       }
     });
-    return Object.entries(counts)
-      .sort(([, a], [, b]) => b - a)
+    return Object.entries(actorStats)
+      .map(([name, stats]) => ({
+        name,
+        count: stats.count,
+        avgTone: stats.totalTone / stats.count,
+        trend: stats.totalTone / stats.count > 0 ? ("up" as const) : ("down" as const),
+      }))
+      .sort((a, b) => b.count - a.count)
       .slice(0, 5);
   }, [results]);
 
@@ -250,18 +258,26 @@ const GdeltNewsSearch = () => {
                   <h3 className="font-bold text-sm uppercase tracking-wider">Top Entities in the News</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  {topActors.map(([name, count]) => (
+                  {topActors.map((actor) => (
                     <div
-                      key={name}
+                      key={actor.name}
                       className="bg-card p-3 rounded-lg border border-border flex flex-col items-center justify-center text-center shadow-sm"
                     >
                       <span className="text-xs font-medium text-muted-foreground uppercase mb-1">Entity</span>
-                      <span className="text-sm font-bold text-primary truncate w-full" title={name}>
-                        {name}
+                      <span className="text-sm font-bold text-primary truncate w-full" title={actor.name}>
+                        {actor.name}
                       </span>
                       <div className="mt-2 flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                        <span className="text-xs text-muted-foreground font-semibold">{count} Mentions</span>
+                        <span className="text-xs text-muted-foreground font-semibold">{actor.count} Mentions</span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-1 text-xs">
+                        {actor.trend === "up" ? (
+                          <TrendingUp className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3 text-red-500" />
+                        )}
+                        <span className="text-muted-foreground">{actor.avgTone.toFixed(1)}</span>
                       </div>
                     </div>
                   ))}
