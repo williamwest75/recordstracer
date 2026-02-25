@@ -15,9 +15,10 @@ const Footer = () => (
         <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
         <span className="font-semibold text-accent">#SaveJournalism</span>
       </nav>
-      <p className="text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Record Tracer. Built for investigative journalists.
-      </p>
+      <div className="text-sm text-muted-foreground text-right">
+        <p>© {new Date().getFullYear()} Record Tracer. Built for investigative journalists.</p>
+        <p className="text-xs text-muted-foreground/70 mt-1">Beta Version — Features subject to change.</p>
+      </div>
     </div>
   </footer>
 );

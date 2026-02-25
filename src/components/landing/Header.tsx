@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { FileSearch, Menu, X, ChevronDown } from "lucide-react";
+import BetaBanner from "@/components/BetaBanner";
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,6 +28,8 @@ const Header = () => {
   }, []);
 
   return (
+    <>
+    <BetaBanner />
     <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
         <Link to="/" className="flex items-center gap-2.5">
@@ -109,6 +112,7 @@ const Header = () => {
         </nav>
       )}
     </header>
+    </>
   );
 };
 
