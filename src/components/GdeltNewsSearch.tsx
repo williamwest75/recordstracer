@@ -252,11 +252,16 @@ const GdeltNewsSearch = () => {
 
         {!isLoading && results.length > 0 && (
           <div className="mt-2">
-            {dataSource === "gdelt-doc-api" && (
-              <div className="mb-4 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 border border-border">
-                ℹ️ Results from GDELT Doc API (tone/sentiment data unavailable in this mode).
-              </div>
-            )}
+            <div className="mb-4 flex items-center gap-2">
+              <Badge variant="outline" className="text-[11px] font-medium gap-1">
+                ⚡ Powered by {dataSource === "gdelt-doc-api" ? "GDELT Doc API" : "BigQuery"}
+              </Badge>
+              {dataSource === "gdelt-doc-api" && (
+                <span className="text-[11px] text-muted-foreground">
+                  (tone/sentiment data unavailable in this mode)
+                </span>
+              )}
+            </div>
             {topActors.length > 0 && mode === "events" && (
               <div className="bg-muted/50 border border-border rounded-xl p-5 mb-6 shadow-sm">
                 <div className="flex items-center gap-2 mb-4 text-foreground">
