@@ -6,8 +6,6 @@ verify_jwt = false
 [functions.subject-summary]
 verify_jwt = false
 
-[functions.founding-member-signup]
-verify_jwt = false
 
 [functions.records-proxy]
 verify_jwt = false

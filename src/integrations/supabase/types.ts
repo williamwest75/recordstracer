@@ -14,45 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
-      founding_member_rate_limits: {
-        Row: {
-          created_at: string
-          id: string
-          ip_address: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          ip_address: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          ip_address?: string
-        }
-        Relationships: []
-      }
       founding_members: {
         Row: {
-          created_at: string
           email: string
+          founding_member_number: number
           id: string
-          name: string
-          role: string
+          product: string
+          subscribed_at: string
+          user_id: string
         }
         Insert: {
-          created_at?: string
           email: string
+          founding_member_number: number
           id?: string
-          name: string
-          role: string
+          product: string
+          subscribed_at?: string
+          user_id: string
         }
         Update: {
-          created_at?: string
           email?: string
+          founding_member_number?: number
           id?: string
-          name?: string
-          role?: string
+          product?: string
+          subscribed_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -286,7 +271,12 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      founding_members_count: {
+        Row: {
+          total_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_founding_member_count: { Args: never; Returns: number }

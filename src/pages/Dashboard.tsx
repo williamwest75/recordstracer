@@ -6,7 +6,7 @@ import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, FolderOpen, Clock, Plus, Trash2 } from "lucide-react";
+import { Search, FolderOpen, Clock, Plus, Trash2, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -17,11 +17,27 @@ const Dashboard = () => {
   const [investigations, setInvestigations] = useState<Tables<"investigations">[]>([]);
   const [newInvTitle, setNewInvTitle] = useState("");
   const [tab, setTab] = useState<"searches" | "investigations">("searches");
+  const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
     loadData();
+    loadFoundingMemberStatus();
   }, [user]);
+
+  const loadFoundingMemberStatus = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("founding_members")
+      .select("founding_member_number")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) {
+      setFoundingMemberNumber(data.founding_member_number);
+    }
+  };
 
   const loadData = async () => {
     const [s, i] = await Promise.all([
@@ -52,7 +68,17 @@ const Dashboard = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container mx-auto px-4 lg:px-8 py-10 max-w-4xl">
-        <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-6">Dashboard</h1>
+        <div className="flex items-center gap-3 mb-6">
+          <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+          {foundingMemberNumber !== null && (
+            <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-accent/20 to-accent/10 border border-accent/30 rounded-full px-3 py-1">
+              <Crown className="h-4 w-4 text-accent" />
+              <span className="text-sm font-semibold text-accent">
+                Founding Member #{foundingMemberNumber}
+              </span>
+            </div>
+          )}
+        </div>
 
         {/* Tabs */}
         <div className="flex gap-1 border-b border-border mb-6">
