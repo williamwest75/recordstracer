@@ -126,57 +126,36 @@ serve(async (req) => {
     let resultKey: string;
 
     if (mode === "gkg") {
-      // Global Knowledge Graph – themes, persons, organisations, tone
       sql = `
-        SELECT
-          DATE,
-          DocumentIdentifier AS url,
-          V2Themes,
-          V2Persons,
-          V2Organizations,
-          V2Tone
+        SELECT DATE, DocumentIdentifier AS url, V2Themes, V2Persons, V2Organizations, V2Tone
         FROM \`gdelt-bq.gdeltv2.gkg_partitioned\`
         WHERE DATE >= ${dateStr}000000
           AND LOWER(DocumentIdentifier) LIKE '%${safeQuery.toLowerCase()}%'
+          AND V2Locations LIKE '%United States%'
         ORDER BY DATE DESC
         LIMIT 50
       `;
       resultKey = "knowledge_graph";
     } else if (mode === "mentions") {
-      // Event mentions with sentiment
       sql = `
-        SELECT
-          MentionDateTime,
-          MentionSourceName,
-          MentionIdentifier AS url,
-          MentionDocTone,
-          Confidence
+        SELECT MentionDateTime, MentionSourceName, MentionIdentifier AS url, MentionDocTone, Confidence
         FROM \`gdelt-bq.gdeltv2.eventmentions_partitioned\`
         WHERE CAST(SUBSTR(CAST(MentionDateTime AS STRING), 1, 8) AS INT64) >= ${dateStr}
+          AND ActionGeo_CountryCode = 'US'
           AND LOWER(MentionSourceName) LIKE '%${safeQuery.toLowerCase()}%'
         ORDER BY MentionDateTime DESC
         LIMIT 50
       `;
       resultKey = "mentions";
     } else {
-      // Default: events table – filtered for significant events
-      // QuadClass: 1=Verbal Cooperation, 2=Material Cooperation, 3=Verbal Conflict, 4=Material Conflict
       sql = `
-        SELECT
-          SQLDATE,
-          Actor1Name,
-          Actor2Name,
-          EventCode,
-          GoldsteinScale,
-          NumMentions,
-          AvgTone,
-          SOURCEURL
+        SELECT SQLDATE, Actor1Name, Actor2Name, EventCode, GoldsteinScale, NumMentions, AvgTone, SOURCEURL
         FROM \`gdelt-bq.gdeltv2.events_partitioned\`
         WHERE SQLDATE >= ${dateStr}
+          AND ActionGeo_CountryCode = 'US'
           AND (LOWER(Actor1Name) LIKE '%${safeQuery.toLowerCase()}%'
                OR LOWER(Actor2Name) LIKE '%${safeQuery.toLowerCase()}%')
-          AND (QuadClass IN (1, 2, 4) OR NumMentions > 10)
-        ORDER BY SQLDATE DESC, NumMentions DESC
+        ORDER BY SQLDATE DESC
         LIMIT 50
       `;
       resultKey = "events";
