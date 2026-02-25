@@ -78,7 +78,7 @@ const HeroSearch = () => {
   const [toggles, setToggles] = useState<Record<string, boolean>>({ ...DEFAULT_TOGGLES });
 
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, subscribed, subscriptionLoading } = useAuth();
 
   const resetFilters = () => {
     setSuffix("");
@@ -98,6 +98,16 @@ const HeroSearch = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    if (!subscribed && !subscriptionLoading) {
+      navigate("/pricing");
+      return;
+    }
 
     const actualSuffix = suffix && suffix !== "none" ? suffix : "";
     const fullName = actualSuffix ? `${name.trim()} ${actualSuffix}` : name.trim();

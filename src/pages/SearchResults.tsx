@@ -59,9 +59,21 @@ const SearchResults = () => {
   const [saving, setSaving] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, subscribed, subscriptionLoading } = useAuth();
 
   useEffect(() => {
+    // Redirect if not authenticated or not subscribed
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    if (!subscriptionLoading && !subscribed) {
+      navigate("/pricing");
+      return;
+    }
+    // Wait for subscription check to finish before searching
+    if (subscriptionLoading) return;
+
     let cancelled = false;
     setLoading(true);
     setError(false);
@@ -91,7 +103,7 @@ const SearchResults = () => {
         }
       });
     return () => { cancelled = true; };
-  }, [name, state, searchParams]);
+  }, [name, state, searchParams, user, subscribed, subscriptionLoading, navigate]);
 
   const fetchInvestigations = async () => {
     if (!user) return;
