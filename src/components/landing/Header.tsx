@@ -58,6 +58,7 @@ const Header = () => {
             )}
           </div>
 
+          <Link to="/pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
           <Link to="/founding-member" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5">
             Founding Members
             <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">OPEN</span>
@@ -87,6 +88,7 @@ const Header = () => {
           <Link to="/" className="block text-sm font-medium text-muted-foreground hover:text-foreground">Home</Link>
           <Link to="/about" className="block text-sm font-medium text-muted-foreground hover:text-foreground">About Us</Link>
           <Link to="/news" className="block text-sm font-medium text-muted-foreground hover:text-foreground pl-4">News</Link>
+          <Link to="/pricing" className="block text-sm font-medium text-muted-foreground hover:text-foreground">Pricing</Link>
           <Link to="/founding-member" className="block text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
             Founding Members
             <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">OPEN</span>
