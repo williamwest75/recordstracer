@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, TIERS, TierKey } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import Header from "@/components/landing/Header";
+import Footer from "@/components/landing/Footer";
 
 const tierFeatures: Record<TierKey, string[]> = {
   solo: [
@@ -79,7 +81,9 @@ const Pricing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <main className="flex-1">
       <div className="max-w-6xl mx-auto px-4 py-16 sm:py-24">
         <div className="text-center mb-16">
           <h1
@@ -161,6 +165,8 @@ const Pricing = () => {
           )}
         </div>
       </div>
+      </main>
+      <Footer />
     </div>
   );
 };
