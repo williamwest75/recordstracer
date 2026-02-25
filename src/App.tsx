@@ -16,6 +16,7 @@ import Privacy from "./pages/Privacy";
 import About from "./pages/About";
 import News from "./pages/News";
 import NewsPost from "./pages/NewsPost";
+import Pricing from "./pages/Pricing";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/news" element={<News />} />
             <Route path="/news/:slug" element={<NewsPost />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
