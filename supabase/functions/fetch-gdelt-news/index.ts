@@ -150,7 +150,7 @@ serve(async (req) => {
     } else {
       sql = `
         SELECT SQLDATE, Actor1Name, Actor2Name, EventCode, GoldsteinScale, NumMentions, AvgTone, SOURCEURL
-        FROM \`gdelt-bq.gdeltv2.events_partitioned\`
+        FROM \`gdelt-bq.gdeltv2.events\`
         WHERE SQLDATE >= ${dateStr}
           AND ActionGeo_CountryCode = 'US'
           AND (LOWER(Actor1Name) LIKE '%${safeQuery.toLowerCase()}%'
@@ -161,7 +161,9 @@ serve(async (req) => {
       resultKey = "events";
     }
 
+    console.log("[GDELT-BQ] SQL:", sql);
     const rows = await queryBigQuery(accessToken, sa.project_id, sql);
+    console.log("[GDELT-BQ] rows returned:", rows.length);
 
     return new Response(JSON.stringify({ [resultKey]: rows, mode, query, days }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
