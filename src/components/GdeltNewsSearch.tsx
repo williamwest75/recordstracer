@@ -96,19 +96,30 @@ const GdeltNewsSearch = () => {
 
   const exportToCSV = (rows: any[]) => {
     if (rows.length === 0) return;
-    const headers = Object.keys(rows[0]).join(",");
-    const csvRows = rows.map((row) =>
+    const readableData = rows.map((row) => ({
+      Date: row.SQLDATE || row.DATE || row.MentionDateTime || "",
+      Source: row.Actor1Name || row.MentionSourceName || "N/A",
+      Target: row.Actor2Name || "N/A",
+      Category: GDELT_MAPPINGS.quadClass[row.QuadClass] || "Unknown",
+      Action:
+        GDELT_MAPPINGS.eventCodes[row.EventCode?.toString().slice(0, 2)] ||
+        "Other Action",
+      Sentiment: parseFloat(row.AvgTone || row.MentionDocTone || "0") > 0 ? "Positive" : "Negative",
+      URL: row.SOURCEURL || row.url || "",
+    }));
+    const headers = Object.keys(readableData[0]).join(",");
+    const csvRows = readableData.map((row) =>
       Object.values(row)
         .map((val) => `"${String(val ?? "").replace(/"/g, '""')}"`)
         .join(",")
     );
-    const blob = new Blob([headers + "\n" + csvRows.join("\n")], {
+    const blob = new Blob([[headers, ...csvRows].join("\n")], {
       type: "text/csv;charset=utf-8;",
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `gdelt_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `Intelligence_Report_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
