@@ -208,9 +208,9 @@ serve(async (req) => {
             SELECT SQLDATE, Actor1Name, Actor2Name, EventCode, GoldsteinScale, NumMentions, AvgTone, SOURCEURL
             FROM \`gdelt-bq.gdeltv2.events_partitioned\`
             WHERE _PARTITIONTIME >= TIMESTAMP("${dateLimit.toISOString().slice(0, 10)}")
-              AND ActionGeo_CountryCode = 'US'
               AND (LOWER(Actor1Name) LIKE '%${safeQuery.toLowerCase()}%'
-                   OR LOWER(Actor2Name) LIKE '%${safeQuery.toLowerCase()}%')
+                   OR LOWER(Actor2Name) LIKE '%${safeQuery.toLowerCase()}%'
+                   OR LOWER(SOURCEURL) LIKE '%${safeQuery.toLowerCase()}%')
             ORDER BY SQLDATE DESC, NumMentions DESC
             LIMIT 50
           `;
