@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, Search, Newspaper, BarChart3, Users, Globe } from "lucide-react";
+import { ExternalLink, Search, Newspaper, BarChart3, Users, Globe, Copy, Download } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -58,6 +58,36 @@ const GdeltNewsSearch = () => {
   };
 
   const results = data?.events ?? data?.knowledge_graph ?? data?.mentions ?? [];
+
+  const copyToClipboard = (rows: any[]) => {
+    const text = rows
+      .map(
+        (row) =>
+          `${row.SQLDATE || row.DATE || row.MentionDateTime}: ${row.Actor1Name || "Event"} - ${row.SOURCEURL || row.url}`
+      )
+      .join("\n");
+    navigator.clipboard.writeText(text);
+    alert("Intelligence summary copied to clipboard!");
+  };
+
+  const exportToCSV = (rows: any[]) => {
+    if (rows.length === 0) return;
+    const headers = Object.keys(rows[0]).join(",");
+    const csvRows = rows.map((row) =>
+      Object.values(row)
+        .map((val) => `"${String(val ?? "").replace(/"/g, '""')}"`)
+        .join(",")
+    );
+    const blob = new Blob([headers + "\n" + csvRows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `gdelt_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const getTone = (row: any): number => {
     if (row.AvgTone) return Number(row.AvgTone);
@@ -151,7 +181,16 @@ const GdeltNewsSearch = () => {
         )}
 
         {!isLoading && results.length > 0 && (
-          <div className="mt-2 overflow-hidden rounded-lg border border-border bg-card shadow">
+          <div className="mt-2">
+            <div className="flex justify-end gap-2 mb-2">
+              <Button variant="outline" size="sm" onClick={() => copyToClipboard(results)}>
+                <Copy className="h-3.5 w-3.5 mr-1" /> Copy
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportToCSV(results)}>
+                <Download className="h-3.5 w-3.5 mr-1" /> Export CSV
+              </Button>
+            </div>
+            <div className="overflow-hidden rounded-lg border border-border bg-card shadow">
             <ScrollArea className="h-[600px]">
               <div className="overflow-x-auto">
                 <Table>
@@ -214,6 +253,7 @@ const GdeltNewsSearch = () => {
                 </Table>
               </div>
             </ScrollArea>
+            </div>
           </div>
         )}
       </div>
