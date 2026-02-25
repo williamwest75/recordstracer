@@ -159,7 +159,8 @@ serve(async (req) => {
       `;
       resultKey = "mentions";
     } else {
-      // Default: events table – who did what to whom
+      // Default: events table – filtered for significant events
+      // QuadClass: 1=Verbal Cooperation, 2=Material Cooperation, 3=Verbal Conflict, 4=Material Conflict
       sql = `
         SELECT
           SQLDATE,
@@ -174,7 +175,8 @@ serve(async (req) => {
         WHERE SQLDATE >= ${dateStr}
           AND (LOWER(Actor1Name) LIKE '%${safeQuery.toLowerCase()}%'
                OR LOWER(Actor2Name) LIKE '%${safeQuery.toLowerCase()}%')
-        ORDER BY SQLDATE DESC
+          AND (QuadClass IN (1, 2, 4) OR NumMentions > 10)
+        ORDER BY SQLDATE DESC, NumMentions DESC
         LIMIT 50
       `;
       resultKey = "events";
