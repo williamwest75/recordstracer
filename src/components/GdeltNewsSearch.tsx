@@ -131,6 +131,15 @@ const GdeltNewsSearch = () => {
     return 0;
   };
 
+  const getSentimentBadge = (avgTone: number) => {
+    if (avgTone > 2) {
+      return { label: "Positive Coverage", variant: "default" as const };
+    } else if (avgTone < -2) {
+      return { label: "Critical / Negative", variant: "destructive" as const };
+    }
+    return { label: "Neutral / Factual", variant: "secondary" as const };
+  };
+
   const getDetails = (row: any): { primary: string; secondary: string } => {
     if (mode === "events") {
       const rootCode = row.EventCode?.toString().slice(0, 2);
@@ -261,12 +270,14 @@ const GdeltNewsSearch = () => {
                             </div>
                           </TableCell>
                           <TableCell className="py-4">
-                            <Badge
-                              variant={tone > 0 ? "default" : "destructive"}
-                              className="text-xs"
-                            >
-                              {tone.toFixed(2)}
-                            </Badge>
+                            {(() => {
+                              const sentiment = getSentimentBadge(tone);
+                              return (
+                                <Badge variant={sentiment.variant} className="text-xs">
+                                  {sentiment.label} ({tone.toFixed(1)})
+                                </Badge>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell className="py-4 text-right">
                             {link ? (
