@@ -133,11 +133,11 @@ const Pricing = () => {
                   key={key}
                   className={`relative rounded-lg border p-8 flex flex-col ${
                     isCurrentPlan
-                      ? "border-accent ring-2 ring-accent"
+                      ? "border-accent ring-2 ring-accent bg-accent/5 shadow-lg shadow-accent/10"
                       : isPopular
-                      ? "border-primary ring-2 ring-primary"
-                      : "border-border"
-                  } bg-card`}
+                      ? "border-primary ring-2 ring-primary bg-card"
+                      : "border-border bg-card"
+                  }`}
                 >
                   {isCurrentPlan && (
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground text-xs font-semibold px-3 py-1 rounded-full">
