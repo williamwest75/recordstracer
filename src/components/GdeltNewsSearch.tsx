@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ExternalLink, Search, Newspaper, BarChart3, Users, Globe, Copy, Download } from "lucide-react";
+import { ExternalLink, Search, Newspaper, BarChart3, Users, Globe, Copy, Download, Info } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type QueryMode = "events" | "gkg" | "mentions";
 
@@ -272,10 +273,28 @@ const GdeltNewsSearch = () => {
                           <TableCell className="py-4">
                             {(() => {
                               const sentiment = getSentimentBadge(tone);
+                              const explanation =
+                                tone > 2
+                                  ? "The language in these reports is predominantly positive, optimistic, or supportive."
+                                  : tone < -2
+                                  ? "The language is predominantly critical, focusing on conflict, tragedy, or negative sentiment."
+                                  : "The reporting is mostly factual, neutral, or balanced in its delivery.";
                               return (
-                                <Badge variant={sentiment.variant} className="text-xs">
-                                  {sentiment.label} ({tone.toFixed(1)})
-                                </Badge>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="inline-flex items-center gap-1 cursor-help">
+                                        <Badge variant={sentiment.variant} className="text-xs">
+                                          {sentiment.label} ({tone.toFixed(1)})
+                                        </Badge>
+                                        <Info className="h-3 w-3 text-muted-foreground" />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs text-xs">
+                                      {explanation}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               );
                             })()}
                           </TableCell>
