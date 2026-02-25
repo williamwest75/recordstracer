@@ -155,7 +155,7 @@ serve(async (req) => {
           AND ActionGeo_CountryCode = 'US'
           AND (LOWER(Actor1Name) LIKE '%${safeQuery.toLowerCase()}%'
                OR LOWER(Actor2Name) LIKE '%${safeQuery.toLowerCase()}%')
-        ORDER BY SQLDATE DESC
+        ORDER BY SQLDATE DESC, NumMentions DESC
         LIMIT 50
       `;
       resultKey = "events";
