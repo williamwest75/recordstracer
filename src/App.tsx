@@ -17,6 +17,7 @@ import About from "./pages/About";
 import News from "./pages/News";
 import NewsPost from "./pages/NewsPost";
 import Pricing from "./pages/Pricing";
+import GdeltNews from "./pages/GdeltNews";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/news" element={<News />} />
             <Route path="/news/:slug" element={<NewsPost />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/gdelt-news" element={<GdeltNews />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
