@@ -24,6 +24,20 @@ const GdeltNewsSearch = () => {
   const [submitted, setSubmitted] = useState("");
   const [mode, setMode] = useState<QueryMode>("events");
 
+  const getNextUpdateTime = () => {
+    const now = new Date();
+    const morning = new Date(now);
+    morning.setHours(7, 0, 0, 0);
+    const evening = new Date(now);
+    evening.setHours(19, 0, 0, 0);
+
+    if (now < morning) return morning.getTime() - now.getTime();
+    if (now < evening) return evening.getTime() - now.getTime();
+    const tomorrow = new Date(morning);
+    tomorrow.setDate(morning.getDate() + 1);
+    return tomorrow.getTime() - now.getTime();
+  };
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["gdelt-bq", submitted, mode],
     queryFn: async () => {
@@ -33,6 +47,8 @@ const GdeltNewsSearch = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: getNextUpdateTime(),
+    gcTime: 1000 * 60 * 60 * 24,
     enabled: !!submitted,
   });
 
