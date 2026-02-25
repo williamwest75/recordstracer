@@ -24,7 +24,6 @@ async function getAccessToken(sa: {
     })
   );
 
-  // Import the RSA private key
   const pemBody = sa.private_key
     .replace(/-----BEGIN PRIVATE KEY-----/, "")
     .replace(/-----END PRIVATE KEY-----/, "")
@@ -94,6 +93,50 @@ async function queryBigQuery(
   );
 }
 
+/** Free GDELT Doc API fallback – no credentials needed. */
+async function queryGdeltDocApi(query: string, days: number, mode: string): Promise<{ rows: any[]; resultKey: string }> {
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+  const fmt = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, "");
+
+  // The GDELT DOC 2.0 API
+  const params = new URLSearchParams({
+    query: `${query} sourcelang:eng sourcecountry:US`,
+    mode: "ArtList",
+    maxrecords: "50",
+    format: "json",
+    startdatetime: `${fmt(startDate)}000000`,
+    enddatetime: `${fmt(endDate)}235959`,
+  });
+
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc?${params}`;
+  console.log("[GDELT-DOC] URL:", url);
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`GDELT Doc API error (${res.status}): ${text}`);
+  }
+
+  const data = await res.json();
+  const articles = data.articles ?? [];
+
+  // Normalize to match the shape the frontend expects for "events" mode
+  const rows = articles.map((a: any) => ({
+    SQLDATE: a.seendate?.replace(/[- :]/g, "").slice(0, 8) ?? "",
+    Actor1Name: a.sourcecountry ?? a.domain ?? "Unknown",
+    Actor2Name: a.title?.split(/[-–—:|]/)[0]?.trim().slice(0, 40) ?? "",
+    EventCode: "01",
+    GoldsteinScale: String(a.tone ?? 0),
+    NumMentions: String(a.socialimage ? 5 : 1),
+    AvgTone: String(a.tone ?? 0),
+    SOURCEURL: a.url ?? "",
+  }));
+
+  return { rows, resultKey: "events" };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -108,68 +151,86 @@ serve(async (req) => {
       });
     }
 
+    // ── Try BigQuery first ──
+    let rows: any[] = [];
+    let resultKey = "events";
+    let usedFallback = false;
+
     const saJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
-    if (!saJson) {
-      throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON secret is not configured");
+
+    if (saJson) {
+      try {
+        const sa = JSON.parse(saJson);
+        const accessToken = await getAccessToken(sa);
+
+        const dateLimit = new Date();
+        dateLimit.setDate(dateLimit.getDate() - days);
+        const dateStr = dateLimit.toISOString().slice(0, 10).replace(/-/g, "");
+
+        const safeQuery = query.replace(/'/g, "\\'");
+
+        let sql: string;
+
+        if (mode === "gkg") {
+          sql = `
+            SELECT DATE, DocumentIdentifier AS url, V2Themes, V2Persons, V2Organizations, V2Tone
+            FROM \`gdelt-bq.gdeltv2.gkg_partitioned\`
+            WHERE _PARTITIONTIME >= TIMESTAMP("${dateLimit.toISOString().slice(0, 10)}")
+              AND LOWER(DocumentIdentifier) LIKE '%${safeQuery.toLowerCase()}%'
+              AND V2Locations LIKE '%United States%'
+            ORDER BY DATE DESC
+            LIMIT 50
+          `;
+          resultKey = "knowledge_graph";
+        } else if (mode === "mentions") {
+          sql = `
+            SELECT MentionDateTime, MentionSourceName, MentionIdentifier AS url, MentionDocTone, Confidence
+            FROM \`gdelt-bq.gdeltv2.eventmentions_partitioned\`
+            WHERE _PARTITIONTIME >= TIMESTAMP("${dateLimit.toISOString().slice(0, 10)}")
+              AND ActionGeo_CountryCode = 'US'
+              AND LOWER(MentionSourceName) LIKE '%${safeQuery.toLowerCase()}%'
+            ORDER BY MentionDateTime DESC
+            LIMIT 50
+          `;
+          resultKey = "mentions";
+        } else {
+          sql = `
+            SELECT SQLDATE, Actor1Name, Actor2Name, EventCode, GoldsteinScale, NumMentions, AvgTone, SOURCEURL
+            FROM \`gdelt-bq.gdeltv2.events_partitioned\`
+            WHERE _PARTITIONTIME >= TIMESTAMP("${dateLimit.toISOString().slice(0, 10)}")
+              AND ActionGeo_CountryCode = 'US'
+              AND (LOWER(Actor1Name) LIKE '%${safeQuery.toLowerCase()}%'
+                   OR LOWER(Actor2Name) LIKE '%${safeQuery.toLowerCase()}%')
+            ORDER BY SQLDATE DESC, NumMentions DESC
+            LIMIT 50
+          `;
+          resultKey = "events";
+        }
+
+        console.log("[GDELT-BQ] SQL:", sql);
+        rows = await queryBigQuery(accessToken, sa.project_id, sql);
+        console.log("[GDELT-BQ] rows returned:", rows.length);
+      } catch (bqErr) {
+        console.warn("[GDELT-BQ] BigQuery failed, falling back to Doc API:", String(bqErr));
+        rows = []; // trigger fallback below
+      }
     }
-    const sa = JSON.parse(saJson);
-    const accessToken = await getAccessToken(sa);
 
-    const dateLimit = new Date();
-    dateLimit.setDate(dateLimit.getDate() - days);
-    const dateStr = dateLimit.toISOString().slice(0, 10).replace(/-/g, "");
-
-    // Sanitise input for SQL (basic escaping)
-    const safeQuery = query.replace(/'/g, "\\'");
-
-    let sql: string;
-    let resultKey: string;
-
-    if (mode === "gkg") {
-      sql = `
-        SELECT DATE, DocumentIdentifier AS url, V2Themes, V2Persons, V2Organizations, V2Tone
-        FROM \`gdelt-bq.gdeltv2.gkg_partitioned\`
-        WHERE DATE >= ${dateStr}000000
-          AND LOWER(DocumentIdentifier) LIKE '%${safeQuery.toLowerCase()}%'
-          AND V2Locations LIKE '%United States%'
-        ORDER BY DATE DESC
-        LIMIT 50
-      `;
-      resultKey = "knowledge_graph";
-    } else if (mode === "mentions") {
-      sql = `
-        SELECT MentionDateTime, MentionSourceName, MentionIdentifier AS url, MentionDocTone, Confidence
-        FROM \`gdelt-bq.gdeltv2.eventmentions_partitioned\`
-        WHERE CAST(SUBSTR(CAST(MentionDateTime AS STRING), 1, 8) AS INT64) >= ${dateStr}
-          AND ActionGeo_CountryCode = 'US'
-          AND LOWER(MentionSourceName) LIKE '%${safeQuery.toLowerCase()}%'
-        ORDER BY MentionDateTime DESC
-        LIMIT 50
-      `;
-      resultKey = "mentions";
-    } else {
-      sql = `
-        SELECT SQLDATE, Actor1Name, Actor2Name, EventCode, GoldsteinScale, NumMentions, AvgTone, SOURCEURL
-        FROM \`gdelt-bq.gdeltv2.events\`
-        WHERE SQLDATE >= ${dateStr}
-          AND ActionGeo_CountryCode = 'US'
-          AND (LOWER(Actor1Name) LIKE '%${safeQuery.toLowerCase()}%'
-               OR LOWER(Actor2Name) LIKE '%${safeQuery.toLowerCase()}%')
-        ORDER BY SQLDATE DESC, NumMentions DESC
-        LIMIT 50
-      `;
-      resultKey = "events";
+    // ── Fallback to free GDELT Doc API ──
+    if (rows.length === 0) {
+      console.log("[GDELT] Using free Doc API fallback");
+      usedFallback = true;
+      const fallback = await queryGdeltDocApi(query, days, mode);
+      rows = fallback.rows;
+      resultKey = fallback.resultKey;
     }
 
-    console.log("[GDELT-BQ] SQL:", sql);
-    const rows = await queryBigQuery(accessToken, sa.project_id, sql);
-    console.log("[GDELT-BQ] rows returned:", rows.length);
-
-    return new Response(JSON.stringify({ [resultKey]: rows, mode, query, days }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ [resultKey]: rows, mode, query, days, source: usedFallback ? "gdelt-doc-api" : "bigquery" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (err) {
-    console.error("[GDELT-BQ] error", err);
+    console.error("[GDELT] error", err);
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
