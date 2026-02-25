@@ -244,15 +244,31 @@ const GdeltNewsSearch = () => {
         {!isLoading && results.length > 0 && (
           <div className="mt-2">
             {topActors.length > 0 && mode === "events" && (
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Top Actors:
-                </span>
-                {topActors.map(([name, count]) => (
-                  <Badge key={name} variant="outline" className="text-xs">
-                    {name} ({count})
-                  </Badge>
-                ))}
+              <div className="bg-muted/50 border border-border rounded-xl p-5 mb-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4 text-foreground">
+                  <span className="text-xl">🏆</span>
+                  <h3 className="font-bold text-sm uppercase tracking-wider">Top Entities in the News</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  {topActors.map(([name, count]) => (
+                    <div
+                      key={name}
+                      className="bg-card p-3 rounded-lg border border-border flex flex-col items-center justify-center text-center shadow-sm"
+                    >
+                      <span className="text-xs font-medium text-muted-foreground uppercase mb-1">Entity</span>
+                      <span className="text-sm font-bold text-primary truncate w-full" title={name}>
+                        {name}
+                      </span>
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        <span className="text-xs text-muted-foreground font-semibold">{count} Mentions</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-[11px] text-muted-foreground/60 italic">
+                  Note: This summary represents the most active organizations or individuals based on today's snapshot.
+                </p>
               </div>
             )}
             <div className="flex justify-end gap-2 mb-2">
