@@ -94,15 +94,16 @@ async function queryBigQuery(
 }
 
 /** Free GDELT Doc API fallback – no credentials needed. */
-async function queryGdeltDocApi(query: string, days: number, mode: string): Promise<{ rows: any[]; resultKey: string }> {
+async function queryGdeltDocApi(query: string, days: number, mode: string, usOnly: boolean): Promise<{ rows: any[]; resultKey: string }> {
   const endDate = new Date();
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
   const fmt = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, "");
 
-  // The GDELT DOC 2.0 API
+  const queryStr = usOnly ? `${query} sourcelang:eng sourcecountry:US` : `${query} sourcelang:eng`;
+
   const params = new URLSearchParams({
-    query: `${query} sourcelang:eng sourcecountry:US`,
+    query: queryStr,
     mode: "ArtList",
     maxrecords: "50",
     format: "json",
@@ -153,7 +154,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query, days = 7, mode = "events" } = await req.json();
+    const { query, days = 7, mode = "events", usOnly = false } = await req.json();
     if (!query || typeof query !== "string") {
       return new Response(JSON.stringify({ error: "query is required" }), {
         status: 400,
@@ -182,28 +183,31 @@ serve(async (req) => {
         let sql: string;
 
         if (mode === "gkg") {
+          const gkgUsFilter = usOnly ? `AND V2Locations LIKE '%United States%'` : "";
           sql = `
             SELECT DATE, DocumentIdentifier AS url, V2Themes, V2Persons, V2Organizations, V2Tone
             FROM \`gdelt-bq.gdeltv2.gkg_partitioned\`
             WHERE _PARTITIONTIME >= TIMESTAMP("${dateLimit.toISOString().slice(0, 10)}")
               AND LOWER(DocumentIdentifier) LIKE '%${safeQuery.toLowerCase()}%'
-              AND V2Locations LIKE '%United States%'
+              ${gkgUsFilter}
             ORDER BY DATE DESC
             LIMIT 50
           `;
           resultKey = "knowledge_graph";
         } else if (mode === "mentions") {
+          const mentionsUsFilter = usOnly ? `AND ActionGeo_CountryCode = 'US'` : "";
           sql = `
             SELECT MentionDateTime, MentionSourceName, MentionIdentifier AS url, MentionDocTone, Confidence
             FROM \`gdelt-bq.gdeltv2.eventmentions_partitioned\`
             WHERE _PARTITIONTIME >= TIMESTAMP("${dateLimit.toISOString().slice(0, 10)}")
-              AND ActionGeo_CountryCode = 'US'
               AND LOWER(MentionSourceName) LIKE '%${safeQuery.toLowerCase()}%'
+              ${mentionsUsFilter}
             ORDER BY MentionDateTime DESC
             LIMIT 50
           `;
           resultKey = "mentions";
         } else {
+          const eventsUsFilter = usOnly ? `AND ActionGeo_CountryCode = 'US'` : "";
           sql = `
             SELECT SQLDATE, Actor1Name, Actor2Name, EventCode, GoldsteinScale, NumMentions, AvgTone, SOURCEURL
             FROM \`gdelt-bq.gdeltv2.events_partitioned\`
@@ -211,6 +215,7 @@ serve(async (req) => {
               AND (LOWER(Actor1Name) LIKE '%${safeQuery.toLowerCase()}%'
                    OR LOWER(Actor2Name) LIKE '%${safeQuery.toLowerCase()}%'
                    OR LOWER(SOURCEURL) LIKE '%${safeQuery.toLowerCase()}%')
+              ${eventsUsFilter}
             ORDER BY SQLDATE DESC, NumMentions DESC
             LIMIT 50
           `;
@@ -230,7 +235,7 @@ serve(async (req) => {
     if (rows.length === 0) {
       console.log("[GDELT] Using free Doc API fallback");
       usedFallback = true;
-      const fallback = await queryGdeltDocApi(query, days, mode);
+      const fallback = await queryGdeltDocApi(query, days, mode, usOnly);
       rows = fallback.rows;
       resultKey = fallback.resultKey;
     }

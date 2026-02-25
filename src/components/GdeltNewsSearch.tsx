@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { ExternalLink, Search, Newspaper, BarChart3, Users, Globe, Copy, Download, Info, TrendingUp, TrendingDown } from "lucide-react";
 import {
   Table,
@@ -48,6 +50,7 @@ const GdeltNewsSearch = () => {
   const [keyword, setKeyword] = useState("");
   const [submitted, setSubmitted] = useState("");
   const [mode, setMode] = useState<QueryMode>("events");
+  const [usOnly, setUsOnly] = useState(false);
 
   const getNextUpdateTime = () => {
     const now = new Date();
@@ -64,10 +67,10 @@ const GdeltNewsSearch = () => {
   };
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["gdelt-bq", submitted, mode],
+    queryKey: ["gdelt-bq", submitted, mode, usOnly],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("fetch-gdelt-news", {
-        body: { query: submitted, days: 7, mode },
+        body: { query: submitted, days: 7, mode, usOnly },
       });
       if (error) throw error;
       return data;
@@ -211,7 +214,7 @@ const GdeltNewsSearch = () => {
           </TabsList>
         </Tabs>
 
-        <form onSubmit={handleSearch} className="flex gap-2 mb-8">
+        <form onSubmit={handleSearch} className="flex gap-2 mb-4">
           <Input
             placeholder={
               mode === "events"
@@ -228,6 +231,13 @@ const GdeltNewsSearch = () => {
             <Search className="h-4 w-4 mr-1" /> Search
           </Button>
         </form>
+
+        <div className="flex items-center gap-2 mb-8">
+          <Switch id="us-only" checked={usOnly} onCheckedChange={setUsOnly} />
+          <Label htmlFor="us-only" className="text-sm text-muted-foreground cursor-pointer">
+            US sources only
+          </Label>
+        </div>
 
         {isLoading && (
           <div className="space-y-4">
