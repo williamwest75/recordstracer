@@ -19,6 +19,30 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 type QueryMode = "events" | "gkg" | "mentions";
 
+const GDELT_MAPPINGS = {
+  quadClass: {
+    1: "Verbal Cooperation",
+    2: "Material Cooperation",
+    3: "Verbal Conflict",
+    4: "Material Conflict",
+  } as Record<number, string>,
+  eventCodes: {
+    "01": "Public Statement",
+    "02": "Appeal/Request",
+    "03": "Intent to Cooperate",
+    "04": "Consult/Visit",
+    "05": "Praise/Endorse",
+    "06": "Negotiate",
+    "07": "Provide Aid",
+    "08": "Yield/Concede",
+    "09": "Investigate",
+    "10": "Demand",
+    "14": "Protest",
+    "18": "Assault/Violence",
+    "19": "Military Action",
+  } as Record<string, string>,
+};
+
 const GdeltNewsSearch = () => {
   const [keyword, setKeyword] = useState("");
   const [submitted, setSubmitted] = useState("");
@@ -98,9 +122,11 @@ const GdeltNewsSearch = () => {
 
   const getDetails = (row: any): { primary: string; secondary: string } => {
     if (mode === "events") {
+      const rootCode = row.EventCode?.toString().slice(0, 2);
+      const eventLabel = GDELT_MAPPINGS.eventCodes[rootCode] || `Event ${row.EventCode}`;
       return {
         primary: `${row.Actor1Name || "Unknown"} → ${row.Actor2Name || "Unknown"}`,
-        secondary: row.SQLDATE ?? "",
+        secondary: `${row.SQLDATE ?? ""} · ${eventLabel}`,
       };
     }
     if (mode === "gkg") {
