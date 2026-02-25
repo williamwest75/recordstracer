@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -123,10 +124,7 @@ async function queryGdeltDocApi(query: string, days: number, mode: string, usOnl
   const data = await res.json();
   const articles = data.articles ?? [];
 
-  // Normalize to match the shape the frontend expects for "events" mode
   const rows = articles.map((a: any) => {
-    // GDELT Doc API tone is a semicolon-separated string: "overallTone;pos;neg;polarity;..."
-    // or sometimes just a number
     let tone = 0;
     if (a.tone != null) {
       const toneStr = String(a.tone);
@@ -154,6 +152,30 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate the request
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: authError } = await supabase.auth.getClaims(token);
+    if (authError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { query, days = 7, mode = "events", usOnly = false } = await req.json();
     if (!query || typeof query !== "string") {
       return new Response(JSON.stringify({ error: "query is required" }), {
@@ -227,7 +249,7 @@ serve(async (req) => {
         console.log("[GDELT-BQ] rows returned:", rows.length);
       } catch (bqErr) {
         console.warn("[GDELT-BQ] BigQuery failed, falling back to Doc API:", String(bqErr));
-        rows = []; // trigger fallback below
+        rows = [];
       }
     }
 

@@ -28,6 +28,14 @@ serve(async (req) => {
   }
 
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+  if (!webhookSecret) {
+    logStep("ERROR", { message: "STRIPE_WEBHOOK_SECRET not configured" });
+    return new Response(JSON.stringify({ error: "Server misconfigured" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
   const supabase = createClient(
@@ -40,15 +48,10 @@ serve(async (req) => {
     const body = await req.text();
     let event: Stripe.Event;
 
-    if (webhookSecret) {
-      const signature = req.headers.get("stripe-signature");
-      if (!signature) throw new Error("Missing stripe-signature header");
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-      logStep("Webhook signature verified", { type: event.type });
-    } else {
-      event = JSON.parse(body) as Stripe.Event;
-      logStep("WARNING: No webhook secret, skipping signature verification", { type: event.type });
-    }
+    const signature = req.headers.get("stripe-signature");
+    if (!signature) throw new Error("Missing stripe-signature header");
+    event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    logStep("Webhook signature verified", { type: event.type });
 
     const relevantEvents = [
       "customer.subscription.created",
