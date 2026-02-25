@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -164,6 +164,20 @@ const GdeltNewsSearch = () => {
 
   const getLink = (row: any): string | null => row.SOURCEURL || row.url || null;
 
+  const topActors = useMemo(() => {
+    if (!results.length) return [];
+    const counts: Record<string, number> = {};
+    results.forEach((row: any) => {
+      const name = row.Actor1Name;
+      if (name && name !== "UNITED STATES") {
+        counts[name] = (counts[name] || 0) + 1;
+      }
+    });
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+  }, [results]);
+
   return (
     <section className="py-12">
       <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
@@ -229,6 +243,18 @@ const GdeltNewsSearch = () => {
 
         {!isLoading && results.length > 0 && (
           <div className="mt-2">
+            {topActors.length > 0 && mode === "events" && (
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Top Actors:
+                </span>
+                {topActors.map(([name, count]) => (
+                  <Badge key={name} variant="outline" className="text-xs">
+                    {name} ({count})
+                  </Badge>
+                ))}
+              </div>
+            )}
             <div className="flex justify-end gap-2 mb-2">
               <Button variant="outline" size="sm" onClick={() => copyToClipboard(results)}>
                 <Copy className="h-3.5 w-3.5 mr-1" /> Copy
