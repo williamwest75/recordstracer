@@ -64,10 +64,12 @@ const SearchResults = () => {
   useEffect(() => {
     // Redirect if not authenticated or not subscribed
     if (!user) {
+      toast({ title: "Sign in required", description: "Please sign in or create an account to search records." });
       navigate("/auth");
       return;
     }
     if (!subscriptionLoading && !subscribed) {
+      toast({ title: "Subscription required", description: "Choose a plan to start searching public records." });
       navigate("/pricing");
       return;
     }

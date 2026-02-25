@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -79,6 +80,7 @@ const HeroSearch = () => {
 
   const navigate = useNavigate();
   const { user, subscribed, subscriptionLoading } = useAuth();
+  const { toast } = useToast();
 
   const resetFilters = () => {
     setSuffix("");
@@ -100,11 +102,13 @@ const HeroSearch = () => {
     if (!name.trim()) return;
 
     if (!user) {
+      toast({ title: "Sign in required", description: "Please sign in or create an account to search records." });
       navigate("/auth");
       return;
     }
 
     if (!subscribed && !subscriptionLoading) {
+      toast({ title: "Subscription required", description: "Choose a plan to start searching public records." });
       navigate("/pricing");
       return;
     }
