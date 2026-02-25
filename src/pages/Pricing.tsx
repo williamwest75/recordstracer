@@ -32,7 +32,7 @@ const tierFeatures: Record<TierKey, string[]> = {
 };
 
 const Pricing = () => {
-  const { user, subscribed, subscriptionTier } = useAuth();
+  const { user, subscribed, subscriptionTier, subscriptionEnd } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loadingTier, setLoadingTier] = useState<TierKey | null>(null);
@@ -86,15 +86,40 @@ const Pricing = () => {
       <main className="flex-1">
       <div className="max-w-6xl mx-auto px-4 py-16 sm:py-24">
         <div className="text-center mb-16">
-          <h1
-            className="text-4xl sm:text-5xl font-bold text-foreground mb-4"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            Choose Your Plan
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Unlock the full power of public records intelligence. All plans include a 7-day free trial.
-          </p>
+          {subscribed && subscriptionTier ? (
+            <>
+              <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                <Check className="h-4 w-4" />
+                You're on the {TIERS[subscriptionTier].name} plan
+                {subscriptionEnd && (
+                  <span className="text-muted-foreground font-normal ml-1">
+                    · Renews {new Date(subscriptionEnd).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+              <h1
+                className="text-4xl sm:text-5xl font-bold text-foreground mb-4"
+                style={{ fontFamily: "var(--font-heading)" }}
+              >
+                Upgrade Your Plan
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Need more power? Upgrade to unlock additional searches, features, and support.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1
+                className="text-4xl sm:text-5xl font-bold text-foreground mb-4"
+                style={{ fontFamily: "var(--font-heading)" }}
+              >
+                Choose Your Plan
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Unlock the full power of public records intelligence. All plans include a 7-day free trial.
+              </p>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
