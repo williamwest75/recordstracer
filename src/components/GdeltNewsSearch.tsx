@@ -83,6 +83,7 @@ const GdeltNewsSearch = () => {
   };
 
   const results = data?.events ?? data?.knowledge_graph ?? data?.mentions ?? [];
+  const dataSource = data?.source as string | undefined;
 
   const copyToClipboard = (rows: any[]) => {
     const text = rows
@@ -169,7 +170,7 @@ const GdeltNewsSearch = () => {
     const actorStats: Record<string, { count: number; totalTone: number }> = {};
     results.forEach((row: any) => {
       const name = row.Actor1Name;
-      if (name && name !== "UNITED STATES") {
+      if (name && name.toUpperCase() !== "UNITED STATES") {
         if (!actorStats[name]) actorStats[name] = { count: 0, totalTone: 0 };
         actorStats[name].count += 1;
         actorStats[name].totalTone += parseFloat(row.AvgTone || 0);
@@ -251,6 +252,11 @@ const GdeltNewsSearch = () => {
 
         {!isLoading && results.length > 0 && (
           <div className="mt-2">
+            {dataSource === "gdelt-doc-api" && (
+              <div className="mb-4 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 border border-border">
+                ℹ️ Results from GDELT Doc API (tone/sentiment data unavailable in this mode).
+              </div>
+            )}
             {topActors.length > 0 && mode === "events" && (
               <div className="bg-muted/50 border border-border rounded-xl p-5 mb-6 shadow-sm">
                 <div className="flex items-center gap-2 mb-4 text-foreground">
@@ -273,9 +279,9 @@ const GdeltNewsSearch = () => {
                       </div>
                       <div className="mt-1 flex items-center gap-1 text-xs">
                         {actor.trend === "up" ? (
-                          <TrendingUp className="h-3 w-3 text-green-500" />
+                          <TrendingUp className="h-3 w-3 text-primary" />
                         ) : (
-                          <TrendingDown className="h-3 w-3 text-red-500" />
+                          <TrendingDown className="h-3 w-3 text-destructive" />
                         )}
                         <span className="text-muted-foreground">{actor.avgTone.toFixed(1)}</span>
                       </div>

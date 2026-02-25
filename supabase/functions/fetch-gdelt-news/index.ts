@@ -123,16 +123,26 @@ async function queryGdeltDocApi(query: string, days: number, mode: string): Prom
   const articles = data.articles ?? [];
 
   // Normalize to match the shape the frontend expects for "events" mode
-  const rows = articles.map((a: any) => ({
-    SQLDATE: a.seendate?.replace(/[- :]/g, "").slice(0, 8) ?? "",
-    Actor1Name: a.sourcecountry ?? a.domain ?? "Unknown",
-    Actor2Name: a.title?.split(/[-–—:|]/)[0]?.trim().slice(0, 40) ?? "",
-    EventCode: "01",
-    GoldsteinScale: String(a.tone ?? 0),
-    NumMentions: String(a.socialimage ? 5 : 1),
-    AvgTone: String(a.tone ?? 0),
-    SOURCEURL: a.url ?? "",
-  }));
+  const rows = articles.map((a: any) => {
+    // GDELT Doc API tone is a semicolon-separated string: "overallTone;pos;neg;polarity;..."
+    // or sometimes just a number
+    let tone = 0;
+    if (a.tone != null) {
+      const toneStr = String(a.tone);
+      const firstVal = toneStr.split(";")[0];
+      tone = parseFloat(firstVal) || 0;
+    }
+    return {
+      SQLDATE: a.seendate?.replace(/[- :]/g, "").slice(0, 8) ?? "",
+      Actor1Name: a.domain ?? a.sourcecountry ?? "Unknown",
+      Actor2Name: a.title?.split(/[-–—:|]/)[0]?.trim().slice(0, 40) ?? "",
+      EventCode: "01",
+      GoldsteinScale: String(tone),
+      NumMentions: String(a.socialimage ? 5 : 1),
+      AvgTone: String(tone),
+      SOURCEURL: a.url ?? "",
+    };
+  });
 
   return { rows, resultKey: "events" };
 }
