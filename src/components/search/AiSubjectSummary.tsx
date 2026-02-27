@@ -108,7 +108,22 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
           setError(data.error);
         } else if (data?.briefing) {
           setBriefing(data.briefing);
-        } else if (data?.summary) {
+          // Persist risk_level and flag counts to the search record
+          if (user) {
+            const flagCount: Record<string, number> = { red: 0, yellow: 0, green: 0, blue: 0 };
+            for (const f of (data.briefing.findings || [])) {
+              if (flagCount[f.flag] !== undefined) flagCount[f.flag]++;
+            }
+            supabase
+              .from("searches")
+              .update({ risk_level: data.briefing.riskLevel, flag_count: flagCount })
+              .eq("user_id", user.id)
+              .eq("subject_name", name)
+              .eq("state", state)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .then(() => {});
+          }
           // Fallback plain text
           setFallbackSummary(data.summary);
         }
