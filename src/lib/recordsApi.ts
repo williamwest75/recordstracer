@@ -40,10 +40,15 @@ function formatMoney(amount: number): string {
 }
 
 async function proxyFetch(source: string, searchName: string, state?: string): Promise<any> {
+  console.log(`[proxyFetch] Calling records-proxy for source: ${source}`);
   const { data, error } = await supabase.functions.invoke("records-proxy", {
     body: { source, searchName, state },
   });
-  if (error) throw new Error(`Proxy error: ${error.message}`);
+  if (error) {
+    console.error(`[proxyFetch] Error for ${source}:`, error);
+    throw new Error(`Proxy error: ${error.message}`);
+  }
+  console.log(`[proxyFetch] Success for ${source}:`, typeof data);
   return data;
 }
 

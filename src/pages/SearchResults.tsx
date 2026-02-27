@@ -93,13 +93,15 @@ const SearchResults = () => {
     searchAll(name, state, options)
       .then((data) => {
         if (!cancelled) {
+          console.log("[SearchResults] searchAll returned", data.results.length, "results, debug:", data.debug);
           setResults(data.results);
           setDebugInfo(data.debug);
           setLoading(false);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
+          console.error("[SearchResults] searchAll FAILED:", err);
           setError(true);
           setLoading(false);
         }
