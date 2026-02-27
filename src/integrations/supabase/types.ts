@@ -193,7 +193,11 @@ export type Database = {
           additional_info: string | null
           city: string | null
           created_at: string
+          database_count: number | null
+          flag_count: Json | null
           id: string
+          result_count: number | null
+          risk_level: string | null
           state: string
           subject_name: string
           user_id: string
@@ -202,7 +206,11 @@ export type Database = {
           additional_info?: string | null
           city?: string | null
           created_at?: string
+          database_count?: number | null
+          flag_count?: Json | null
           id?: string
+          result_count?: number | null
+          risk_level?: string | null
           state: string
           subject_name: string
           user_id: string
@@ -211,7 +219,11 @@ export type Database = {
           additional_info?: string | null
           city?: string | null
           created_at?: string
+          database_count?: number | null
+          flag_count?: Json | null
           id?: string
+          result_count?: number | null
+          risk_level?: string | null
           state?: string
           subject_name?: string
           user_id?: string

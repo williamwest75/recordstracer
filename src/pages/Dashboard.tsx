@@ -112,16 +112,38 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {searches.map((s) => (
-                  <Link
-                    key={s.id}
-                    to={`/search-results?name=${encodeURIComponent(s.subject_name)}&state=${encodeURIComponent(s.state)}`}
-                    className="block border border-border rounded-lg p-4 bg-card hover:shadow-sm transition-shadow"
-                  >
-                    <p className="text-sm font-semibold text-foreground">{s.subject_name}</p>
-                    <p className="text-xs text-muted-foreground">{s.state}{s.city ? `, ${s.city}` : ""} · {new Date(s.created_at).toLocaleDateString()}</p>
-                  </Link>
-                ))}
+                {searches.map((s) => {
+                  const rc = (s as any).result_count as number | null;
+                  const dc = (s as any).database_count as number | null;
+                  const rl = (s as any).risk_level as string | null;
+                  return (
+                    <Link
+                      key={s.id}
+                      to={`/search-results?name=${encodeURIComponent(s.subject_name)}&state=${encodeURIComponent(s.state)}`}
+                      className="block border border-border rounded-lg p-4 bg-card hover:shadow-sm transition-shadow"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-foreground">{s.subject_name}</p>
+                        {rl && (
+                          <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                            rl === "high" ? "bg-destructive/15 text-destructive" :
+                            rl === "elevated" ? "bg-warning/15 text-warning" :
+                            rl === "moderate" ? "bg-accent/15 text-accent" :
+                            "bg-success/15 text-success"
+                          }`}>
+                            {rl} risk
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {s.state}{s.city ? `, ${s.city}` : ""} · {new Date(s.created_at).toLocaleDateString()}
+                        {rc != null && rc > 0 && (
+                          <span className="ml-2 font-medium text-foreground">{rc} record{rc !== 1 ? "s" : ""} across {dc} database{dc !== 1 ? "s" : ""}</span>
+                        )}
+                      </p>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>

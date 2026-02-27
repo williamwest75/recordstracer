@@ -93,12 +93,35 @@ const SearchResults = () => {
     };
 
     searchAll(name, state, options)
-      .then((data) => {
+      .then(async (data) => {
         if (!cancelled) {
           console.log("[SearchResults] searchAll returned", data.results.length, "results, debug:", data.debug);
           setResults(data.results);
           setDebugInfo(data.debug);
           setLoading(false);
+
+          // Persist search metrics for dashboard previews
+          if (user && data.results.length > 0) {
+            const categoryCounts: Record<string, number> = {};
+            for (const r of data.results) {
+              categoryCounts[r.category] = (categoryCounts[r.category] || 0) + 1;
+            }
+            const dbCount = Object.keys(categoryCounts).length;
+            const flagCount = { red: 0, yellow: 0, green: 0, blue: 0 };
+            // We'll update risk_level later when AI summary returns; for now store counts
+            await supabase
+              .from("searches")
+              .update({
+                result_count: data.results.length,
+                database_count: dbCount,
+                flag_count: flagCount,
+              })
+              .eq("user_id", user.id)
+              .eq("subject_name", name)
+              .eq("state", state)
+              .order("created_at", { ascending: false })
+              .limit(1);
+          }
         }
       })
       .catch((err) => {
