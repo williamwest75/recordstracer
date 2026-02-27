@@ -42,6 +42,7 @@ interface AuthContextType {
   subscriptionEnd: string | null;
   subscriptionLoading: boolean;
   refreshSubscription: () => Promise<void>;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -54,6 +55,7 @@ const AuthContext = createContext<AuthContextType>({
   subscriptionEnd: null,
   subscriptionLoading: true,
   refreshSubscription: async () => {},
+  isAdmin: false,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -65,6 +67,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [subscriptionTier, setSubscriptionTier] = useState<TierKey | null>(null);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const checkAdminRole = useCallback(async (userId: string) => {
+    try {
+      const { data } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+      setIsAdmin(!!data);
+    } catch {
+      setIsAdmin(false);
+    }
+  }, []);
 
   const checkSubscription = useCallback(async () => {
     try {
@@ -97,11 +109,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
         if (session) {
           setTimeout(() => checkSubscription(), 0);
+          checkAdminRole(session.user.id);
         } else {
           setSubscribed(false);
           setSubscriptionTier(null);
           setSubscriptionEnd(null);
           setSubscriptionLoading(false);
+          setIsAdmin(false);
         }
       }
     );
@@ -109,12 +123,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
-      if (session) checkSubscription();
-      else setSubscriptionLoading(false);
+      if (session) {
+        checkSubscription();
+        checkAdminRole(session.user.id);
+      } else {
+        setSubscriptionLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [checkSubscription]);
+  }, [checkSubscription, checkAdminRole]);
 
   // Auto-refresh every 60 seconds
   useEffect(() => {
@@ -134,11 +152,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user: session?.user ?? null,
         loading,
         signOut,
-        subscribed,
+        subscribed: subscribed || isAdmin,
         subscriptionTier,
         subscriptionEnd,
         subscriptionLoading,
         refreshSubscription: checkSubscription,
+        isAdmin,
       }}
     >
       {children}
