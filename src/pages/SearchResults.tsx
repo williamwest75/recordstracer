@@ -245,9 +245,9 @@ const SearchResults = () => {
                   ) : (
                     <div className="space-y-3 pl-7">
                       {visibleItems.map((item) => (
-                        <div key={item.id} className="border border-border rounded-lg p-4 bg-card flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div key={item.id} className="border border-border rounded-lg p-4 bg-card flex flex-col sm:flex-row sm:items-start gap-3">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-sm font-semibold text-foreground">{item.source}</p>
                               {item.relevance != null && (
                                 <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
@@ -257,6 +257,14 @@ const SearchResults = () => {
                                 }`}>
                                   {item.relevance}% match
                                 </span>
+                              )}
+                              {item.returnedName && (
+                                <NameMatchBadge
+                                  confidence={getNameMatchConfidence(name, item.returnedName)}
+                                  searchedName={name}
+                                  returnedName={item.returnedName}
+                                  source={item.source}
+                                />
                               )}
                             </div>
                             <p className="text-sm text-muted-foreground mt-0.5">{item.description}</p>
