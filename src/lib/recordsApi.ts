@@ -96,6 +96,7 @@ export async function searchFEC(name: string, state: string): Promise<RecordResu
           source: "FEC Individual Contribution",
           category: "donations",
           description: `${formatMoney(amount)} to ${recipient} on ${c.contribution_receipt_date || "N/A"}`,
+          returnedName: c.contributor_name || undefined,
           details: {
             Contributor: c.contributor_name || name,
             Amount: formatMoney(amount),
