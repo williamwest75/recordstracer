@@ -152,11 +152,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user: session?.user ?? null,
         loading,
         signOut,
-        subscribed,
+        subscribed: subscribed || isAdmin,
         subscriptionTier,
         subscriptionEnd,
         subscriptionLoading,
         refreshSubscription: checkSubscription,
+        isAdmin,
       }}
     >
       {children}
