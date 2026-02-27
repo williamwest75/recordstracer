@@ -64,6 +64,13 @@ const Dashboard = () => {
     setSearches((prev) => prev.filter((s) => s.id !== id));
   };
 
+  const clearAllSearches = async () => {
+    if (!user) return;
+    await supabase.from("searches").delete().eq("user_id", user.id);
+    setSearches([]);
+    toast({ title: "Cleared", description: "All search history has been removed." });
+  };
+
   const deleteInvestigation = async (id: string) => {
     await supabase.from("investigations").delete().eq("id", id);
     loadData();
@@ -116,52 +123,64 @@ const Dashboard = () => {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-3">
-                {searches.map((s) => {
-                  const rc = (s as any).result_count as number | null;
-                  const dc = (s as any).database_count as number | null;
-                  const rl = (s as any).risk_level as string | null;
-                  return (
-                    <div
-                      key={s.id}
-                      className="border border-border rounded-lg p-4 bg-card hover:shadow-sm transition-shadow flex items-center gap-3"
-                    >
-                      <Link
-                        to={`/search-results?name=${encodeURIComponent(s.subject_name)}&state=${encodeURIComponent(s.state)}`}
-                        className="flex-1 min-w-0"
+              <>
+                <div className="flex justify-end mb-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-destructive gap-1.5"
+                    onClick={clearAllSearches}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Clear All
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {searches.map((s) => {
+                    const rc = (s as any).result_count as number | null;
+                    const dc = (s as any).database_count as number | null;
+                    const rl = (s as any).risk_level as string | null;
+                    return (
+                      <div
+                        key={s.id}
+                        className="border border-border rounded-lg p-4 bg-card hover:shadow-sm transition-shadow flex items-center gap-3"
                       >
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-foreground">{s.subject_name}</p>
-                          {rl && (
-                            <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
-                              rl === "high" ? "bg-destructive/15 text-destructive" :
-                              rl === "elevated" ? "bg-warning/15 text-warning" :
-                              rl === "moderate" ? "bg-accent/15 text-accent" :
-                              "bg-success/15 text-success"
-                            }`}>
-                              {rl} risk
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {s.state}{s.city ? `, ${s.city}` : ""} · {new Date(s.created_at).toLocaleDateString()}
-                          {rc != null && rc > 0 && (
-                            <span className="ml-2 font-medium text-foreground">{rc} record{rc !== 1 ? "s" : ""} across {dc} database{dc !== 1 ? "s" : ""}</span>
-                          )}
-                        </p>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => { e.preventDefault(); deleteSearch(s.id); }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
+                        <Link
+                          to={`/search-results?name=${encodeURIComponent(s.subject_name)}&state=${encodeURIComponent(s.state)}`}
+                          className="flex-1 min-w-0"
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold text-foreground">{s.subject_name}</p>
+                            {rl && (
+                              <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                                rl === "high" ? "bg-destructive/15 text-destructive" :
+                                rl === "elevated" ? "bg-warning/15 text-warning" :
+                                rl === "moderate" ? "bg-accent/15 text-accent" :
+                                "bg-success/15 text-success"
+                              }`}>
+                                {rl} risk
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {s.state}{s.city ? `, ${s.city}` : ""} · {new Date(s.created_at).toLocaleDateString()}
+                            {rc != null && rc > 0 && (
+                              <span className="ml-2 font-medium text-foreground">{rc} record{rc !== 1 ? "s" : ""} across {dc} database{dc !== 1 ? "s" : ""}</span>
+                            )}
+                          </p>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => { e.preventDefault(); deleteSearch(s.id); }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         )}
