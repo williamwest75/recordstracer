@@ -123,7 +123,17 @@ const Dashboard = () => {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-3">
+              <>
+                <div className="flex justify-end mb-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:text-destructive gap-1.5"
+                    onClick={clearAllSearches}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Clear All
+                  </Button>
+                </div>
                 {searches.map((s) => {
                   const rc = (s as any).result_count as number | null;
                   const dc = (s as any).database_count as number | null;
