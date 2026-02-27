@@ -59,6 +59,11 @@ const Dashboard = () => {
     }
   };
 
+  const deleteSearch = async (id: string) => {
+    await supabase.from("searches").delete().eq("id", id);
+    setSearches((prev) => prev.filter((s) => s.id !== id));
+  };
+
   const deleteInvestigation = async (id: string) => {
     await supabase.from("investigations").delete().eq("id", id);
     loadData();
