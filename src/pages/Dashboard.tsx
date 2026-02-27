@@ -179,6 +179,7 @@ const Dashboard = () => {
                   );
                 })}
               </div>
+              </>
             )}
           </div>
         )}
