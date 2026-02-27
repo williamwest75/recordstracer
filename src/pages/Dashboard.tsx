@@ -64,6 +64,13 @@ const Dashboard = () => {
     setSearches((prev) => prev.filter((s) => s.id !== id));
   };
 
+  const clearAllSearches = async () => {
+    if (!user) return;
+    await supabase.from("searches").delete().eq("user_id", user.id);
+    setSearches([]);
+    toast({ title: "Cleared", description: "All search history has been removed." });
+  };
+
   const deleteInvestigation = async (id: string) => {
     await supabase.from("investigations").delete().eq("id", id);
     loadData();
