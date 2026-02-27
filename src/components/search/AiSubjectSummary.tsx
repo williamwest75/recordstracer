@@ -53,6 +53,7 @@ const DIFFICULTY_STYLES: Record<string, { bg: string; text: string }> = {
 };
 
 const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
+  const { user } = useAuth();
   const [briefing, setBriefing] = useState<Briefing | null>(null);
   const [fallbackSummary, setFallbackSummary] = useState("");
   const [loading, setLoading] = useState(true);
