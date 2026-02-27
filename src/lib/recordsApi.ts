@@ -25,6 +25,7 @@ export interface RecordResult {
   details: Record<string, string>;
   sourceUrl?: string;
   relevance?: number; // 0-100, higher = better match
+  returnedName?: string; // The name as it appeared in the source database
 }
 
 export interface ApiDebugInfo {
@@ -95,6 +96,7 @@ export async function searchFEC(name: string, state: string): Promise<RecordResu
           source: "FEC Individual Contribution",
           category: "donations",
           description: `${formatMoney(amount)} to ${recipient} on ${c.contribution_receipt_date || "N/A"}`,
+          returnedName: c.contributor_name || undefined,
           details: {
             Contributor: c.contributor_name || name,
             Amount: formatMoney(amount),

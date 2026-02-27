@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Star, MessageSquare } from "lucide-react";
+import { Shield, Star, MessageSquare, Gift, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,16 @@ import Footer from "@/components/landing/Footer";
 
 const TOTAL_SPOTS = 100;
 const FOUNDING_MEMBER_PRICE_ID = "price_1T4YxtCbx7NULXBjgcqZNAAs";
+
+const BENEFITS = [
+  "200 searches per month",
+  "Full public records suite (all databases)",
+  "Deep Research Analyst (AI briefings)",
+  "Contact intelligence",
+  "Priority support",
+  "Direct input into feature roadmap",
+  "$49/month locked permanently — never increases",
+];
 
 const FoundingMember = () => {
   const [spotsRemaining, setSpotsRemaining] = useState<number | null>(null);
@@ -119,8 +129,18 @@ const FoundingMember = () => {
                   Be First. Pay Less. Forever.
                 </h1>
                 <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                  Lock in <span className="font-semibold text-foreground">$49/month for life</span> — before public launch at $99/month. Only 100 spots available.
+                  Lock in <span className="font-semibold text-foreground">$49/month for life</span> — before public launch at $99/month. Only {spotsRemaining ?? "..."} spots available.
                 </p>
+              </div>
+
+              {/* KEY CLARIFICATION — Tier Level */}
+              <div className="flex justify-center">
+                <div className="inline-flex items-center gap-2 bg-success-bg border border-success-border rounded-lg px-4 py-2.5">
+                  <Gift className="h-4 w-4 text-success" />
+                  <span className="text-sm font-semibold text-success">
+                    Full Investigator-tier access ($99 value) at Solo pricing — permanently
+                  </span>
+                </div>
               </div>
 
               {/* Spot Counter — live */}
@@ -135,25 +155,26 @@ const FoundingMember = () => {
 
               {/* Benefits */}
               <Card className="border-accent/20 bg-card">
-                <CardContent className="pt-6 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <Shield className="h-5 w-5 text-accent mt-0.5 shrink-0" />
-                    <p className="text-sm text-foreground">Full access to all Record Tracer databases at launch.</p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Star className="h-5 w-5 text-accent mt-0.5 shrink-0" />
-                    <p className="text-sm text-foreground">Founding member rate of <span className="font-semibold">$49/month locked permanently</span> — never increases.</p>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <MessageSquare className="h-5 w-5 text-accent mt-0.5 shrink-0" />
-                    <p className="text-sm text-foreground">Direct input into what features we build next.</p>
+                <CardContent className="pt-6">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-foreground mb-4">
+                    What Founding Members Get
+                  </h3>
+                  <div className="space-y-3">
+                    {BENEFITS.map((benefit, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="h-5 w-5 rounded-full bg-success-bg border border-success-border flex items-center justify-center shrink-0">
+                          <Check className="h-3 w-3 text-success" />
+                        </div>
+                        <span className="text-sm text-foreground">{benefit}</span>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
 
               {/* CTA */}
               <div className="text-center space-y-3">
-                <Button size="lg" onClick={handleFoundingCheckout} disabled={loading}>
+                <Button size="lg" className="w-full max-w-md" onClick={handleFoundingCheckout} disabled={loading}>
                   {loading ? "Loading…" : "Claim Your Founding Member Spot — $49/mo"}
                 </Button>
                 <p className="text-xs text-muted-foreground">

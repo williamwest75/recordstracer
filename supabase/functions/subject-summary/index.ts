@@ -10,7 +10,6 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Authenticate the request
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -25,8 +24,8 @@ serve(async (req) => {
     );
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: authError } = await supabaseClient.auth.getClaims(token);
-    if (authError || !claimsData?.claims) {
+    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -36,17 +35,53 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are an investigative journalism research assistant. Given a subject's name, location, and a structured summary of public records found across multiple databases, write a concise journalist's briefing.
+    const systemPrompt = `You are an investigative journalism research assistant. Given a subject's name, location, and a structured summary of public records found across multiple databases, produce a structured JSON briefing.
+
+You MUST return valid JSON with this exact structure:
+{
+  "summary": "2-3 sentence executive overview of what was found",
+  "riskLevel": "low|moderate|elevated|high",
+  "findings": [
+    {
+      "flag": "red|yellow|green|blue",
+      "title": "Short title like '13 Offshore Leaks Records'",
+      "detail": "1-2 sentence explanation of what was found and why it matters",
+      "database": "Source database name",
+      "actionable": true
+    }
+  ],
+  "nextSteps": [
+    "Specific actionable step a journalist should take"
+  ],
+  "storyAngles": [
+    {
+      "angle": "Story angle title",
+      "description": "1-2 sentence description of the investigative angle",
+      "difficulty": "Beginner|Intermediate|Advanced"
+    }
+  ]
+}
+
+Flag colors:
+- red = Requires investigation (offshore entities, sanctions matches, suspicious patterns)
+- yellow = Notable finding (court cases, large contracts, lobbying)
+- green = Routine (standard campaign donations, normal business filings)
+- blue = Contextual information (nonprofit records, professional licenses)
+
+Risk levels:
+- low = Only routine findings, no red flags
+- moderate = Some notable findings worth reviewing
+- elevated = Multiple notable findings or one significant red flag
+- high = Multiple red flags requiring immediate investigation
 
 Rules:
-- Write 3-4 sentences max
-- Start with what was found (e.g. "John Smith appears in X SEC filings...")
-- Highlight notable connections between different databases (e.g. political donations and government contracts)
-- End with 1-2 specific follow-up suggestions a journalist should investigate
-- Be factual, not speculative — only reference data that was actually found
+- Return ONLY valid JSON, no markdown or code fences
+- Include 2-5 findings, ordered by importance (red flags first)
+- Include 2-4 next steps
+- Include 1-3 story angles
+- Be factual, reference actual data found
 - Use specific numbers and dollar amounts when available
-- If very little was found, say so honestly and suggest alternative search strategies
-- Do NOT use bullet points or headers — write flowing prose`;
+- If very little was found, set riskLevel to "low" and suggest alternative strategies in nextSteps`;
 
     const userPrompt = `Subject: ${name}
 Location: ${state}
@@ -54,7 +89,7 @@ Location: ${state}
 Public records found:
 ${resultsSummary}
 
-Write a journalist's briefing summarizing findings and suggesting follow-ups.`;
+Return a structured JSON briefing.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -63,7 +98,7 @@ Write a journalist's briefing summarizing findings and suggesting follow-ups.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -91,9 +126,22 @@ Write a journalist's briefing summarizing findings and suggesting follow-ups.`;
     }
 
     const data = await response.json();
-    const summary = data.choices?.[0]?.message?.content || "";
+    const rawContent = data.choices?.[0]?.message?.content || "";
 
-    return new Response(JSON.stringify({ summary }), {
+    // Parse the JSON response - handle potential markdown code fences
+    let briefing;
+    try {
+      const cleaned = rawContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      briefing = JSON.parse(cleaned);
+    } catch {
+      // Fallback: return as plain summary if JSON parsing fails
+      console.error("Failed to parse structured briefing, falling back to plain text");
+      return new Response(JSON.stringify({ summary: rawContent }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ briefing }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
