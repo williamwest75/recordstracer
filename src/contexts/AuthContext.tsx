@@ -109,11 +109,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
         if (session) {
           setTimeout(() => checkSubscription(), 0);
+          checkAdminRole(session.user.id);
         } else {
           setSubscribed(false);
           setSubscriptionTier(null);
           setSubscriptionEnd(null);
           setSubscriptionLoading(false);
+          setIsAdmin(false);
         }
       }
     );
@@ -121,12 +123,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
-      if (session) checkSubscription();
-      else setSubscriptionLoading(false);
+      if (session) {
+        checkSubscription();
+        checkAdminRole(session.user.id);
+      } else {
+        setSubscriptionLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [checkSubscription]);
+  }, [checkSubscription, checkAdminRole]);
 
   // Auto-refresh every 60 seconds
   useEffect(() => {
