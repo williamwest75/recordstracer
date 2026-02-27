@@ -25,6 +25,7 @@ export interface RecordResult {
   details: Record<string, string>;
   sourceUrl?: string;
   relevance?: number; // 0-100, higher = better match
+  returnedName?: string; // The name as it appeared in the source database
 }
 
 export interface ApiDebugInfo {

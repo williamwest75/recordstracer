@@ -11,6 +11,8 @@ import SubjectProfile from "@/components/search/SubjectProfile";
 import ContactIntelligence from "@/components/search/ContactIntelligence";
 import AiSubjectSummary from "@/components/search/AiSubjectSummary";
 import DeepResearchAnalyst from "@/components/search/DeepResearchAnalyst";
+import NameMatchBadge from "@/components/search/NameMatchBadge";
+import { getNameMatchConfidence } from "@/lib/nameMatch";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
