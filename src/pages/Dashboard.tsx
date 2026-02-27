@@ -6,6 +6,17 @@ import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Search, FolderOpen, Clock, Plus, Trash2, Crown, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
@@ -125,14 +136,31 @@ const Dashboard = () => {
             ) : (
               <>
                 <div className="flex justify-end mb-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-destructive gap-1.5"
-                    onClick={clearAllSearches}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" /> Clear All
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground hover:text-destructive gap-1.5"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" /> Clear All
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Clear all search history?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete all {searches.length} search{searches.length !== 1 ? "es" : ""} from your history. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={clearAllSearches} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Delete All
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
                 <div className="space-y-3">
                   {searches.map((s) => {
