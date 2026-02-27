@@ -42,6 +42,7 @@ interface AuthContextType {
   subscriptionEnd: string | null;
   subscriptionLoading: boolean;
   refreshSubscription: () => Promise<void>;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -54,6 +55,7 @@ const AuthContext = createContext<AuthContextType>({
   subscriptionEnd: null,
   subscriptionLoading: true,
   refreshSubscription: async () => {},
+  isAdmin: false,
 });
 
 export const useAuth = () => useContext(AuthContext);
