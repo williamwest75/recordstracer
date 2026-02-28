@@ -726,7 +726,7 @@ function computeRelevance(result: RecordResult, searchName: string, searchState:
   const textFields = [
     result.source, result.description,
     ...Object.values(result.details),
-  ].map(v => (v || "").toLowerCase());
+  ].map(v => (typeof v === "string" ? v : String(v ?? "")).toLowerCase());
 
   const allText = textFields.join(" ");
 
