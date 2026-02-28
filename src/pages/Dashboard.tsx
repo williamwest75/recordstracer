@@ -94,7 +94,16 @@ const Dashboard = () => {
   };
 
   const deleteInvestigation = async (id: string) => {
+    // Delete saved results first (cascade), then the investigation
+    await supabase.from("saved_results").delete().eq("investigation_id", id);
     await supabase.from("investigations").delete().eq("id", id);
+    loadData();
+  };
+
+  const deleteSavedResult = async (resultId: string) => {
+    await supabase.from("saved_results").delete().eq("id", resultId);
+    loadData();
+  };
     loadData();
   };
 
