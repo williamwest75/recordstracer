@@ -104,8 +104,6 @@ const Dashboard = () => {
     await supabase.from("saved_results").delete().eq("id", resultId);
     loadData();
   };
-    loadData();
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
