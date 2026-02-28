@@ -53,12 +53,21 @@ const Dashboard = () => {
   };
 
   const loadData = async () => {
-    const [s, i] = await Promise.all([
+    const [s, i, sr] = await Promise.all([
       supabase.from("searches").select("*").order("created_at", { ascending: false }),
       supabase.from("investigations").select("*").order("created_at", { ascending: false }),
+      supabase.from("saved_results").select("*").order("created_at", { ascending: false }),
     ]);
     if (s.data) setSearches(s.data);
     if (i.data) setInvestigations(i.data);
+    if (sr.data) {
+      const grouped: Record<string, any[]> = {};
+      for (const r of sr.data) {
+        const invId = r.investigation_id || "__unassigned";
+        (grouped[invId] ??= []).push(r);
+      }
+      setSavedResults(grouped);
+    }
   };
 
   const createInvestigation = async () => {
