@@ -20,12 +20,14 @@ import {
 import { Search, FolderOpen, Clock, Plus, Trash2, Crown, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
+import InvestigationCard from "@/components/dashboard/InvestigationCard";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [searches, setSearches] = useState<Tables<"searches">[]>([]);
   const [investigations, setInvestigations] = useState<Tables<"investigations">[]>([]);
+  const [savedResults, setSavedResults] = useState<Record<string, any[]>>({});
   const [newInvTitle, setNewInvTitle] = useState("");
   const [tab, setTab] = useState<"searches" | "investigations">("searches");
   const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
@@ -51,12 +53,21 @@ const Dashboard = () => {
   };
 
   const loadData = async () => {
-    const [s, i] = await Promise.all([
+    const [s, i, sr] = await Promise.all([
       supabase.from("searches").select("*").order("created_at", { ascending: false }),
       supabase.from("investigations").select("*").order("created_at", { ascending: false }),
+      supabase.from("saved_results").select("*").order("created_at", { ascending: false }),
     ]);
     if (s.data) setSearches(s.data);
     if (i.data) setInvestigations(i.data);
+    if (sr.data) {
+      const grouped: Record<string, any[]> = {};
+      for (const r of sr.data) {
+        const invId = r.investigation_id || "__unassigned";
+        (grouped[invId] ??= []).push(r);
+      }
+      setSavedResults(grouped);
+    }
   };
 
   const createInvestigation = async () => {
@@ -83,7 +94,16 @@ const Dashboard = () => {
   };
 
   const deleteInvestigation = async (id: string) => {
+    // Delete saved results first (cascade), then the investigation
+    await supabase.from("saved_results").delete().eq("investigation_id", id);
     await supabase.from("investigations").delete().eq("id", id);
+    loadData();
+  };
+
+  const deleteSavedResult = async (resultId: string) => {
+    await supabase.from("saved_results").delete().eq("id", resultId);
+    loadData();
+  };
     loadData();
   };
 
@@ -253,33 +273,13 @@ const Dashboard = () => {
             ) : (
               <div className="space-y-3">
                 {investigations.map((inv) => (
-                  <div key={inv.id} className="border border-border rounded-lg p-4 bg-card flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{inv.title}</p>
-                      <p className="text-xs text-muted-foreground">Created {new Date(inv.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete this investigation?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently remove "{inv.title}" and cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteInvestigation(inv.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                  <InvestigationCard
+                    key={inv.id}
+                    investigation={inv}
+                    savedResults={savedResults[inv.id] || []}
+                    onDelete={deleteInvestigation}
+                    onDeleteResult={deleteSavedResult}
+                  />
                 ))}
               </div>
             )}
