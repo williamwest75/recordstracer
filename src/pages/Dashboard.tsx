@@ -27,6 +27,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [searches, setSearches] = useState<Tables<"searches">[]>([]);
   const [investigations, setInvestigations] = useState<Tables<"investigations">[]>([]);
+  const [savedResults, setSavedResults] = useState<Record<string, any[]>>({});
   const [newInvTitle, setNewInvTitle] = useState("");
   const [tab, setTab] = useState<"searches" | "investigations">("searches");
   const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
