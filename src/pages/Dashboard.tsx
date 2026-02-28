@@ -273,33 +273,13 @@ const Dashboard = () => {
             ) : (
               <div className="space-y-3">
                 {investigations.map((inv) => (
-                  <div key={inv.id} className="border border-border rounded-lg p-4 bg-card flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{inv.title}</p>
-                      <p className="text-xs text-muted-foreground">Created {new Date(inv.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete this investigation?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently remove "{inv.title}" and cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteInvestigation(inv.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                  <InvestigationCard
+                    key={inv.id}
+                    investigation={inv}
+                    savedResults={savedResults[inv.id] || []}
+                    onDelete={deleteInvestigation}
+                    onDeleteResult={deleteSavedResult}
+                  />
                 ))}
               </div>
             )}
