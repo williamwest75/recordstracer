@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { searchAll, type MockResult, type ApiDebugInfo, type SearchOptions } from "@/lib/recordsApi";
+import { sanitizeInput, sanitizeUrlParam, isValidName, isValidState } from "@/utils/validation";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 
 interface Investigation {

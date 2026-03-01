@@ -100,7 +100,17 @@ const HeroSearch = () => {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+
+    const sanitizedName = sanitizeInput(name);
+    const nameCheck = isValidName(sanitizedName);
+    if (!nameCheck.valid) {
+      toast({ title: "Invalid name", description: nameCheck.reason });
+      return;
+    }
+    if (!isValidState(state)) {
+      toast({ title: "Invalid state", description: "Please select a valid US state." });
+      return;
+    }
 
     if (!user) {
       toast({ title: "Sign in required", description: "Please sign in or create an account to search records." });
@@ -115,7 +125,7 @@ const HeroSearch = () => {
     }
 
     const actualSuffix = suffix && suffix !== "none" ? suffix : "";
-    const fullName = actualSuffix ? `${name.trim()} ${actualSuffix}` : name.trim();
+    const fullName = actualSuffix ? `${sanitizedName} ${actualSuffix}` : sanitizedName;
 
     if (user) {
       await supabase.from("searches").insert({
