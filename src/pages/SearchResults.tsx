@@ -48,8 +48,10 @@ const DEFAULT_VISIBLE = 3;
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const name = searchParams.get("name") || "Unknown";
-  const state = searchParams.get("state") || "Unknown";
+  const rawName = sanitizeUrlParam(searchParams.get("name")) || "Unknown";
+  const rawState = sanitizeUrlParam(searchParams.get("state")) || "Unknown";
+  const name = sanitizeInput(rawName);
+  const state = isValidState(rawState) ? rawState : "All States / National";
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [results, setResults] = useState<MockResult[]>([]);
