@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { sanitizeInput, isValidName, isValidState } from "@/utils/validation";
 
 const US_STATES = [
   "All States / National",
