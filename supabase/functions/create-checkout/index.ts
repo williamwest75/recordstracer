@@ -41,8 +41,14 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { email: user.email });
 
-    const { priceId, foundingMember } = await req.json();
+    const body = await req.json();
+    const priceId = typeof body.priceId === "string" ? body.priceId.trim().slice(0, 100) : "";
+    const foundingMember = body.foundingMember === true;
+
     if (!priceId) throw new Error("priceId is required");
+    // Validate priceId format (Stripe price IDs start with "price_")
+    if (!/^price_[a-zA-Z0-9]+$/.test(priceId)) throw new Error("Invalid priceId format");
+
     logStep("Price ID received", { priceId, foundingMember });
 
     let finalPriceId = priceId;

@@ -176,8 +176,13 @@ serve(async (req) => {
       });
     }
 
-    const { query, days = 7, mode = "events", usOnly = false } = await req.json();
-    if (!query || typeof query !== "string") {
+    const body = await req.json();
+    const query = typeof body.query === "string" ? body.query.replace(/<[^>]*>/g, "").trim().slice(0, 200) : "";
+    const days = typeof body.days === "number" && body.days >= 1 && body.days <= 365 ? body.days : 7;
+    const mode = typeof body.mode === "string" && ["events", "gkg", "mentions"].includes(body.mode) ? body.mode : "events";
+    const usOnly = body.usOnly === true;
+
+    if (!query) {
       return new Response(JSON.stringify({ error: "query is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -35,20 +35,36 @@ serve(async (req) => {
       });
     }
 
-    const { source, searchName, state } = await req.json();
+    const body = await req.json();
+    const source = typeof body.source === "string" ? body.source.trim().slice(0, 50) : "";
+    const searchName = typeof body.searchName === "string" ? body.searchName.replace(/<[^>]*>/g, "").trim().slice(0, 200) : "";
+    const state = typeof body.state === "string" ? body.state.trim().slice(0, 50) : "";
+
+    if (!source || !searchName) {
+      return new Response(JSON.stringify({ error: "source and searchName are required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const validSources = ["sec", "propublica", "sunbiz", "fec", "courtlistener", "sanctions", "icij", "lobbying", "faa", "contact-intel"];
+    if (!validSources.includes(source)) {
+      return new Response(JSON.stringify({ error: "Invalid source" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     let result: any = { success: false, error: "Unknown source" };
 
     if (source === "sec") result = await searchSEC(searchName);
     if (source === "propublica") result = await searchProPublica(searchName);
     if (source === "sunbiz") result = await searchSunBiz(searchName);
-    if (source === "fec") result = await searchFEC(searchName, state || "");
+    if (source === "fec") result = await searchFEC(searchName, state);
     if (source === "courtlistener") result = await fetchCourtListener(searchName);
     if (source === "sanctions") result = await searchSanctions(searchName);
     if (source === "icij") result = await searchOffshoreLeaks(searchName);
     if (source === "lobbying") result = await searchLobbying(searchName);
     if (source === "faa") result = await searchFAA(searchName);
-    if (source === "contact-intel") result = await searchContactIntel(searchName, state || "");
+    if (source === "contact-intel") result = await searchContactIntel(searchName, state);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
