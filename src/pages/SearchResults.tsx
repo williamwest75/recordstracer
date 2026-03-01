@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { searchAll, type MockResult, type ApiDebugInfo, type SearchOptions } from "@/lib/recordsApi";
+import { sanitizeInput, sanitizeUrlParam, isValidName, isValidState } from "@/utils/validation";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 
 interface Investigation {
@@ -46,8 +48,10 @@ const DEFAULT_VISIBLE = 3;
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const name = searchParams.get("name") || "Unknown";
-  const state = searchParams.get("state") || "Unknown";
+  const rawName = sanitizeUrlParam(searchParams.get("name")) || "Unknown";
+  const rawState = sanitizeUrlParam(searchParams.get("state")) || "Unknown";
+  const name = sanitizeInput(rawName);
+  const state = isValidState(rawState) ? rawState : "All States / National";
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [results, setResults] = useState<MockResult[]>([]);
@@ -82,15 +86,22 @@ const SearchResults = () => {
     setLoading(true);
     setError(false);
 
-    const skipParam = searchParams.get("skip");
+    const skipParam = sanitizeUrlParam(searchParams.get("skip"));
     const options: SearchOptions = {
-      skip: skipParam ? skipParam.split(",") : undefined,
-      middleInitial: searchParams.get("mi") || undefined,
-      dob: searchParams.get("dob") || undefined,
-      email: searchParams.get("email") || undefined,
-      streetAddress: searchParams.get("address") || undefined,
-      city: searchParams.get("city") || undefined,
+      skip: skipParam ? skipParam.split(",").filter(s => /^[a-z]+$/.test(s)) : undefined,
+      middleInitial: sanitizeUrlParam(searchParams.get("mi"), 1) || undefined,
+      dob: sanitizeUrlParam(searchParams.get("dob"), 10) || undefined,
+      email: sanitizeUrlParam(searchParams.get("email"), 255) || undefined,
+      streetAddress: sanitizeUrlParam(searchParams.get("address")) || undefined,
+      city: sanitizeUrlParam(searchParams.get("city"), 100) || undefined,
     };
+
+    const nameCheck = isValidName(name);
+    if (!nameCheck.valid) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
 
     searchAll(name, state, options)
       .then(async (data) => {
@@ -248,9 +259,9 @@ const SearchResults = () => {
           </div>
         ) : (
           <div className="mt-8 space-y-8">
-            <AiSubjectSummary name={name} state={state} results={results} />
-            <SubjectProfile name={name} state={state} results={results} />
-            <ContactIntelligence searchName={name} state={state} />
+            <ErrorBoundary><AiSubjectSummary name={name} state={state} results={results} /></ErrorBoundary>
+            <ErrorBoundary><SubjectProfile name={name} state={state} results={results} /></ErrorBoundary>
+            <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
             {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
               const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
               const isExpanded = expandedCategories.has(key);
@@ -316,7 +327,7 @@ const SearchResults = () => {
                 </section>
               );
             })}
-            <DeepResearchAnalyst name={name} state={state} results={results} />
+            <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
           </div>
         )}
 

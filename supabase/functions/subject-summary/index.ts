@@ -31,7 +31,17 @@ serve(async (req) => {
       });
     }
 
-    const { name, state, resultsSummary } = await req.json();
+    const body = await req.json();
+    const name = typeof body.name === "string" ? body.name.replace(/<[^>]*>/g, "").trim().slice(0, 200) : "";
+    const state = typeof body.state === "string" ? body.state.trim().slice(0, 50) : "";
+    const resultsSummary = typeof body.resultsSummary === "string" ? body.resultsSummary.slice(0, 10000) : "";
+
+    if (!name) {
+      return new Response(JSON.stringify({ error: "name is required" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 

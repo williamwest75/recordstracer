@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeInput } from "@/utils/validation";
 
 const STATE_ABBR: Record<string, string> = {
   Alabama:"AL",Alaska:"AK",Arizona:"AZ",Arkansas:"AR",California:"CA",Colorado:"CO",Connecticut:"CT",
@@ -42,15 +43,24 @@ function formatMoney(amount: number): string {
 
 async function proxyFetch(source: string, searchName: string, state?: string): Promise<any> {
   console.log(`[proxyFetch] Calling records-proxy for source: ${source}`);
-  const { data, error } = await supabase.functions.invoke("records-proxy", {
-    body: { source, searchName, state },
-  });
-  if (error) {
-    console.error(`[proxyFetch] Error for ${source}:`, error);
-    throw new Error(`Proxy error: ${error.message}`);
+  try {
+    const { data, error } = await supabase.functions.invoke("records-proxy", {
+      body: { source, searchName: sanitizeInput(searchName), state },
+    });
+    if (error) {
+      console.error(`[proxyFetch] Error for ${source}:`, error);
+      throw new Error(`Proxy error: ${error.message}`);
+    }
+    if (data == null || typeof data !== "object") {
+      console.error(`[proxyFetch] Unexpected response shape for ${source}:`, data);
+      return { success: false, error: "Unexpected response format" };
+    }
+    console.log(`[proxyFetch] Success for ${source}:`, typeof data);
+    return data;
+  } catch (err) {
+    console.error(`[proxyFetch] Exception for ${source}:`, err);
+    return { success: false, error: String(err) };
   }
-  console.log(`[proxyFetch] Success for ${source}:`, typeof data);
-  return data;
 }
 
 // ═══════════════════════════════════════════════════════════════
