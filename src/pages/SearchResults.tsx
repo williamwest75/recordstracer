@@ -86,15 +86,22 @@ const SearchResults = () => {
     setLoading(true);
     setError(false);
 
-    const skipParam = searchParams.get("skip");
+    const skipParam = sanitizeUrlParam(searchParams.get("skip"));
     const options: SearchOptions = {
-      skip: skipParam ? skipParam.split(",") : undefined,
-      middleInitial: searchParams.get("mi") || undefined,
-      dob: searchParams.get("dob") || undefined,
-      email: searchParams.get("email") || undefined,
-      streetAddress: searchParams.get("address") || undefined,
-      city: searchParams.get("city") || undefined,
+      skip: skipParam ? skipParam.split(",").filter(s => /^[a-z]+$/.test(s)) : undefined,
+      middleInitial: sanitizeUrlParam(searchParams.get("mi"), 1) || undefined,
+      dob: sanitizeUrlParam(searchParams.get("dob"), 10) || undefined,
+      email: sanitizeUrlParam(searchParams.get("email"), 255) || undefined,
+      streetAddress: sanitizeUrlParam(searchParams.get("address")) || undefined,
+      city: sanitizeUrlParam(searchParams.get("city"), 100) || undefined,
     };
+
+    const nameCheck = isValidName(name);
+    if (!nameCheck.valid) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
 
     searchAll(name, state, options)
       .then(async (data) => {
