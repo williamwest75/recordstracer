@@ -327,7 +327,7 @@ const SearchResults = () => {
                 </section>
               );
             })}
-            <DeepResearchAnalyst name={name} state={state} results={results} />
+            <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
           </div>
         )}
 
