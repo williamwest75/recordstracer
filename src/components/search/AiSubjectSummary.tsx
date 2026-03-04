@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Sparkles, Loader2, AlertCircle, ChevronDown, Search, CheckCircle, Newspaper } from "lucide-react";
+import { Sparkles, Loader2, AlertCircle, ChevronDown, Search, CheckCircle, Newspaper, Link2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { RecordResult } from "@/lib/recordsApi";
