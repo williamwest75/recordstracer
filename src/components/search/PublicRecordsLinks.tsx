@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   ExternalLink,
   Briefcase,
@@ -15,6 +15,8 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -88,7 +90,15 @@ const DEFAULT_COUNTIES = 8;
 
 export default function PublicRecordsLinks({ searchName, state }: PublicRecordsLinksProps) {
   const [showAllCounties, setShowAllCounties] = useState(false);
+  const [copied, setCopied] = useState(false);
   const isFlorida = state.toLowerCase().includes("florida") || state.toLowerCase() === "fl";
+
+  const copyName = useCallback(() => {
+    navigator.clipboard.writeText(searchName).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [searchName]);
 
   if (!isFlorida) return null;
 
@@ -98,7 +108,7 @@ export default function PublicRecordsLinks({ searchName, state }: PublicRecordsL
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Search className="h-5 w-5 text-accent" />
         <h2 className="font-heading text-lg font-semibold text-foreground">
           Florida Public Records
@@ -106,6 +116,15 @@ export default function PublicRecordsLinks({ searchName, state }: PublicRecordsL
         <span className="text-xs text-muted-foreground ml-1">
           Search for "{searchName}" in state databases
         </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={copyName}
+          className="ml-auto h-7 gap-1.5 text-xs"
+        >
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {copied ? "Copied!" : "Copy Name"}
+        </Button>
       </div>
 
       {/* Professional Licenses */}
