@@ -110,7 +110,7 @@ ${sections.join("\n")}`;
       );
     }
 
-    const aiRes = await fetch("https://api.lovable.dev/v1/chat/completions", {
+    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
