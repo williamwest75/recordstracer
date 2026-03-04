@@ -391,6 +391,14 @@ const SearchResults = () => {
           </div>
         )}
       </main>
+      {/* FCRA Disclaimer */}
+      {!loading && results.length > 0 && (
+        <div className="border-t border-border bg-muted/30 px-4 py-4 text-center">
+          <p className="text-[11px] text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Record Tracer searches publicly available government databases and open data sources. Search results reflect name-based matches and do not confirm identity, affiliation, or wrongdoing. Users are responsible for independently verifying all information before use in any publication or legal proceeding. Record Tracer is a research tool, not a background check service as defined under the Fair Credit Reporting Act (FCRA).
+          </p>
+        </div>
+      )}
       <Footer />
 
       {/* Record Detail Modal */}
