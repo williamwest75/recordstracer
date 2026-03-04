@@ -17,7 +17,7 @@ import About from "./pages/About";
 import News from "./pages/News";
 import NewsPost from "./pages/NewsPost";
 import Pricing from "./pages/Pricing";
-import GdeltNews from "./pages/GdeltNews";
+// GdeltNews standalone page removed — now integrated as NewsMentions in search results
 
 const queryClient = new QueryClient();
 
