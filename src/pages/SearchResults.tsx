@@ -364,6 +364,9 @@ const SearchResults = () => {
               );
             })}
             <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
+
+            {/* Reporter's Checklist */}
+            <ErrorBoundary><ReportersChecklist name={name} state={state} results={results} /></ErrorBoundary>
           </div>
         )}
 
