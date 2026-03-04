@@ -21,6 +21,8 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   PROFESSIONAL_LICENSE_SOURCES,
+  CAMPAIGN_FINANCE_SOURCES,
+  FEDERAL_RECORD_SOURCES,
   STATEWIDE_SOURCES,
   COUNTY_PROPERTY_SOURCES,
   COUNTY_CLERK_SOURCES,
@@ -40,6 +42,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Vote,
   FileText,
   Home,
+  Search,
 };
 
 interface PublicRecordsLinksProps {
@@ -47,16 +50,32 @@ interface PublicRecordsLinksProps {
   state: string;
 }
 
-function SourceCard({ source }: { source: RecordSource }) {
+function getSourceUrl(source: RecordSource, searchName: string): string {
+  if (source.deepLinkable && source.urlTemplate) {
+    return source.urlTemplate.replace("${name}", encodeURIComponent(searchName));
+  }
+  return source.searchUrl;
+}
+
+function SourceCard({ source, searchName }: { source: RecordSource; searchName: string }) {
   const Icon = ICON_MAP[source.icon] || Search;
+  const url = getSourceUrl(source, searchName);
+  const isDeepLinked = source.deepLinkable === true;
+
   return (
     <a
-      href={source.searchUrl}
+      href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex items-start gap-3 rounded-lg border border-border bg-card p-3 hover:border-accent/40 hover:bg-accent/5 transition-colors"
+      className={`group flex items-start gap-3 rounded-lg border p-3 transition-colors ${
+        isDeepLinked
+          ? "border-accent/30 bg-accent/5 hover:border-accent/60 hover:bg-accent/10"
+          : "border-border bg-card hover:border-accent/40 hover:bg-accent/5"
+      }`}
     >
-      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent/10 text-accent">
+      <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+        isDeepLinked ? "bg-accent/20 text-accent" : "bg-accent/10 text-accent"
+      }`}>
         <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
@@ -65,6 +84,15 @@ function SourceCard({ source }: { source: RecordSource }) {
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">{source.agency}</p>
         <p className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-1">{source.description}</p>
+        {isDeepLinked ? (
+          <p className="text-xs font-medium text-accent mt-1.5">
+            Search for "{searchName}" →
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground/60 mt-1.5">
+            Open search page · enter name manually
+          </p>
+        )}
       </div>
       <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 group-hover:text-accent mt-1 transition-colors" />
     </a>
@@ -134,7 +162,31 @@ export default function PublicRecordsLinks({ searchName, state }: PublicRecordsL
         </h3>
         <div className="grid gap-2 sm:grid-cols-2">
           {PROFESSIONAL_LICENSE_SOURCES.map((s) => (
-            <SourceCard key={s.id} source={s} />
+            <SourceCard key={s.id} source={s} searchName={searchName} />
+          ))}
+        </div>
+      </div>
+
+      {/* Political & Campaign Finance */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
+          Political & Campaign Finance
+        </h3>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {CAMPAIGN_FINANCE_SOURCES.map((s) => (
+            <SourceCard key={s.id} source={s} searchName={searchName} />
+          ))}
+        </div>
+      </div>
+
+      {/* Federal Records */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
+          Federal Records
+        </h3>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {FEDERAL_RECORD_SOURCES.map((s) => (
+            <SourceCard key={s.id} source={s} searchName={searchName} />
           ))}
         </div>
       </div>
@@ -146,7 +198,7 @@ export default function PublicRecordsLinks({ searchName, state }: PublicRecordsL
         </h3>
         <div className="grid gap-2 sm:grid-cols-2">
           {STATEWIDE_SOURCES.map((s) => (
-            <SourceCard key={s.id} source={s} />
+            <SourceCard key={s.id} source={s} searchName={searchName} />
           ))}
         </div>
       </div>
@@ -192,7 +244,7 @@ export default function PublicRecordsLinks({ searchName, state }: PublicRecordsL
       </div>
 
       <p className="text-[11px] text-muted-foreground/60 pl-1">
-        These links open external Florida government websites. Enter the subject's name to search each database.
+        These links open external government websites. Deep-linked sources pre-populate the search name; others require manual entry.
       </p>
     </section>
   );
