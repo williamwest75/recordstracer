@@ -291,12 +291,18 @@ const SearchResults = () => {
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-sm font-semibold text-foreground">{item.source}</p>
                               {item.relevance != null && (
-                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                                  item.relevance >= 80 ? "bg-accent/15 text-accent" :
-                                  item.relevance >= 60 ? "bg-muted text-foreground" :
-                                  "bg-muted text-muted-foreground"
-                                }`}>
-                                  {item.relevance}% match
+                                <span
+                                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                                    item.relevance >= 90 ? "bg-accent/15 text-accent" :
+                                    item.relevance >= 70 ? "bg-info-bg text-info" :
+                                    "bg-muted text-muted-foreground"
+                                  }`}
+                                  title="Name similarity indicates how closely the entity name matches your search term. It does NOT indicate a confirmed connection. Many entities share similar names. Always verify identity using additional details like addresses, dates, and jurisdictions."
+                                >
+                                  {item.relevance}% name similarity
+                                  {item.relevance < 70 && " · ⚠️ Weak — verify independently"}
+                                  {item.relevance >= 70 && item.relevance < 90 && " · Moderate"}
+                                  {item.relevance >= 90 && " · Strong"}
                                 </span>
                               )}
                               {item.returnedName && (
