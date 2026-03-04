@@ -44,12 +44,19 @@ const Dashboard = () => {
   const [newInvTitle, setNewInvTitle] = useState("");
   const [tab, setTab] = useState<"searches" | "investigations">("searches");
   const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
+
   // Save-to-investigation modal state
   const [saveSearch, setSaveSearch] = useState<Tables<"searches"> | null>(null);
   const [saveInvId, setSaveInvId] = useState("");
   const [saveNewTitle, setSaveNewTitle] = useState("");
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    loadData();
+    loadFoundingMemberStatus();
+  }, [user]);
 
   const loadFoundingMemberStatus = async () => {
     if (!user) return;
@@ -107,7 +114,6 @@ const Dashboard = () => {
   };
 
   const deleteInvestigation = async (id: string) => {
-    // Delete saved results first (cascade), then the investigation
     await supabase.from("saved_results").delete().eq("investigation_id", id);
     await supabase.from("investigations").delete().eq("id", id);
     loadData();
@@ -116,6 +122,71 @@ const Dashboard = () => {
   const deleteSavedResult = async (resultId: string) => {
     await supabase.from("saved_results").delete().eq("id", resultId);
     loadData();
+  };
+
+  const openSaveSearchModal = (s: Tables<"searches">) => {
+    setSaveSearch(s);
+    setSaveInvId("");
+    setSaveNewTitle("");
+    setIsCreatingNew(false);
+  };
+
+  const handleSaveSearchToInvestigation = async () => {
+    if (!user || !saveSearch) return;
+    setSaving(true);
+
+    let investigationId = saveInvId;
+    let investigationName = "";
+
+    if (isCreatingNew) {
+      if (!saveNewTitle.trim()) {
+        toast({ title: "Enter a name", description: "Please name your new investigation.", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("investigations")
+        .insert({ title: saveNewTitle.trim(), user_id: user.id })
+        .select("id, title")
+        .single();
+      if (error || !data) {
+        toast({ title: "Error", description: error?.message || "Could not create investigation.", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+      investigationId = data.id;
+      investigationName = data.title;
+    } else {
+      if (!investigationId) {
+        toast({ title: "Select an investigation", description: "Choose an investigation or create a new one.", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+      investigationName = investigations.find((i) => i.id === investigationId)?.title || "Investigation";
+    }
+
+    const { error } = await supabase.from("saved_results").insert({
+      user_id: user.id,
+      investigation_id: investigationId,
+      result_data: {
+        source: `Search: ${saveSearch.subject_name}`,
+        description: `${saveSearch.state}${saveSearch.city ? `, ${saveSearch.city}` : ""} — searched ${new Date(saveSearch.created_at).toLocaleDateString()}`,
+        category: "search",
+        searchName: saveSearch.subject_name,
+        searchState: saveSearch.state,
+        resultCount: saveSearch.result_count,
+        riskLevel: saveSearch.risk_level,
+      },
+    });
+
+    setSaving(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Saved", description: `Added to "${investigationName}"` });
+      setSaveSearch(null);
+      loadData();
+    }
   };
 
   return (
@@ -195,9 +266,9 @@ const Dashboard = () => {
                 </div>
                 <div className="space-y-3">
                   {searches.map((s) => {
-                    const rc = (s as any).result_count as number | null;
-                    const dc = (s as any).database_count as number | null;
-                    const rl = (s as any).risk_level as string | null;
+                    const rc = s.result_count;
+                    const dc = s.database_count;
+                    const rl = s.risk_level;
                     return (
                       <div
                         key={s.id}
@@ -227,6 +298,15 @@ const Dashboard = () => {
                             )}
                           </p>
                         </Link>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 text-muted-foreground hover:text-accent"
+                          title="Save to investigation"
+                          onClick={() => openSaveSearchModal(s)}
+                        >
+                          <Bookmark className="h-4 w-4" />
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -298,6 +378,74 @@ const Dashboard = () => {
         )}
       </main>
       <Footer />
+
+      {/* Save to Investigation Modal */}
+      <Dialog open={!!saveSearch} onOpenChange={(open) => !open && setSaveSearch(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bookmark className="h-5 w-5 text-accent" />
+              Save to Investigation
+            </DialogTitle>
+          </DialogHeader>
+          {saveSearch && (
+            <div className="space-y-4">
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <p className="text-sm font-semibold text-foreground">{saveSearch.subject_name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {saveSearch.state}{saveSearch.city ? `, ${saveSearch.city}` : ""} · {new Date(saveSearch.created_at).toLocaleDateString()}
+                </p>
+              </div>
+
+              {!isCreatingNew ? (
+                <div className="space-y-3">
+                  <Select value={saveInvId} onValueChange={setSaveInvId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose an investigation…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {investigations.map((inv) => (
+                        <SelectItem key={inv.id} value={inv.id}>{inv.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button
+                    onClick={() => setIsCreatingNew(true)}
+                    className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline font-medium"
+                  >
+                    <FolderPlus className="h-3.5 w-3.5" /> Create new investigation
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <Input
+                    placeholder="New investigation title…"
+                    value={saveNewTitle}
+                    onChange={(e) => setSaveNewTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSaveSearchToInvestigation()}
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => setIsCreatingNew(false)}
+                    className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:underline font-medium"
+                  >
+                    Use existing investigation
+                  </button>
+                </div>
+              )}
+
+              <Button
+                variant="accent"
+                className="w-full"
+                onClick={handleSaveSearchToInvestigation}
+                disabled={saving}
+              >
+                {saving ? "Saving…" : "Save to Investigation"}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
