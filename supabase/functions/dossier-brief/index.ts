@@ -89,14 +89,18 @@ serve(async (req) => {
 
     const prompt = `You are a newsroom research assistant generating a background brief for a journalist. Based ONLY on the data below, write a 3-4 paragraph plain-English summary about "${searchName}". 
 
-Rules:
+CRITICAL LANGUAGE RULES:
 - Only state facts supported by the data. Never speculate.
-- If a section has no results, say so briefly (e.g., "No federal court records were found.").
+- NEVER say a person "is associated with" or "is connected to" results. Instead say "X records were returned matching or partially matching this name."
+- NEVER imply ownership, control, or involvement. Use "records with similar names were found" instead.
+- For PEP listings, explicitly note these are standard for public officials and do NOT indicate wrongdoing.
+- NEVER use: "guilty", "criminal", "illegal", "fraud", "corrupt", "suspicious". Use neutral language like "warrants further review" or "merits additional verification".
+- When referencing match counts, always qualify: "13 records contain names similar to the search term" NOT "13 entities are linked to this person".
+- If a section has no results, say so briefly.
 - Write in third person, past tense for events, present tense for status.
 - Note any patterns: donation timing, recurring recipients, case types.
-- End with a one-sentence note about what's NOT covered (state records, property, licenses — things the reporter should check manually via the links below).
+- End with: "This summary is generated from public database searches. Name matches do not confirm identity or imply wrongdoing."
 - Keep it under 200 words. No bullet points. No headers. Just paragraphs.
-- Do NOT include any disclaimer about AI or accuracy. The UI handles that.
 
 DATA:
 ${sections.join("\n")}`;

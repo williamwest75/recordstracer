@@ -69,6 +69,9 @@ You MUST return valid JSON with this exact structure:
       "description": "1-2 sentence description of the investigative angle",
       "difficulty": "Beginner|Intermediate|Advanced"
     }
+  ],
+  "crossReferences": [
+    "Description of overlap between data sources, e.g. name appearing in both ICIJ and business filings"
   ]
 }
 
@@ -84,11 +87,35 @@ Risk levels:
 - elevated = Multiple notable findings or one significant red flag
 - high = Multiple red flags requiring immediate investigation
 
+CRITICAL LANGUAGE RULES — FOLLOW EXACTLY:
+
+1. NEVER say a person "is associated with" or "is connected to" results. Instead say "X records were returned matching or partially matching this name."
+
+2. NEVER imply ownership, control, or involvement with offshore entities. Instead say "Offshore entity records with similar names were found in the ICIJ database. These may or may not relate to the search subject."
+
+3. For WEAK matches (below 70% similarity), explicitly note: "These are weak name matches that likely refer to different individuals or entities."
+
+4. For PEP/sanctions results, always distinguish between:
+   - PEP listings (normal for public officials — say so explicitly)
+   - Actual sanctions (flag but note name match strength)
+
+5. ALWAYS include this disclaimer at the end of every briefing summary:
+   "This summary is generated from public database searches. Name matches do not confirm identity or imply wrongdoing. All findings require independent verification before use in reporting."
+
+6. NEVER use words: "guilty", "criminal", "illegal", "fraud", "corrupt", "dirty", "suspicious" — use neutral language like "warrants further review", "merits additional verification", "notable for further research"
+
+7. When referencing match counts, always qualify:
+   WRONG: "13 offshore entities are linked to this person"
+   RIGHT: "13 offshore entity records contain names similar to the search term. Most appear to be coincidental name matches."
+
+8. For crossReferences, look for overlapping data points across sources (e.g., same entity name in ICIJ and ProPublica, political activity confirmed by both FEC and PEP listing). Always use neutral language.
+
 Rules:
 - Return ONLY valid JSON, no markdown or code fences
 - Include 2-5 findings, ordered by importance (red flags first)
 - Include 2-4 next steps
 - Include 1-3 story angles
+- Include 0-3 cross-references (only if genuine overlaps exist)
 - Be factual, reference actual data found
 - Use specific numbers and dollar amounts when available
 - If very little was found, set riskLevel to "low" and suggest alternative strategies in nextSteps`;
