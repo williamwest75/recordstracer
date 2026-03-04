@@ -8,6 +8,8 @@ export interface RecordSource {
   description: string;
   searchUrl: string;
   icon: string; // lucide icon name
+  deepLinkable?: boolean;
+  urlTemplate?: string; // use ${name} as placeholder for search name
 }
 
 export interface CountyPropertySource {
@@ -49,6 +51,117 @@ export const PROFESSIONAL_LICENSE_SOURCES: RecordSource[] = [
     description: "Mortgage brokers, securities dealers, investment advisers",
     searchUrl: "https://flofr.gov/education/verify-a-license",
     icon: "DollarSign",
+  },
+];
+
+// ── Political & Campaign Finance ──
+export const CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
+  {
+    id: "fec",
+    name: "FEC Individual Contributions",
+    agency: "Federal Election Commission",
+    description: "Federal political donations ($200+)",
+    searchUrl: "",
+    icon: "Vote",
+    deepLinkable: true,
+    urlTemplate: "https://www.fec.gov/data/receipts/individual-contributions/?contributor_name=${name}&contributor_state=FL",
+  },
+  {
+    id: "opensecrets",
+    name: "OpenSecrets Donor Lookup",
+    agency: "OpenSecrets (Center for Responsive Politics)",
+    description: "Federal campaign contributions with industry analysis",
+    searchUrl: "",
+    icon: "DollarSign",
+    deepLinkable: true,
+    urlTemplate: "https://www.opensecrets.org/donor-lookup/results?name=${name}&order=desc",
+  },
+  {
+    id: "fl_campaign_finance",
+    name: "FL Campaign Finance",
+    agency: "FL Division of Elections",
+    description: "State-level campaign contributions since 1996",
+    searchUrl: "https://dos.elections.myflorida.com/campaign-finance/contributions/",
+    icon: "FileText",
+    deepLinkable: false,
+  },
+  {
+    id: "followthemoney",
+    name: "FollowTheMoney",
+    agency: "OpenSecrets / NIMSP",
+    description: "State-level candidate contributions, all 50 states",
+    searchUrl: "https://www.followthemoney.org/",
+    icon: "Briefcase",
+    deepLinkable: false,
+  },
+  {
+    id: "fl_leg_lobbyists",
+    name: "FL Legislative Lobbyists",
+    agency: "Florida Legislature",
+    description: "Registered legislative branch lobbyists & principals",
+    searchUrl: "https://www.leg.state.fl.us/lobbyist/index.cfm?Mode=Directory&Submenu=3&Tab=lobbyist",
+    icon: "Building2",
+    deepLinkable: false,
+  },
+  {
+    id: "fl_exec_lobbyists",
+    name: "FL Executive Lobbyists",
+    agency: "FL Lobbyist Registration Office",
+    description: "Registered executive branch lobbyists & firms",
+    searchUrl: "https://www.floridalobbyist.gov/LobbyistInformation/ExecutiveFirmDirectory",
+    icon: "Building2",
+    deepLinkable: false,
+  },
+];
+
+// ── Federal Records ──
+export const FEDERAL_RECORD_SOURCES: RecordSource[] = [
+  {
+    id: "courtlistener_recap",
+    name: "Federal Court Dockets (RECAP)",
+    agency: "Free Law Project / CourtListener",
+    description: "Federal court cases, dockets & PACER documents (free)",
+    searchUrl: "",
+    icon: "Gavel",
+    deepLinkable: true,
+    urlTemplate: "https://www.courtlistener.com/?q=${name}&type=r&order_by=score+desc",
+  },
+  {
+    id: "courtlistener_opinions",
+    name: "Federal & State Court Opinions",
+    agency: "Free Law Project / CourtListener",
+    description: "Court opinions and legal decisions",
+    searchUrl: "",
+    icon: "Scale",
+    deepLinkable: true,
+    urlTemplate: "https://www.courtlistener.com/?q=${name}&type=o&order_by=score+desc",
+  },
+  {
+    id: "faa_aircraft",
+    name: "FAA Aircraft Registry",
+    agency: "Federal Aviation Administration",
+    description: "Aircraft ownership by registrant name",
+    searchUrl: "https://registry.faa.gov/aircraftinquiry/Search/NameInquiry",
+    icon: "Search",
+    deepLinkable: false,
+  },
+  {
+    id: "irs_eos",
+    name: "IRS Tax Exempt Organizations",
+    agency: "Internal Revenue Service",
+    description: "Nonprofit 990 filings & tax-exempt status",
+    searchUrl: "https://apps.irs.gov/app/eos/",
+    icon: "FileText",
+    deepLinkable: false,
+  },
+  {
+    id: "fl_charity",
+    name: "FL Charity Search",
+    agency: "FL Dept. of Agriculture",
+    description: "Registered charities & solicitation organizations",
+    searchUrl: "https://csapp.fdacs.gov/CSPublicApp/CheckACharity/CheckACharity.aspx",
+    icon: "ShieldAlert",
+    deepLinkable: false,
   },
 ];
 
