@@ -44,12 +44,12 @@ const Dashboard = () => {
   const [newInvTitle, setNewInvTitle] = useState("");
   const [tab, setTab] = useState<"searches" | "investigations">("searches");
   const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    loadData();
-    loadFoundingMemberStatus();
-  }, [user]);
+  // Save-to-investigation modal state
+  const [saveSearch, setSaveSearch] = useState<Tables<"searches"> | null>(null);
+  const [saveInvId, setSaveInvId] = useState("");
+  const [saveNewTitle, setSaveNewTitle] = useState("");
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const loadFoundingMemberStatus = async () => {
     if (!user) return;
