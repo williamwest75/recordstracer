@@ -63,6 +63,7 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
     findings: true,
     steps: true,
     angles: false,
+    crossRefs: false,
   });
 
   const toggleSection = (key: keyof typeof expandedSections) => {
