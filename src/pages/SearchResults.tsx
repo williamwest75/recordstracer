@@ -328,6 +328,7 @@ const SearchResults = () => {
                 </section>
               );
             })}
+            <ErrorBoundary><NewsMentions searchQuery={name} defaultExpanded /></ErrorBoundary>
             <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
           </div>
         )}
