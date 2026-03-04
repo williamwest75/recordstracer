@@ -24,6 +24,7 @@ interface Briefing {
   findings: Finding[];
   nextSteps: string[];
   storyAngles: StoryAngle[];
+  crossReferences?: string[];
 }
 
 interface AiSubjectSummaryProps {
