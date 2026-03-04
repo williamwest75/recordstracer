@@ -264,6 +264,7 @@ const SearchResults = () => {
             <ErrorBoundary><AiSubjectSummary name={name} state={state} results={results} /></ErrorBoundary>
             <ErrorBoundary><SubjectProfile name={name} state={state} results={results} /></ErrorBoundary>
             <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
+            <ErrorBoundary><PublicRecordsLinks searchName={name} state={state} /></ErrorBoundary>
             {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
               const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
               const isExpanded = expandedCategories.has(key);
