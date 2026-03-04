@@ -297,6 +297,36 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
               )}
             </div>
           )}
+
+          {/* Cross-References */}
+          {briefing.crossReferences && briefing.crossReferences.length > 0 && (
+            <div>
+              <button
+                onClick={() => toggleSection("crossRefs")}
+                className="w-full flex items-center justify-between px-5 py-3 border-b border-border/50 hover:bg-muted/30 transition-colors"
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Link2 className="h-4 w-4" />
+                  Cross-References Detected
+                  <span className="bg-warning-bg text-warning text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                    {briefing.crossReferences.length}
+                  </span>
+                </span>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expandedSections.crossRefs ? "rotate-180" : ""}`} />
+              </button>
+
+              {expandedSections.crossRefs && (
+                <div className="px-5 py-4 space-y-2">
+                  {briefing.crossReferences.map((ref, i) => (
+                    <div key={i} className="flex gap-2.5 items-start p-3 rounded-lg bg-muted/30 border border-border/50">
+                      <span className="text-accent shrink-0">🔗</span>
+                      <p className="text-[13px] text-foreground leading-relaxed">{ref}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </>
       ) : null}
     </div>
