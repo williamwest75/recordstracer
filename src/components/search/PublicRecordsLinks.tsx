@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   ExternalLink,
   Briefcase,
@@ -15,6 +15,8 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
