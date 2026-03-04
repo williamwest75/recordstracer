@@ -425,11 +425,64 @@ const SearchResults = () => {
                     {Object.entries(selectedResult.details).map(([key, value]) => (
                       <div key={key} className="contents">
                         <dt className="font-medium text-foreground whitespace-nowrap">{key}</dt>
-                        <dd className="text-muted-foreground">{value}</dd>
+                        <dd className="text-muted-foreground">{typeof value === "object" ? JSON.stringify(value) : String(value ?? "N/A")}</dd>
                       </div>
                     ))}
                   </dl>
                 </div>
+
+                {/* What This Means — ICIJ */}
+                {selectedResult.category === "offshore" && selectedResult.id !== "icij-summary" && (
+                  <div className="bg-info-bg/30 border border-info-border rounded-lg p-3 mt-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-info mb-1.5">What This Means</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-2">
+                      This record shows an offshore entity that appeared in leaked documents. The entity is classified as: <strong>{selectedResult.details?.Type || "Offshore Entity"}</strong>.
+                    </p>
+                    <p className="text-xs font-medium text-foreground mb-1">🔍 Next Steps for Reporters:</p>
+                    <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
+                      <li>Check if this entity name matches your subject — common name elements may produce coincidental matches</li>
+                      <li>Click "View on ICIJ" to see the full network graph showing connected officers, addresses, and intermediaries</li>
+                      <li>Cross-reference any addresses or officer names against business filings and other sources in this search</li>
+                    </ul>
+                    <p className="text-[11px] text-muted-foreground italic mt-2">This listing does not imply any illegal conduct.</p>
+                  </div>
+                )}
+
+                {/* What This Means — PEP vs Sanctions */}
+                {selectedResult.category === "sanctions" && selectedResult.id !== "sanctions-summary" && (() => {
+                  const topics = (selectedResult.details?.Topics || "").toLowerCase();
+                  const datasets = (selectedResult.details?.["Sanctions Lists"] || "").toLowerCase();
+                  const isPEP = topics.includes("pep") || topics.includes("politic") || datasets.includes("pep") || datasets.includes("congress") || datasets.includes("politician") || datasets.includes("everypolitician");
+                  const isSanction = topics.includes("sanction") || datasets.includes("ofac") || datasets.includes("sdn") || datasets.includes("sanction");
+                  return isPEP && !isSanction ? (
+                    <div className="bg-info-bg/30 border border-info-border rounded-lg p-3 mt-2">
+                      <h4 className="text-xs font-semibold uppercase tracking-wide text-info mb-1.5">👤 Politically Exposed Person (PEP)</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        PEP status means this person holds or held a public office. This is standard for elected officials and government appointees — it does NOT indicate sanctions, criminal activity, or wrongdoing. PEP databases exist to flag potential conflicts of interest in financial transactions.
+                      </p>
+                      <p className="text-xs font-medium text-foreground mt-2 mb-1">🔍 Next Steps:</p>
+                      <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
+                        <li>Check campaign finance records for related donations</li>
+                        <li>Review any disclosed financial interests</li>
+                        <li>Cross-reference with lobbying registrations</li>
+                      </ul>
+                    </div>
+                  ) : isSanction ? (
+                    <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 mt-2">
+                      <h4 className="text-xs font-semibold uppercase tracking-wide text-destructive mb-1.5">🚨 Sanctions List Match</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        This entity appears on one or more international sanctions lists. Sanctions are imposed by governments to restrict dealings with specific individuals, companies, or countries.
+                      </p>
+                      <p className="text-xs text-warning mt-2">⚠️ VERIFY: A name match does NOT confirm this is the same entity. Many entities share similar names.</p>
+                      <p className="text-xs font-medium text-foreground mt-2 mb-1">🔍 Next Steps:</p>
+                      <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
+                        <li>Click "View Details" to check the full sanctions record, including jurisdiction and listed reasons</li>
+                        <li>Verify the entity's registered address and officers match your subject</li>
+                        <li>Consult OFAC's SDN list for the most current status</li>
+                      </ul>
+                    </div>
+                  ) : null;
+                })()}
                 {selectedResult.sourceUrl && (
                   <>
                     <Separator className="my-2" />

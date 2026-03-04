@@ -482,11 +482,12 @@ export async function searchSanctions(name: string): Promise<RecordResult[]> {
   try {
     const data = await proxyFetch("sanctions", name);
     if (data.success && data.results?.length > 0) {
+      const totalCount = typeof data.total === "number" ? data.total : (Array.isArray(data.results) ? data.results.length : 0);
       results.push({
         id: "sanctions-summary",
         source: "Global Sanctions & PEPs Summary",
         category: "sanctions",
-        description: `${data.total} record(s) found across global sanctions lists and PEP databases`,
+        description: `${totalCount} record(s) found across global sanctions lists and PEP databases`,
         details: {
           "Total Matches": String(data.total),
           "Source": "OpenSanctions (OFAC, UN, EU, and 100+ other lists)",
