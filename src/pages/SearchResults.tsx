@@ -269,6 +269,29 @@ const SearchResults = () => {
             {/* Dossier View: Brief, Timeline, Campaign Finance, Court Records, News, Public Records */}
             <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
 
+            {/* ICIJ Offshore Leaks Explainer */}
+            {grouped["offshore"]?.length > 0 && (
+              <div className="border border-border rounded-lg p-4 bg-info-bg/30 text-sm" id="icij-explainer">
+                <p className="font-semibold text-foreground mb-1">ℹ️ About Offshore Leaks</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  These results come from the International Consortium of Investigative Journalists' database of 810,000+ offshore entities from the Panama Papers, Paradise Papers, Pandora Papers, and other leaked documents.
+                </p>
+                <p className="text-warning text-xs mt-2 leading-relaxed">
+                  ⚠️ IMPORTANT: Offshore entities have many legitimate uses including international business, estate planning, and asset protection. Appearing in this database does NOT indicate illegal activity. Names may match different individuals. Always verify identity using addresses, dates, and jurisdictions before drawing conclusions.
+                </p>
+              </div>
+            )}
+
+            {/* OpenSanctions/PEP Explainer */}
+            {grouped["sanctions"]?.length > 0 && (
+              <div className="border border-border rounded-lg p-4 bg-info-bg/30 text-sm" id="sanctions-explainer">
+                <p className="font-semibold text-foreground mb-1">ℹ️ About Sanctions & PEP Results</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  These results come from OpenSanctions, which aggregates 100+ sanctions lists, PEP databases, and watchlists. <strong>PEP (Politically Exposed Person)</strong> listings are standard for current or former public officials and do NOT indicate wrongdoing. Actual sanctions matches are flagged separately.
+                </p>
+              </div>
+            )}
+
             {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
               const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
               const isExpanded = expandedCategories.has(key);
