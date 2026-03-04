@@ -22,6 +22,7 @@ import { searchAll, type MockResult, type ApiDebugInfo, type SearchOptions } fro
 import { sanitizeInput, sanitizeUrlParam, isValidName, isValidState } from "@/utils/validation";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import PublicRecordsLinks from "@/components/search/PublicRecordsLinks";
+import DossierView from "@/components/dossier/DossierView";
 
 
 interface Investigation {
