@@ -349,13 +349,11 @@ async function searchOffshoreLeaks(name: string) {
         q2: { query: name, type: "Intermediary", limit: 5 },
       },
     });
-    console.log("[ICIJ] Searching:", name);
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body,
     });
-    console.log("[ICIJ] Response status:", res.status);
 
     if (res.ok) {
       const data = await res.json();
