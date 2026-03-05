@@ -312,24 +312,31 @@ const SearchResults = () => {
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-1.5">
                     <List className="h-3 w-3" /> Contents
                   </p>
-                  <ul className="space-y-1 border-l border-border pl-3">
-                    {tocItems.map((item) => (
-                      <li key={item.id}>
-                        <a
-                          href={`#${item.id}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-                          }}
-                          className="block text-[11px] text-muted-foreground hover:text-foreground transition-colors py-1 leading-tight"
-                        >
-                          {item.label}
-                          {item.count !== undefined && (
-                            <span className="text-muted-foreground/50 ml-1">({item.count})</span>
-                          )}
-                        </a>
-                      </li>
-                    ))}
+                  <ul className="space-y-1 pl-3">
+                    {tocItems.map((item) => {
+                      const isActive = activeSection === item.id;
+                      return (
+                        <li key={item.id}>
+                          <a
+                            href={`#${item.id}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              scrollToSection(item.id);
+                            }}
+                            className={`block text-[11px] py-1 leading-tight ${
+                              isActive
+                                ? "text-foreground border-l-2 border-foreground pl-3 -ml-[2px]"
+                                : "text-muted-foreground hover:text-foreground pl-3"
+                            }`}
+                          >
+                            {item.label}
+                            {item.count !== undefined && (
+                              <span className="text-muted-foreground/50 ml-1">({item.count})</span>
+                            )}
+                          </a>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               </nav>
