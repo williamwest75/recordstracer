@@ -245,6 +245,19 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
                           </span>
                         </div>
                         <p className="text-[13px] text-foreground/80 leading-relaxed">{finding.detail}</p>
+                        {(() => {
+                          const url = getDatabaseSourceUrl(finding.database, name, state);
+                          return url ? (
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[12px] text-accent hover:underline mt-2"
+                            >
+                              <ExternalLink className="h-3 w-3" /> View Records ↗
+                            </a>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                   );
