@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Loader2, AlertCircle, ChevronDown, Search, CheckCircle, Newspaper, Link2, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { detectCrossReferences } from "@/lib/crossReferences";
 import type { RecordResult } from "@/lib/recordsApi";
 
 interface Finding {
