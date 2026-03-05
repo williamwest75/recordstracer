@@ -120,12 +120,6 @@ const SearchResults = () => {
   const [results, setResults] = useState<MockResult[]>([]);
   const [debugInfo, setDebugInfo] = useState<ApiDebugInfo[]>([]);
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
-  const [saveModalResult, setSaveModalResult] = useState<MockResult | null>(null);
-  const [investigations, setInvestigations] = useState<Investigation[]>([]);
-  const [selectedInvestigationId, setSelectedInvestigationId] = useState("");
-  const [newInvestigationTitle, setNewInvestigationTitle] = useState("");
-  const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading } = useAuth();
 
