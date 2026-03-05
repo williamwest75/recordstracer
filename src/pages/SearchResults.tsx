@@ -11,7 +11,6 @@ import Footer from "@/components/landing/Footer";
 import AiSubjectSummary from "@/components/search/AiSubjectSummary";
 import DeepResearchAnalyst from "@/components/search/DeepResearchAnalyst";
 import NameMatchBadge from "@/components/search/NameMatchBadge";
-import NameMatchBadge from "@/components/search/NameMatchBadge";
 import { getNameMatchConfidence } from "@/lib/nameMatch";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
