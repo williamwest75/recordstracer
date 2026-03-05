@@ -368,6 +368,20 @@ const SearchResults = () => {
                     );
                   }
 
+                  // Use specialized offshore leaks section with relevance scoring
+                  if (key === "offshore") {
+                    return (
+                      <div key={key} id={`source-${key}`} className="scroll-mt-24">
+                        <OffshoreLeaksSection
+                          items={items}
+                          name={name}
+                          state={state}
+                          onViewDetails={setSelectedResult}
+                        />
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={key} id={`source-${key}`} className="scroll-mt-24">
                       <SourceRecordSection
