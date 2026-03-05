@@ -390,11 +390,9 @@ async function searchOffshoreLeaks(name: string) {
 async function searchLobbying(name: string) {
   try {
     const url = `https://lda.senate.gov/api/v1/filings/?filing_year=2024&client_name=${encodeURIComponent(name)}&page_size=15`;
-    console.log("[Lobbying] Searching:", url);
     const res = await fetch(url, {
       headers: { "Accept": "application/json" },
     });
-    console.log("[Lobbying] Response status:", res.status);
 
     if (res.ok) {
       const data = await res.json();
