@@ -390,7 +390,6 @@ const SearchResults = () => {
                         items={items}
                         name={name}
                         onViewDetails={setSelectedResult}
-                        onSave={openSaveModal}
                       />
                     </div>
                   );
