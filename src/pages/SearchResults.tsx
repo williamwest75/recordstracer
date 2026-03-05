@@ -118,7 +118,7 @@ const SearchResults = () => {
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
   const [searchTimestamp, setSearchTimestamp] = useState<Date | null>(null);
   const { toast } = useToast();
-  const { user, subscribed, subscriptionLoading } = useAuth();
+  const { user, subscribed, subscriptionLoading, loading: authLoading } = useAuth();
 
   useEffect(() => {
     // Redirect if not authenticated or not subscribed
