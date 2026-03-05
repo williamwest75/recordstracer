@@ -595,7 +595,7 @@ async function searchContactIntel(name: string, state: string) {
       while ((linkMatch = linkRegex.exec(html)) !== null && detailUrls.length < 3) {
         detailUrls.push(`https://search.sunbiz.org${linkMatch[1]}`);
       }
-      console.log("[ContactIntel] SunBiz detail URLs found:", detailUrls.length);
+      
       for (const detailUrl of detailUrls) {
         try {
           const detailRes = await fetch(detailUrl, {
