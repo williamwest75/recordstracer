@@ -559,7 +559,7 @@ async function searchContactIntel(name: string, state: string) {
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
-      console.log("[ContactIntel] FEC contributions found:", (data.results || []).length);
+      
       const seen = new Set<string>();
       for (const c of (data.results || [])) {
         const addr = [c.contributor_street_1, c.contributor_street_2, c.contributor_city, c.contributor_state, c.contributor_zip]
