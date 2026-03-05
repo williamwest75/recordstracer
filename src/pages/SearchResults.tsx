@@ -398,6 +398,11 @@ const SearchResults = () => {
                   );
                 })}
 
+                {/* News Coverage section */}
+                <div id="source-news-coverage" className="scroll-mt-24 border border-border rounded-lg p-4">
+                  <NewsMentions searchQuery={name} defaultExpanded={false} />
+                </div>
+
                 {/* Dossier deep-dive sections as collapsible */}
                 <div id="source-dossier" className="scroll-mt-24">
                   <Collapsible>
