@@ -275,6 +275,18 @@ const SearchResults = () => {
     return acc;
   }, {});
 
+  const tocItems = useMemo(() => {
+    const items: { id: string; label: string; count?: number }[] = [];
+    for (const [key, { label }] of Object.entries(CATEGORY_META)) {
+      const count = grouped[key]?.length ?? 0;
+      if (count > 0) items.push({ id: `source-${key}`, label, count });
+    }
+    items.push({ id: "source-dossier", label: "Investigative Dossier" });
+    items.push({ id: "source-deep-research", label: "Deep Research Analyst" });
+    items.push({ id: "source-checklist", label: "Reporter's Checklist" });
+    return items;
+  }, [results, grouped]);
+
   const categoryForResult = (result: MockResult) => CATEGORY_META[result.category];
 
   return (
