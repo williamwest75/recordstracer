@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { searchAll, type MockResult, type ApiDebugInfo, type SearchOptions } from "@/lib/recordsApi";
 import { sanitizeInput, sanitizeUrlParam, isValidName, isValidState } from "@/utils/validation";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import PublicRecordsLinks from "@/components/search/PublicRecordsLinks";
+import DossierView from "@/components/dossier/DossierView";
 import DossierView from "@/components/dossier/DossierView";
 import ReportersChecklist from "@/components/search/ReportersChecklist";
 
