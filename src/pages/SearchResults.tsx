@@ -118,22 +118,22 @@ const SearchResults = () => {
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
   const [searchTimestamp, setSearchTimestamp] = useState<Date | null>(null);
   const { toast } = useToast();
-  const { user, subscribed, subscriptionLoading } = useAuth();
+  const { user, subscribed, subscriptionLoading, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    // Redirect if not authenticated or not subscribed
+    // Wait for auth to hydrate before making any redirect decision
+    if (authLoading) return;
     if (!user) {
       toast({ title: "Sign in required", description: "Please sign in or create an account to search records." });
       navigate("/auth");
       return;
     }
-    if (!subscriptionLoading && !subscribed) {
+    if (subscriptionLoading) return;
+    if (!subscribed) {
       toast({ title: "Subscription required", description: "Choose a plan to start searching public records." });
       navigate("/pricing");
       return;
     }
-    // Wait for subscription check to finish before searching
-    if (subscriptionLoading) return;
 
     let cancelled = false;
     setLoading(true);
@@ -197,7 +197,7 @@ const SearchResults = () => {
         }
       });
     return () => { cancelled = true; };
-  }, [name, state, searchParams, user, subscribed, subscriptionLoading, navigate]);
+  }, [name, state, searchParams, user, subscribed, subscriptionLoading, authLoading, navigate]);
 
 
 
