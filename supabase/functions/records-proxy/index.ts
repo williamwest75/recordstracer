@@ -452,7 +452,7 @@ async function searchFAA(name: string) {
         });
       }
     }
-    console.log("[FAA] Aircraft found:", aircraft.length);
+    
     return { success: true, aircraft, total: aircraft.length };
   } catch (err) {
     console.error("[FAA] Search error:", err);

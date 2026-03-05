@@ -113,7 +113,7 @@ async function queryGdeltDocApi(query: string, days: number, mode: string, usOnl
   });
 
   const url = `https://api.gdeltproject.org/api/v2/doc/doc?${params}`;
-  console.log("[GDELT-DOC] URL:", url);
+  
 
   const res = await fetch(url);
   if (!res.ok) {
