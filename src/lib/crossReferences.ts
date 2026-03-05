@@ -40,22 +40,27 @@ export function detectCrossReferences(
   const subjectFirst = subjectParts[0] || "";
 
   // Helper: check if a name matches the subject (full or close variant)
-  const isSubjectName = (name: string) => {
-    const n = normalize(name);
+  const matchesSubject = (text: string) => {
+    const n = normalize(text);
     return n.includes(subjectNorm) ||
       n.includes(`${subjectLast} ${subjectFirst}`) ||
-      n.includes(`${subjectLast}, ${subjectFirst}`);
+      (n.includes(subjectLast) && n.includes(subjectFirst));
   };
 
+  // Helper: check if any record in a category references the subject
+  const subjectInCategory = (records: RecordResult[]) =>
+    records.some(r => {
+      const texts = [
+        r.details?.Contributor, r.details?.Name, r.details?.["Case Name"],
+        r.details?.["Recipient Name"], r.details?.["Entity Name"],
+        r.details?.["Officer/Agent"], r.description, r.returnedName,
+      ].filter(Boolean);
+      return texts.some(t => matchesSubject(t!));
+    });
+
   // 1. Subject name in FEC AND court records
-  const subjectInFec = fecRecords.some(r => {
-    const contrib = normalize(r.details?.Contributor || "");
-    return contrib.includes(subjectNorm) || contrib.includes(`${subjectLast}, ${subjectFirst}`);
-  });
-  const subjectInCourt = courtRecords.some(r => {
-    const caseName = normalize(r.details?.["Case Name"] || r.description || "");
-    return caseName.includes(subjectLast) && caseName.includes(subjectFirst);
-  });
+  const subjectInFec = subjectInCategory(fecRecords);
+  const subjectInCourt = subjectInCategory(courtRecords);
   if (subjectInFec && subjectInCourt) {
     addUnique(`"${subjectName}" appears in both FEC campaign finance records and federal court records.`);
   }
