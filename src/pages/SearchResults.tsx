@@ -162,6 +162,7 @@ const SearchResults = () => {
           console.log("[SearchResults] searchAll returned", data.results.length, "results, debug:", data.debug);
           setResults(data.results);
           setDebugInfo(data.debug);
+          setSearchTimestamp(new Date());
           setLoading(false);
 
           // Persist search metrics for dashboard previews
