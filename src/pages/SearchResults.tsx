@@ -20,7 +20,6 @@ import { searchAll, type MockResult, type ApiDebugInfo, type SearchOptions } fro
 import { sanitizeInput, sanitizeUrlParam, isValidName, isValidState } from "@/utils/validation";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DossierView from "@/components/dossier/DossierView";
-import DossierView from "@/components/dossier/DossierView";
 import ReportersChecklist from "@/components/search/ReportersChecklist";
 
 
