@@ -230,19 +230,22 @@ serve(async (req) => {
         let sql: string;
         let bqParams: BqParam[];
 
+        const usOnlyParam = mkParam("usOnly", "BOOL", usOnly ? "true" : "false");
+
         if (mode === "gkg") {
           sql = `
             SELECT DATE, DocumentIdentifier AS url, V2Themes, V2Persons, V2Organizations, V2Tone
             FROM \`gdelt-bq.gdeltv2.gkg_partitioned\`
             WHERE _PARTITIONTIME >= TIMESTAMP(@dateParam)
               AND LOWER(DocumentIdentifier) LIKE @query
-              ${usOnly ? "AND V2Locations LIKE '%United States%'" : ""}
+              AND (@usOnly = FALSE OR V2Locations LIKE '%United States%')
             ORDER BY DATE DESC
             LIMIT 50
           `;
           bqParams = [
             mkParam("dateParam", "STRING", dateParam),
             mkParam("query", "STRING", likePattern),
+            usOnlyParam,
           ];
           resultKey = "knowledge_graph";
         } else if (mode === "mentions") {
@@ -251,13 +254,14 @@ serve(async (req) => {
             FROM \`gdelt-bq.gdeltv2.eventmentions_partitioned\`
             WHERE _PARTITIONTIME >= TIMESTAMP(@dateParam)
               AND LOWER(MentionSourceName) LIKE @query
-              ${usOnly ? "AND ActionGeo_CountryCode = 'US'" : ""}
+              AND (@usOnly = FALSE OR ActionGeo_CountryCode = 'US')
             ORDER BY MentionDateTime DESC
             LIMIT 50
           `;
           bqParams = [
             mkParam("dateParam", "STRING", dateParam),
             mkParam("query", "STRING", likePattern),
+            usOnlyParam,
           ];
           resultKey = "mentions";
         } else {
@@ -268,13 +272,14 @@ serve(async (req) => {
               AND (LOWER(Actor1Name) LIKE @query
                    OR LOWER(Actor2Name) LIKE @query
                    OR LOWER(SOURCEURL) LIKE @query)
-              ${usOnly ? "AND ActionGeo_CountryCode = 'US'" : ""}
+              AND (@usOnly = FALSE OR ActionGeo_CountryCode = 'US')
             ORDER BY SQLDATE DESC, NumMentions DESC
             LIMIT 50
           `;
           bqParams = [
             mkParam("dateParam", "STRING", dateParam),
             mkParam("query", "STRING", likePattern),
+            usOnlyParam,
           ];
           resultKey = "events";
         }
