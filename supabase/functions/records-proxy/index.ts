@@ -489,7 +489,6 @@ function toStateAbbr(state: string): string {
 async function searchContactIntel(name: string, state: string) {
   const contacts: any[] = [];
   const stateCode = toStateAbbr(state);
-  console.log("[ContactIntel] Searching for:", name, "state:", state, "code:", stateCode);
   const apiKey = Deno.env.get("FEC_API_KEY") || "DEMO_KEY";
 
   // 1. FEC Candidate filings — address info from candidate detail
