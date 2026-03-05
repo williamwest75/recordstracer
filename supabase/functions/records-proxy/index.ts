@@ -556,7 +556,6 @@ async function searchContactIntel(name: string, state: string) {
   try {
     const stateParam = stateCode ? `&contributor_state=${stateCode}` : "";
     const url = `https://api.open.fec.gov/v1/schedules/schedule_a/?contributor_name=${encodeURIComponent(name)}${stateParam}&per_page=5&sort=-contribution_receipt_date&api_key=${apiKey}`;
-    console.log("[ContactIntel] FEC contributions search…");
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
