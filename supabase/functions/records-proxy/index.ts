@@ -310,9 +310,7 @@ async function searchSanctions(name: string) {
     const apiKey = (Deno.env.get("OPENSANCTIONS_API_KEY") || "").replace(/[^\x20-\x7E]/g, "").trim();
     const apiKeyParam = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : "";
     const url = `https://api.opensanctions.org/search/default?q=${encodeURIComponent(name)}&limit=15${apiKeyParam}`;
-    console.log("[Sanctions] Searching:", url.replace(apiKey, "***"), "hasKey:", !!apiKey);
     const res = await fetch(url, { headers: { "Accept": "application/json" } });
-    console.log("[Sanctions] Response status:", res.status);
     
     if (res.ok) {
       const data = await res.json();
