@@ -292,7 +292,7 @@ const SearchResults = () => {
             <p className="text-muted-foreground mt-1 text-sm">{results.length} records found across multiple databases</p>
 
             {/* 2. Editorial Brief — full width, generous spacing */}
-            <div className="mt-10 mb-12">
+            <div id="source-briefing" className="mt-10 mb-12 scroll-mt-24">
               <ErrorBoundary><AiSubjectSummary name={name} state={state} results={results} /></ErrorBoundary>
             </div>
 
