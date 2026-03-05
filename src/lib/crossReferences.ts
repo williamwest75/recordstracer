@@ -143,6 +143,26 @@ export function detectCrossReferences(
     addUnique(`"${subjectName}" appears in both PEP/sanctions databases and federal court records.`);
   }
 
+  // 7. Subject in FEC AND business records
+  const subjectInBusiness = subjectInCategory(businessRecords);
+  if (subjectInFec && subjectInBusiness) {
+    addUnique(`"${subjectName}" appears in both FEC campaign finance records and Florida business filings.`);
+  }
+
+  // 8. Subject in court AND business records
+  if (subjectInCourt && subjectInBusiness) {
+    addUnique(`"${subjectName}" appears in both federal court records and Florida business filings.`);
+  }
+
+  // 9. Subject in FEC AND offshore (only if credible match)
+  const subjectInOffshore = offshoreRecords.some(r => {
+    if (r.id === "icij-summary") return false;
+    return matchesSubject(r.details?.Name || "");
+  });
+  if (subjectInFec && subjectInOffshore) {
+    addUnique(`"${subjectName}" appears in both FEC campaign finance records and ICIJ Offshore Leaks.`);
+  }
+
   return refs;
 }
 
