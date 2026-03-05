@@ -62,11 +62,18 @@ async function getAccessToken(sa: {
   return access_token;
 }
 
-/** Run a BigQuery query and return rows. */
+interface BqParam {
+  name: string;
+  parameterType: { type: string };
+  parameterValue: { value: string };
+}
+
+/** Run a parameterized BigQuery query and return rows. */
 async function queryBigQuery(
   accessToken: string,
   projectId: string,
-  sql: string
+  sql: string,
+  params: BqParam[] = []
 ): Promise<any[]> {
   const url = `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`;
   const res = await fetch(url, {
@@ -78,6 +85,8 @@ async function queryBigQuery(
     body: JSON.stringify({
       query: sql,
       useLegacySql: false,
+      parameterMode: "NAMED",
+      queryParameters: params,
       maxResults: 50,
     }),
   });
