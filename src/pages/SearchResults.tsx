@@ -289,7 +289,12 @@ const SearchResults = () => {
           </div>
         ) : (
           <>
-            <p className="text-muted-foreground mt-1 text-sm">{results.length} records found across multiple databases</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {results.length} records found across multiple databases
+              <span className="text-muted-foreground/50 ml-2 text-xs">
+                Generated {new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+              </span>
+            </p>
 
             {/* 2. Editorial Brief — full width, generous spacing */}
             <div id="source-briefing" className="mt-10 mb-12 scroll-mt-24">
