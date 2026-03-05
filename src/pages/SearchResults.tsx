@@ -116,6 +116,7 @@ const SearchResults = () => {
   const [results, setResults] = useState<MockResult[]>([]);
   const [debugInfo, setDebugInfo] = useState<ApiDebugInfo[]>([]);
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
+  const [searchTimestamp, setSearchTimestamp] = useState<Date | null>(null);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading } = useAuth();
 
@@ -161,6 +162,7 @@ const SearchResults = () => {
           console.log("[SearchResults] searchAll returned", data.results.length, "results, debug:", data.debug);
           setResults(data.results);
           setDebugInfo(data.debug);
+          setSearchTimestamp(new Date());
           setLoading(false);
 
           // Persist search metrics for dashboard previews
@@ -289,7 +291,14 @@ const SearchResults = () => {
           </div>
         ) : (
           <>
-            <p className="text-muted-foreground mt-1 text-sm">{results.length} records found across multiple databases</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {results.length} records found across multiple databases
+              {searchTimestamp && (
+                <span className="text-muted-foreground/50 ml-2 text-xs">
+                  · Generated {searchTimestamp.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                </span>
+              )}
+            </p>
 
             {/* 2. Editorial Brief — full width, generous spacing */}
             <div id="source-briefing" className="mt-10 mb-12 scroll-mt-24">
