@@ -10,7 +10,7 @@ import AiSubjectSummary from "@/components/search/AiSubjectSummary";
 import DeepResearchAnalyst from "@/components/search/DeepResearchAnalyst";
 import NameMatchBadge from "@/components/search/NameMatchBadge";
 import { getNameMatchConfidence } from "@/lib/nameMatch";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
