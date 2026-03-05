@@ -498,7 +498,7 @@ async function searchContactIntel(name: string, state: string) {
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
-      console.log("[ContactIntel] FEC candidates found:", (data.results || []).length);
+      
       for (const c of (data.results || [])) {
         try {
           const detailUrl = `https://api.open.fec.gov/v1/candidate/${c.candidate_id}/?api_key=${apiKey}`;
