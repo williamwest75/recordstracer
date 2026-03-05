@@ -280,7 +280,7 @@ const SearchResults = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 container mx-auto px-4 lg:px-8 py-10 max-w-3xl">
+      <main className="flex-1 container mx-auto px-4 lg:px-8 py-10 max-w-5xl">
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" /> Back to search
         </Link>
@@ -319,55 +319,93 @@ const SearchResults = () => {
               </span>
             </div>
 
-            {/* 4. Raw Source Data — collapsible sections */}
-            <div className="space-y-2">
-              {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
-                const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
-                if (items.length === 0) return null;
-                return (
-                  <SourceRecordSection
-                    key={key}
-                    categoryKey={key}
-                    icon={Icon}
-                    label={label}
-                    items={items}
-                    name={name}
-                    onViewDetails={setSelectedResult}
-                    onSave={openSaveModal}
-                  />
-                );
-              })}
+            {/* 4. Source Records with sticky TOC */}
+            <div className="flex gap-8 relative">
+              {/* Sticky TOC sidebar */}
+              <nav className="hidden lg:block w-48 shrink-0">
+                <div className="sticky top-24">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-1.5">
+                    <List className="h-3 w-3" /> Contents
+                  </p>
+                  <ul className="space-y-1 border-l border-border pl-3">
+                    {tocItems.map((item) => (
+                      <li key={item.id}>
+                        <a
+                          href={`#${item.id}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }}
+                          className="block text-[11px] text-muted-foreground hover:text-foreground transition-colors py-1 leading-tight"
+                        >
+                          {item.label}
+                          {item.count !== undefined && (
+                            <span className="text-muted-foreground/50 ml-1">({item.count})</span>
+                          )}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </nav>
 
-              {/* Dossier deep-dive sections as collapsible */}
-              <Collapsible>
-                <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
-                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Investigative Dossier</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pt-4 pb-2">
-                  <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
-                </CollapsibleContent>
-              </Collapsible>
+              {/* Main source records column */}
+              <div className="flex-1 min-w-0 space-y-2">
+                {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
+                  const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
+                  if (items.length === 0) return null;
+                  return (
+                    <div key={key} id={`source-${key}`} className="scroll-mt-24">
+                      <SourceRecordSection
+                        categoryKey={key}
+                        icon={Icon}
+                        label={label}
+                        items={items}
+                        name={name}
+                        onViewDetails={setSelectedResult}
+                        onSave={openSaveModal}
+                      />
+                    </div>
+                  );
+                })}
 
-              <Collapsible>
-                <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
-                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Deep Research Analyst</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pt-4 pb-2">
-                  <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
-                </CollapsibleContent>
-              </Collapsible>
+                {/* Dossier deep-dive sections as collapsible */}
+                <div id="source-dossier" className="scroll-mt-24">
+                  <Collapsible>
+                    <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Investigative Dossier</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4 pb-2">
+                      <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
 
-              <Collapsible>
-                <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
-                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Reporter's Checklist</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pt-4 pb-2">
-                  <ErrorBoundary><ReportersChecklist name={name} state={state} results={results} /></ErrorBoundary>
-                </CollapsibleContent>
-              </Collapsible>
+                <div id="source-deep-research" className="scroll-mt-24">
+                  <Collapsible>
+                    <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Deep Research Analyst</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4 pb-2">
+                      <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+
+                <div id="source-checklist" className="scroll-mt-24">
+                  <Collapsible>
+                    <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
+                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Reporter's Checklist</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4 pb-2">
+                      <ErrorBoundary><ReportersChecklist name={name} state={state} results={results} /></ErrorBoundary>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+              </div>
             </div>
           </>
         )}
