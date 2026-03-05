@@ -116,6 +116,7 @@ const SearchResults = () => {
   const [results, setResults] = useState<MockResult[]>([]);
   const [debugInfo, setDebugInfo] = useState<ApiDebugInfo[]>([]);
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
+  const [searchTimestamp, setSearchTimestamp] = useState<Date | null>(null);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading } = useAuth();
 
