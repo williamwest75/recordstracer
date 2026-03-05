@@ -1,3 +1,7 @@
+// GDELT: DOC API only — free, automatic, 30-day window, 10 results max
+// BigQuery GDELT removed — not cost-effective at current scale
+// Revisit BigQuery archive search only when a clear editorial use case is established
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
@@ -7,161 +11,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-/** Parse the service-account JSON and mint a short-lived OAuth2 token. */
-async function getAccessToken(sa: {
-  client_email: string;
-  private_key: string;
-  token_uri: string;
-}): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  const header = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const payload = btoa(
-    JSON.stringify({
-      iss: sa.client_email,
-      scope: "https://www.googleapis.com/auth/bigquery.readonly",
-      aud: sa.token_uri,
-      iat: now,
-      exp: now + 3600,
-    })
-  );
-
-  const pemBody = sa.private_key
-    .replace(/-----BEGIN PRIVATE KEY-----/, "")
-    .replace(/-----END PRIVATE KEY-----/, "")
-    .replace(/\n/g, "");
-  const binaryKey = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0));
-
-  const cryptoKey = await crypto.subtle.importKey(
-    "pkcs8",
-    binaryKey,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  const signatureInput = new TextEncoder().encode(`${header}.${payload}`);
-  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, signatureInput);
-  const signature = btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-
-  const jwt = `${header}.${payload}.${signature}`;
-
-  const tokenRes = await fetch(sa.token_uri, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
-  });
-
-  if (!tokenRes.ok) {
-    const text = await tokenRes.text();
-    throw new Error(`Token exchange failed (${tokenRes.status}): ${text}`);
-  }
-  const { access_token } = await tokenRes.json();
-  return access_token;
-}
-
-interface BqParam {
-  name: string;
-  parameterType: { type: string };
-  parameterValue: { value: string };
-}
-
-/** Run a parameterized BigQuery query and return rows. */
-async function queryBigQuery(
-  accessToken: string,
-  projectId: string,
-  sql: string,
-  params: BqParam[] = []
-): Promise<any[]> {
-  const url = `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      query: sql,
-      useLegacySql: false,
-      parameterMode: "NAMED",
-      queryParameters: params,
-      maxResults: 50,
-    }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`BigQuery error (${res.status}): ${text}`);
-  }
-
-  const data = await res.json();
-  const fields = (data.schema?.fields ?? []).map((f: any) => f.name);
-  return (data.rows ?? []).map((row: any) =>
-    Object.fromEntries(row.f.map((cell: any, i: number) => [fields[i], cell.v]))
-  );
-}
-
-/** Free GDELT Doc API fallback – no credentials needed. */
-async function queryGdeltDocApi(query: string, days: number, mode: string, usOnly: boolean): Promise<{ rows: any[]; resultKey: string }> {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
-  const fmt = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, "");
-
-  const queryStr = usOnly ? `${query} sourcelang:eng sourcecountry:US` : `${query} sourcelang:eng`;
-
-  const params = new URLSearchParams({
-    query: queryStr,
-    mode: "ArtList",
-    maxrecords: "50",
-    format: "json",
-    startdatetime: `${fmt(startDate)}000000`,
-    enddatetime: `${fmt(endDate)}235959`,
-  });
-
-  const url = `https://api.gdeltproject.org/api/v2/doc/doc?${params}`;
-  
-
-  const res = await fetch(url);
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`GDELT Doc API error (${res.status}): ${text}`);
-  }
-
-  const data = await res.json();
-  const articles = data.articles ?? [];
-
-  const rows = articles.map((a: any) => {
-    let tone = 0;
-    if (a.tone != null) {
-      const toneStr = String(a.tone);
-      const firstVal = toneStr.split(";")[0];
-      tone = parseFloat(firstVal) || 0;
-    }
-    return {
-      SQLDATE: a.seendate?.replace(/[- :]/g, "").slice(0, 8) ?? "",
-      Actor1Name: a.domain ?? a.sourcecountry ?? "Unknown",
-      Actor2Name: a.title?.split(/[-–—:|]/)[0]?.trim().slice(0, 40) ?? "",
-      EventCode: "01",
-      GoldsteinScale: String(tone),
-      NumMentions: String(a.socialimage ? 5 : 1),
-      AvgTone: String(tone),
-      SOURCEURL: a.url ?? "",
-    };
-  });
-
-  return { rows, resultKey: "events" };
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Authenticate the request
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -186,10 +41,9 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const query = typeof body.query === "string" ? body.query.replace(/<[^>]*>/g, "").trim().slice(0, 200) : "";
-    const days = typeof body.days === "number" && body.days >= 1 && body.days <= 365 ? body.days : 7;
-    const mode = typeof body.mode === "string" && ["events", "gkg", "mentions"].includes(body.mode) ? body.mode : "events";
-    const usOnly = body.usOnly === true;
+    const query = typeof body.query === "string"
+      ? body.query.replace(/<[^>]*>/g, "").trim().slice(0, 200)
+      : "";
 
     if (!query) {
       return new Response(JSON.stringify({ error: "query is required" }), {
@@ -198,116 +52,42 @@ serve(async (req) => {
       });
     }
 
-    // ── Try BigQuery first ──
-    let rows: any[] = [];
-    let resultKey = "events";
-    let usedFallback = false;
+    const params = new URLSearchParams({
+      query: `${query} sourcelang:eng`,
+      mode: "ArtList",
+      maxrecords: "10",
+      format: "json",
+      timespan: "30d",
+    });
 
-    const saJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
+    const url = `https://api.gdeltproject.org/api/v2/doc/doc?${params}`;
+    const res = await fetch(url);
 
-    if (saJson) {
-      try {
-        const sa = JSON.parse(saJson);
-        const accessToken = await getAccessToken(sa);
-
-        const dateLimit = new Date();
-        dateLimit.setDate(dateLimit.getDate() - days);
-        const dateParam = dateLimit.toISOString().slice(0, 10);
-
-        // Sanitize for LIKE pattern — no interpolation into SQL
-        const safeQuery = query.replace(/[^a-zA-Z0-9\s\-.']/g, "").trim().toLowerCase();
-        if (!safeQuery) {
-          throw new Error("Query contains no valid characters after sanitization");
-        }
-        const likePattern = `%${safeQuery}%`;
-
-        const mkParam = (name: string, type: string, value: string): BqParam => ({
-          name,
-          parameterType: { type },
-          parameterValue: { value },
-        });
-
-        let sql: string;
-        let bqParams: BqParam[];
-
-        const usOnlyParam = mkParam("usOnly", "BOOL", usOnly ? "true" : "false");
-
-        if (mode === "gkg") {
-          sql = `
-            SELECT DATE, DocumentIdentifier AS url, V2Themes, V2Persons, V2Organizations, V2Tone
-            FROM \`gdelt-bq.gdeltv2.gkg_partitioned\`
-            WHERE _PARTITIONTIME >= TIMESTAMP(@dateParam)
-              AND LOWER(DocumentIdentifier) LIKE @query
-              AND (@usOnly = FALSE OR V2Locations LIKE '%United States%')
-            ORDER BY DATE DESC
-            LIMIT 50
-          `;
-          bqParams = [
-            mkParam("dateParam", "STRING", dateParam),
-            mkParam("query", "STRING", likePattern),
-            usOnlyParam,
-          ];
-          resultKey = "knowledge_graph";
-        } else if (mode === "mentions") {
-          sql = `
-            SELECT MentionDateTime, MentionSourceName, MentionIdentifier AS url, MentionDocTone, Confidence
-            FROM \`gdelt-bq.gdeltv2.eventmentions_partitioned\`
-            WHERE _PARTITIONTIME >= TIMESTAMP(@dateParam)
-              AND LOWER(MentionSourceName) LIKE @query
-              AND (@usOnly = FALSE OR ActionGeo_CountryCode = 'US')
-            ORDER BY MentionDateTime DESC
-            LIMIT 50
-          `;
-          bqParams = [
-            mkParam("dateParam", "STRING", dateParam),
-            mkParam("query", "STRING", likePattern),
-            usOnlyParam,
-          ];
-          resultKey = "mentions";
-        } else {
-          sql = `
-            SELECT SQLDATE, Actor1Name, Actor2Name, EventCode, GoldsteinScale, NumMentions, AvgTone, SOURCEURL
-            FROM \`gdelt-bq.gdeltv2.events_partitioned\`
-            WHERE _PARTITIONTIME >= TIMESTAMP(@dateParam)
-              AND (LOWER(Actor1Name) LIKE @query
-                   OR LOWER(Actor2Name) LIKE @query
-                   OR LOWER(SOURCEURL) LIKE @query)
-              AND (@usOnly = FALSE OR ActionGeo_CountryCode = 'US')
-            ORDER BY SQLDATE DESC, NumMentions DESC
-            LIMIT 50
-          `;
-          bqParams = [
-            mkParam("dateParam", "STRING", dateParam),
-            mkParam("query", "STRING", likePattern),
-            usOnlyParam,
-          ];
-          resultKey = "events";
-        }
-
-        rows = await queryBigQuery(accessToken, sa.project_id, sql, bqParams);
-      } catch (bqErr) {
-        console.warn("[GDELT-BQ] BigQuery failed, falling back to Doc API:", String(bqErr));
-        rows = [];
-      }
+    if (!res.ok) {
+      console.error(`[GDELT] DOC API returned ${res.status}`);
+      return new Response(JSON.stringify({ articles: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // ── Fallback to free GDELT Doc API ──
-    if (rows.length === 0) {
-      console.log("[GDELT] Using free Doc API fallback");
-      usedFallback = true;
-      const fallback = await queryGdeltDocApi(query, days, mode, usOnly);
-      rows = fallback.rows;
-      resultKey = fallback.resultKey;
-    }
+    const data = await res.json();
+    const raw = data.articles ?? [];
+
+    const articles = raw.map((a: any) => ({
+      title: a.title ?? "",
+      url: a.url ?? "",
+      domain: a.domain ?? "",
+      seendate: a.seendate ?? "",
+    }));
 
     return new Response(
-      JSON.stringify({ [resultKey]: rows, mode, query, days, source: usedFallback ? "gdelt-doc-api" : "bigquery" }),
+      JSON.stringify({ articles }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("[GDELT] error", err);
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
+    console.error("[GDELT] error:", String(err));
+    // Fail silently — return empty results
+    return new Response(JSON.stringify({ articles: [] }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

@@ -1,5 +1,5 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle, FileText, ChevronDown, ChevronRight, List } from "lucide-react";
+import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle, FileText, ChevronDown, ChevronRight, List, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -21,6 +21,7 @@ import { sanitizeInput, sanitizeUrlParam, isValidName, isValidState } from "@/ut
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DossierView from "@/components/dossier/DossierView";
 import ReportersChecklist from "@/components/search/ReportersChecklist";
+import NewsMentions from "@/components/NewsMentions";
 
 
 interface Investigation {
@@ -296,6 +297,7 @@ const SearchResults = () => {
       const count = grouped[key]?.length ?? 0;
       if (count > 0) items.push({ id: `source-${key}`, label, count });
     }
+    items.push({ id: "source-news-coverage", label: "News Coverage" });
     items.push({ id: "source-dossier", label: "Investigative Dossier" });
     items.push({ id: "source-deep-research", label: "Deep Research Analyst" });
     items.push({ id: "source-checklist", label: "Reporter's Checklist" });
@@ -395,6 +397,11 @@ const SearchResults = () => {
                     </div>
                   );
                 })}
+
+                {/* News Coverage section */}
+                <div id="source-news-coverage" className="scroll-mt-24 border border-border rounded-lg p-4">
+                  <NewsMentions searchQuery={name} defaultExpanded={false} />
+                </div>
 
                 {/* Dossier deep-dive sections as collapsible */}
                 <div id="source-dossier" className="scroll-mt-24">
