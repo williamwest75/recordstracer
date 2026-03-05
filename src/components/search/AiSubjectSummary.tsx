@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Sparkles, Loader2, AlertCircle, ChevronDown, Search, CheckCircle, Newspaper, Link2, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2, AlertCircle, ChevronDown, Search, CheckCircle, Newspaper, Link2, ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,28 +34,8 @@ interface AiSubjectSummaryProps {
   results: RecordResult[];
 }
 
-const FLAG_STYLES: Record<string, { icon: string; label: string; bg: string; border: string; text: string }> = {
-  red: { icon: "🔴", label: "Investigate", bg: "bg-destructive/5", border: "border-destructive/20", text: "text-destructive" },
-  yellow: { icon: "🟡", label: "Notable", bg: "bg-warning-bg", border: "border-warning-border", text: "text-warning" },
-  green: { icon: "🟢", label: "Routine", bg: "bg-success-bg", border: "border-success-border", text: "text-success" },
-  blue: { icon: "🔵", label: "Context", bg: "bg-info-bg", border: "border-info-border", text: "text-info" },
-};
-
-const RISK_STYLES: Record<string, { label: string; bg: string; dot: string; text: string }> = {
-  low: { label: "Low", bg: "bg-success-bg", dot: "bg-success", text: "text-success" },
-  moderate: { label: "Moderate", bg: "bg-info-bg", dot: "bg-info", text: "text-info" },
-  elevated: { label: "Elevated", bg: "bg-warning-bg", dot: "bg-warning", text: "text-warning" },
-  high: { label: "High", bg: "bg-destructive/10", dot: "bg-destructive", text: "text-destructive" },
-};
-
-const DIFFICULTY_STYLES: Record<string, { bg: string; text: string }> = {
-  Beginner: { bg: "bg-success-bg", text: "text-success" },
-  Intermediate: { bg: "bg-warning-bg", text: "text-warning" },
-  Advanced: { bg: "bg-destructive/10", text: "text-destructive" },
-};
-
 /** Map a finding's database field to an external source URL */
-function getDatabaseSourceUrl(database: string, name: string, state: string): string | null {
+function getDatabaseSourceUrl(database: string, name: string, _state: string): string | null {
   const db = database.toLowerCase();
   const enc = encodeURIComponent(name);
   if (db.includes("fec") || db.includes("campaign")) return `https://www.fec.gov/data/receipts/?contributor_name=${enc}`;
@@ -68,9 +48,32 @@ function getDatabaseSourceUrl(database: string, name: string, state: string): st
   if (db.includes("propublica") || db.includes("nonprofit")) return `https://projects.propublica.org/nonprofits/search?q=${enc}`;
   if (db.includes("lobbying") || db.includes("lda") || db.includes("senate")) return `https://lda.senate.gov/filings/public/filing/search/?client_name=${enc}`;
   if (db.includes("faa") || db.includes("aircraft")) return `https://registry.faa.gov/AircraftInquiry/Search/NameResult?Nametxt=${enc}`;
-  if (db.includes("gdelt") || db.includes("news")) return null; // GDELT links are per-article
+  if (db.includes("gdelt") || db.includes("news")) return null;
   return null;
 }
+
+const DIFFICULTY_STYLES: Record<string, { bg: string; text: string }> = {
+  Beginner: { bg: "bg-success-bg", text: "text-success" },
+  Intermediate: { bg: "bg-warning-bg", text: "text-warning" },
+  Advanced: { bg: "bg-destructive/10", text: "text-destructive" },
+};
+
+const SectionHeading = ({ children, onClick, expanded, count }: { children: React.ReactNode; onClick: () => void; expanded: boolean; count?: number }) => (
+  <button
+    onClick={onClick}
+    className="w-full flex items-center justify-between px-5 py-3 border-b border-border/50 hover:bg-muted/30 transition-colors"
+  >
+    <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+      {children}
+      {count !== undefined && (
+        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+          {count}
+        </span>
+      )}
+    </span>
+    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
+  </button>
+);
 
 const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
   const { user } = useAuth();
@@ -85,23 +88,16 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Build a deterministic results summary for the query
   const resultsSummary = (() => {
     if (results.length === 0) return "";
     const categoryCounts: Record<string, { count: number; highlights: string[] }> = {};
     for (const r of results) {
-      if (!categoryCounts[r.category]) {
-        categoryCounts[r.category] = { count: 0, highlights: [] };
-      }
+      if (!categoryCounts[r.category]) categoryCounts[r.category] = { count: 0, highlights: [] };
       categoryCounts[r.category].count++;
-      if (categoryCounts[r.category].highlights.length < 3) {
-        categoryCounts[r.category].highlights.push(r.description);
-      }
+      if (categoryCounts[r.category].highlights.length < 3) categoryCounts[r.category].highlights.push(r.description);
     }
     return Object.entries(categoryCounts)
-      .map(([cat, { count, highlights }]) =>
-        `${cat}: ${count} record(s). Examples: ${highlights.join("; ")}`
-      )
+      .map(([cat, { count, highlights }]) => `${cat}: ${count} record(s). Examples: ${highlights.join("; ")}`)
       .join("\n");
   })();
 
@@ -143,30 +139,17 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
 
   if (results.length === 0) return null;
 
-  const risk = briefing ? (RISK_STYLES[briefing.riskLevel] || RISK_STYLES.moderate) : null;
-
   return (
-    <div className="border border-accent/30 rounded-xl overflow-hidden bg-card shadow-sm">
+    <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
       {/* Header */}
-      <div className="bg-gradient-to-r from-accent/5 to-accent/10 px-5 py-4 border-b border-accent/20 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Sparkles className="h-5 w-5 text-accent" />
-          <div>
-            <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-accent">
-              AI Subject Briefing
-            </h2>
-            {briefing && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {results.length} records across multiple databases
-              </p>
-            )}
-          </div>
-        </div>
-        {risk && (
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${risk.bg} border border-current/10`}>
-            <div className={`w-2 h-2 rounded-full ${risk.dot}`} />
-            <span className={`text-xs font-semibold ${risk.text}`}>{risk.label} Interest</span>
-          </div>
+      <div className="px-5 py-4 border-b border-border">
+        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Subject Briefing
+        </h2>
+        {briefing && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {results.length} records across multiple databases
+          </p>
         )}
       </div>
 
@@ -186,86 +169,60 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
         </div>
       ) : briefing ? (
         <>
-          {/* Executive Summary */}
+          {/* Four-sentence summary */}
           <div className="px-5 py-4 border-b border-border">
             <p className="text-sm text-foreground leading-relaxed font-body">{briefing.summary}</p>
           </div>
 
           {/* Key Findings */}
           <div>
-            <button
-              onClick={() => toggleSection("findings")}
-              className="w-full flex items-center justify-between px-5 py-3 border-b border-border/50 hover:bg-muted/30 transition-colors"
-            >
-              <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Search className="h-4 w-4" />
-                Key Findings
-                <span className="bg-accent/10 text-accent text-[11px] font-semibold px-2 py-0.5 rounded-full">
-                  {briefing.findings.length}
-                </span>
-              </span>
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expandedSections.findings ? "rotate-180" : ""}`} />
-            </button>
+            <SectionHeading onClick={() => toggleSection("findings")} expanded={expandedSections.findings} count={briefing.findings.length}>
+              <Search className="h-3.5 w-3.5" />
+              Key Findings
+            </SectionHeading>
 
             {expandedSections.findings && (
               <div className="px-5 py-4 space-y-3">
-                {briefing.findings.map((finding, i) => {
-                  const flag = FLAG_STYLES[finding.flag] || FLAG_STYLES.blue;
-                  return (
-                    <div key={i} className={`flex gap-3 p-4 rounded-lg ${flag.bg} border ${flag.border}`}>
-                      <div className="flex flex-col items-center gap-1 pt-0.5 min-w-[36px]">
-                        <span className="text-base">{flag.icon}</span>
-                        <span className={`text-[9px] font-bold uppercase tracking-wide ${flag.text}`}>
-                          {flag.label}
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <h4 className="text-sm font-bold text-foreground">{finding.title}</h4>
-                          <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                            {finding.database}
-                          </span>
-                        </div>
-                        <p className="text-[13px] text-foreground/80 leading-relaxed">{finding.detail}</p>
-                        {(() => {
-                          const url = getDatabaseSourceUrl(finding.database, name, state);
-                          return url ? (
-                            <a
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[12px] text-accent hover:underline mt-2"
-                            >
-                              <ExternalLink className="h-3 w-3" /> View Records ↗
-                            </a>
-                          ) : null;
-                        })()}
-                      </div>
+                {briefing.findings.map((finding, i) => (
+                  <div key={i} className="p-4 rounded-lg border border-border bg-muted/20">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h4 className="text-sm font-bold text-foreground">{finding.title}</h4>
+                      <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                        {finding.database}
+                      </span>
                     </div>
-                  );
-                })}
+                    <p className="text-[13px] text-foreground/80 leading-relaxed">{finding.detail}</p>
+                    {(() => {
+                      const url = getDatabaseSourceUrl(finding.database, name, state);
+                      return url ? (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[12px] text-accent hover:underline mt-2"
+                        >
+                          <ExternalLink className="h-3 w-3" /> View Records ↗
+                        </a>
+                      ) : null;
+                    })()}
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Recommended Next Steps */}
+          {/* Next Steps */}
           <div>
-            <button
-              onClick={() => toggleSection("steps")}
-              className="w-full flex items-center justify-between px-5 py-3 border-b border-border/50 hover:bg-muted/30 transition-colors"
-            >
-              <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <CheckCircle className="h-4 w-4" />
-                Recommended Next Steps
-              </span>
-              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expandedSections.steps ? "rotate-180" : ""}`} />
-            </button>
+            <SectionHeading onClick={() => toggleSection("steps")} expanded={expandedSections.steps}>
+              <CheckCircle className="h-3.5 w-3.5" />
+              Next Steps
+            </SectionHeading>
 
             {expandedSections.steps && (
               <div className="px-5 py-4">
                 {briefing.nextSteps.map((step, i) => (
                   <div key={i} className="flex gap-3 items-start py-2.5 border-b border-border/30 last:border-0">
-                    <div className="w-6 h-6 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-[11px] font-bold text-accent shrink-0 mt-0.5">
+                    <div className="w-6 h-6 rounded-full bg-muted border border-border flex items-center justify-center text-[11px] font-bold text-muted-foreground shrink-0 mt-0.5">
                       {i + 1}
                     </div>
                     <p className="text-[13px] text-foreground leading-relaxed">{step}</p>
@@ -278,17 +235,10 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
           {/* Story Angles */}
           {briefing.storyAngles && briefing.storyAngles.length > 0 && (
             <div>
-              <button
-                onClick={() => toggleSection("angles")}
-                className="w-full flex items-center justify-between px-5 py-3 border-b border-border/50 hover:bg-muted/30 transition-colors"
-              >
-                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Newspaper className="h-4 w-4" />
-                  Story Angles
-                  <span className="bg-info-bg text-info text-[10px] font-semibold px-2 py-0.5 rounded-full">NEW</span>
-                </span>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expandedSections.angles ? "rotate-180" : ""}`} />
-              </button>
+              <SectionHeading onClick={() => toggleSection("angles")} expanded={expandedSections.angles}>
+                <Newspaper className="h-3.5 w-3.5" />
+                Story Angles
+              </SectionHeading>
 
               {expandedSections.angles && (
                 <div className="px-5 py-4 space-y-3">
@@ -314,25 +264,16 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
           {/* Cross-References */}
           {briefing.crossReferences && briefing.crossReferences.length > 0 && (
             <div>
-              <button
-                onClick={() => toggleSection("crossRefs")}
-                className="w-full flex items-center justify-between px-5 py-3 border-b border-border/50 hover:bg-muted/30 transition-colors"
-              >
-                <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Link2 className="h-4 w-4" />
-                  Cross-References Detected
-                  <span className="bg-warning-bg text-warning text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                    {briefing.crossReferences.length}
-                  </span>
-                </span>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expandedSections.crossRefs ? "rotate-180" : ""}`} />
-              </button>
+              <SectionHeading onClick={() => toggleSection("crossRefs")} expanded={expandedSections.crossRefs} count={briefing.crossReferences.length}>
+                <Link2 className="h-3.5 w-3.5" />
+                Cross-References
+              </SectionHeading>
 
               {expandedSections.crossRefs && (
                 <div className="px-5 py-4 space-y-2">
                   {briefing.crossReferences.map((ref, i) => (
                     <div key={i} className="flex gap-2.5 items-start p-3 rounded-lg bg-muted/30 border border-border/50">
-                      <span className="text-accent shrink-0">🔗</span>
+                      <span className="text-muted-foreground shrink-0">🔗</span>
                       <p className="text-[13px] text-foreground leading-relaxed">{ref}</p>
                     </div>
                   ))}

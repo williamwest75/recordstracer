@@ -49,7 +49,7 @@ serve(async (req) => {
 
 You MUST return valid JSON with this exact structure:
 {
-  "summary": "2-3 sentence executive overview of what was found",
+  "summary": "A four-sentence paragraph following the exact structure below.",
   "riskLevel": "low|moderate|elevated|high",
   "findings": [
     {
@@ -74,6 +74,19 @@ You MUST return valid JSON with this exact structure:
     "Description of overlap between data sources, e.g. name appearing in both ICIJ and business filings"
   ]
 }
+
+SUMMARY FIELD — MANDATORY FOUR-SENTENCE STRUCTURE:
+The "summary" field MUST contain exactly four sentences, each serving a specific purpose:
+
+Sentence 1 — WHO: Establish who the subject is using only what the records confirm. Use FEC occupation fields, PEP listings, or business filings to identify public role. Example: "Jack Latvala appears in federal records as a Florida state legislator and political consultant based in Largo, Florida, with campaign finance activity spanning from 2004 to 2024."
+
+Sentence 2 — WHAT: Describe what the data shows across all sources as one connected picture. State the facts, connect them across databases, draw no conclusions. Include specific counts and dollar amounts. Example: "Public records include 20 federal campaign contributions totaling $25,389 to Republican candidates and PACs, a Politically Exposed Person designation consistent with his legislative history, and five court case records requiring docket review to confirm direct involvement."
+
+Sentence 3 — UNRESOLVED: Identify what is unresolved and requires verification. Frame as standard reporting practice, not as suspicion. Example: "Thirteen offshore entity records return similar names but appear to be weak matches, and one Idaho court filing warrants verification to determine whether it involves this subject or a different individual."
+
+Sentence 4 — NEXT STEP: State the single most logical next reporting step. Be concrete and specific about what to search and where. Example: "A search of Florida SunBiz for entities where Latvala is listed as officer or registered agent, cross-referenced against the PACs and candidates receiving his donations, is the most direct path to building a complete financial picture."
+
+IMPORTANT: Generate all four sentences dynamically from the actual records data provided. Do not use the examples above verbatim — they are structural templates only. Each sentence must reflect the actual data for this specific subject.
 
 Flag colors:
 - red = Requires investigation (offshore entities, sanctions matches, suspicious patterns)
