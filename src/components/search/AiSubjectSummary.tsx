@@ -52,11 +52,7 @@ function getDatabaseSourceUrl(database: string, name: string, _state: string): s
   return null;
 }
 
-const DIFFICULTY_STYLES: Record<string, { bg: string; text: string }> = {
-  Beginner: { bg: "bg-success-bg", text: "text-success" },
-  Intermediate: { bg: "bg-warning-bg", text: "text-warning" },
-  Advanced: { bg: "bg-destructive/10", text: "text-destructive" },
-};
+
 
 const SectionHeading = ({ children, onClick, expanded, count }: { children: React.ReactNode; onClick: () => void; expanded: boolean; count?: number }) => (
   <button
@@ -242,20 +238,12 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
 
               {expandedSections.angles && (
                 <div className="px-5 py-4 space-y-3">
-                  {briefing.storyAngles.map((angle, i) => {
-                    const diff = DIFFICULTY_STYLES[angle.difficulty] || DIFFICULTY_STYLES.Intermediate;
-                    return (
-                      <div key={i} className="p-4 rounded-lg border border-border bg-muted/20">
-                        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                          <h4 className="text-sm font-bold text-foreground">{angle.angle}</h4>
-                          <span className={`text-[10px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full ${diff.bg} ${diff.text}`}>
-                            {angle.difficulty}
-                          </span>
-                        </div>
-                        <p className="text-[13px] text-muted-foreground leading-relaxed">{angle.description}</p>
-                      </div>
-                    );
-                  })}
+                  {briefing.storyAngles.map((angle, i) => (
+                    <div key={i} className="p-4 rounded-lg border border-border bg-muted/20">
+                      <h4 className="text-sm font-normal text-foreground mb-1">{angle.angle}</h4>
+                      <p className="text-[13px] text-muted-foreground leading-relaxed">{angle.description}</p>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
