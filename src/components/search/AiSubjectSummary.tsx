@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Sparkles, Loader2, AlertCircle, ChevronDown, Search, CheckCircle, Newspaper, Link2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Sparkles, Loader2, AlertCircle, ChevronDown, Search, CheckCircle, Newspaper, Link2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { RecordResult } from "@/lib/recordsApi";
@@ -52,6 +52,24 @@ const DIFFICULTY_STYLES: Record<string, { bg: string; text: string }> = {
   Intermediate: { bg: "bg-warning-bg", text: "text-warning" },
   Advanced: { bg: "bg-destructive/10", text: "text-destructive" },
 };
+
+/** Map a finding's database field to an external source URL */
+function getDatabaseSourceUrl(database: string, name: string, state: string): string | null {
+  const db = database.toLowerCase();
+  const enc = encodeURIComponent(name);
+  if (db.includes("fec") || db.includes("campaign")) return `https://www.fec.gov/data/receipts/?contributor_name=${enc}`;
+  if (db.includes("sunbiz") || db.includes("florida")) return `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?searchTerm=${enc}`;
+  if (db.includes("sec") || db.includes("edgar")) return `https://www.sec.gov/cgi-bin/browse-edgar?company=${enc}&action=getcompany`;
+  if (db.includes("icij") || db.includes("offshore")) return `https://offshoreleaks.icij.org/search?q=${enc}`;
+  if (db.includes("usaspending") || db.includes("contract") || db.includes("grant")) return `https://www.usaspending.gov/search`;
+  if (db.includes("court") || db.includes("pacer")) return `https://www.courtlistener.com/?q=${enc}&type=r&order_by=score+desc`;
+  if (db.includes("sanction") || db.includes("pep") || db.includes("opensanctions")) return `https://www.opensanctions.org/search/?q=${enc}`;
+  if (db.includes("propublica") || db.includes("nonprofit")) return `https://projects.propublica.org/nonprofits/search?q=${enc}`;
+  if (db.includes("lobbying") || db.includes("lda") || db.includes("senate")) return `https://lda.senate.gov/filings/public/filing/search/?client_name=${enc}`;
+  if (db.includes("faa") || db.includes("aircraft")) return `https://registry.faa.gov/AircraftInquiry/Search/NameResult?Nametxt=${enc}`;
+  if (db.includes("gdelt") || db.includes("news")) return null; // GDELT links are per-article
+  return null;
+}
 
 const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
   const { user } = useAuth();
@@ -227,6 +245,19 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
                           </span>
                         </div>
                         <p className="text-[13px] text-foreground/80 leading-relaxed">{finding.detail}</p>
+                        {(() => {
+                          const url = getDatabaseSourceUrl(finding.database, name, state);
+                          return url ? (
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[12px] text-accent hover:underline mt-2"
+                            >
+                              <ExternalLink className="h-3 w-3" /> View Records ↗
+                            </a>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                   );
