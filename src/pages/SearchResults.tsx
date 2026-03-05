@@ -22,6 +22,7 @@ import DossierView from "@/components/dossier/DossierView";
 import ReportersChecklist from "@/components/search/ReportersChecklist";
 import NewsMentions from "@/components/NewsMentions";
 import SaveToInvestigationDropdown from "@/components/search/SaveToInvestigationDropdown";
+import CourtRecordsSection from "@/components/search/CourtRecordsSection";
 
 
 
