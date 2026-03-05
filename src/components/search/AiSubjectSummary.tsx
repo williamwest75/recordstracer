@@ -52,11 +52,7 @@ function getDatabaseSourceUrl(database: string, name: string, _state: string): s
   return null;
 }
 
-const DIFFICULTY_STYLES: Record<string, { bg: string; text: string }> = {
-  Beginner: { bg: "bg-success-bg", text: "text-success" },
-  Intermediate: { bg: "bg-warning-bg", text: "text-warning" },
-  Advanced: { bg: "bg-destructive/10", text: "text-destructive" },
-};
+
 
 const SectionHeading = ({ children, onClick, expanded, count }: { children: React.ReactNode; onClick: () => void; expanded: boolean; count?: number }) => (
   <button
