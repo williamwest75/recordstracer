@@ -1,10 +1,11 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle, FileText, ChevronDown } from "lucide-react";
+import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle, FileText, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import SubjectProfile from "@/components/search/SubjectProfile";
