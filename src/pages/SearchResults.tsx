@@ -45,7 +45,7 @@ const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> =
 
 /* Collapsible source record section for a single category */
 const SourceRecordSection = ({
-  categoryKey, icon: Icon, label, items, name, onViewDetails, onSave,
+  categoryKey, icon: Icon, label, items, name, onViewDetails,
 }: {
   categoryKey: string;
   icon: typeof Building2;
@@ -53,7 +53,6 @@ const SourceRecordSection = ({
   items: MockResult[];
   name: string;
   onViewDetails: (r: MockResult) => void;
-  onSave: (r: MockResult) => void;
 }) => (
   <Collapsible>
     <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
@@ -86,9 +85,7 @@ const SourceRecordSection = ({
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onViewDetails(item)}>
                 <ExternalLink className="h-3.5 w-3.5" /> View
               </Button>
-              <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => onSave(item)}>
-                <Bookmark className="h-3.5 w-3.5" /> Save
-              </Button>
+              <SaveToInvestigationDropdown result={item} />
             </div>
           </div>
           {/* Direct outbound source link */}
