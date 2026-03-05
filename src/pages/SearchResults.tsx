@@ -1,10 +1,8 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, Bookmark, Loader2, ArrowLeft, FolderPlus, Plus, AlertCircle, FileText, ChevronDown, ChevronRight, List, Newspaper } from "lucide-react";
+import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, ArrowLeft, AlertCircle, FileText, ChevronRight, List, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
@@ -22,12 +20,11 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import DossierView from "@/components/dossier/DossierView";
 import ReportersChecklist from "@/components/search/ReportersChecklist";
 import NewsMentions from "@/components/NewsMentions";
+import SaveToInvestigationDropdown from "@/components/search/SaveToInvestigationDropdown";
 
 
-interface Investigation {
-  id: string;
-  title: string;
-}
+
+
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
   business: { icon: Building2, label: "Business Registrations & Filings" },
@@ -45,7 +42,7 @@ const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> =
 
 /* Collapsible source record section for a single category */
 const SourceRecordSection = ({
-  categoryKey, icon: Icon, label, items, name, onViewDetails, onSave,
+  categoryKey, icon: Icon, label, items, name, onViewDetails,
 }: {
   categoryKey: string;
   icon: typeof Building2;
@@ -53,7 +50,6 @@ const SourceRecordSection = ({
   items: MockResult[];
   name: string;
   onViewDetails: (r: MockResult) => void;
-  onSave: (r: MockResult) => void;
 }) => (
   <Collapsible>
     <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
@@ -86,9 +82,7 @@ const SourceRecordSection = ({
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onViewDetails(item)}>
                 <ExternalLink className="h-3.5 w-3.5" /> View
               </Button>
-              <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => onSave(item)}>
-                <Bookmark className="h-3.5 w-3.5" /> Save
-              </Button>
+              <SaveToInvestigationDropdown result={item} />
             </div>
           </div>
           {/* Direct outbound source link */}
@@ -122,12 +116,6 @@ const SearchResults = () => {
   const [results, setResults] = useState<MockResult[]>([]);
   const [debugInfo, setDebugInfo] = useState<ApiDebugInfo[]>([]);
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
-  const [saveModalResult, setSaveModalResult] = useState<MockResult | null>(null);
-  const [investigations, setInvestigations] = useState<Investigation[]>([]);
-  const [selectedInvestigationId, setSelectedInvestigationId] = useState("");
-  const [newInvestigationTitle, setNewInvestigationTitle] = useState("");
-  const [isCreatingNew, setIsCreatingNew] = useState(false);
-  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading } = useAuth();
 
@@ -209,82 +197,7 @@ const SearchResults = () => {
     return () => { cancelled = true; };
   }, [name, state, searchParams, user, subscribed, subscriptionLoading, navigate]);
 
-  const fetchInvestigations = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("investigations")
-      .select("id, title")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false });
-    setInvestigations(data || []);
-  };
 
-  const openSaveModal = (result: MockResult) => {
-    if (!user) {
-      toast({ title: "Sign in to save", description: "Create an account to save results to investigations.", variant: "destructive" });
-      return;
-    }
-    setSaveModalResult(result);
-    setSelectedInvestigationId("");
-    setNewInvestigationTitle("");
-    setIsCreatingNew(false);
-    fetchInvestigations();
-  };
-
-  const handleSave = async () => {
-    if (!user || !saveModalResult) return;
-    setSaving(true);
-
-    let investigationId = selectedInvestigationId;
-    let investigationName = "";
-
-    if (isCreatingNew) {
-      if (!newInvestigationTitle.trim()) {
-        toast({ title: "Enter a name", description: "Please name your new investigation.", variant: "destructive" });
-        setSaving(false);
-        return;
-      }
-      const { data, error } = await supabase
-        .from("investigations")
-        .insert({ title: newInvestigationTitle.trim(), user_id: user.id })
-        .select("id, title")
-        .single();
-      if (error || !data) {
-        toast({ title: "Error", description: error?.message || "Could not create investigation.", variant: "destructive" });
-        setSaving(false);
-        return;
-      }
-      investigationId = data.id;
-      investigationName = data.title;
-    } else {
-      if (!investigationId) {
-        toast({ title: "Select an investigation", description: "Choose an investigation or create a new one.", variant: "destructive" });
-        setSaving(false);
-        return;
-      }
-      investigationName = investigations.find((i) => i.id === investigationId)?.title || "Investigation";
-    }
-
-    const { error } = await supabase.from("saved_results").insert({
-      user_id: user.id,
-      investigation_id: investigationId,
-      result_data: {
-        source: saveModalResult.source,
-        description: saveModalResult.description,
-        category: saveModalResult.category,
-        details: saveModalResult.details,
-        sourceUrl: saveModalResult.sourceUrl,
-      },
-    });
-
-    setSaving(false);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Saved", description: `Added to "${investigationName}"` });
-      setSaveModalResult(null);
-    }
-  };
 
   const grouped = results.reduce<Record<string, MockResult[]>>((acc, r) => {
     (acc[r.category] ??= []).push(r);
@@ -392,7 +305,6 @@ const SearchResults = () => {
                         items={items}
                         name={name}
                         onViewDetails={setSelectedResult}
-                        onSave={openSaveModal}
                       />
                     </div>
                   );
@@ -550,83 +462,10 @@ const SearchResults = () => {
                 <Separator className="my-2" />
                 <div className="flex items-center gap-2 justify-end">
                   <Button variant="outline" size="sm" onClick={() => setSelectedResult(null)}>Close</Button>
-                  <Button variant="accent" size="sm" className="gap-1.5" onClick={() => { setSelectedResult(null); openSaveModal(selectedResult); }}>
-                    <FolderPlus className="h-3.5 w-3.5" /> Save to Investigation
-                  </Button>
                 </div>
               </>
             );
           })()}
-        </DialogContent>
-      </Dialog>
-
-      {/* Save to Investigation Modal */}
-      <Dialog open={!!saveModalResult} onOpenChange={(open) => !open && setSaveModalResult(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-heading text-lg">Save to Investigation</DialogTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Choose an investigation or create a new one.
-            </p>
-          </DialogHeader>
-
-          {saveModalResult && (
-            <div className="bg-muted/50 border border-border rounded-md p-3 text-sm">
-              <p className="font-medium text-foreground">{saveModalResult.source}</p>
-              <p className="text-muted-foreground text-xs mt-0.5">{saveModalResult.description}</p>
-            </div>
-          )}
-
-          <div className="space-y-4 mt-2">
-            {!isCreatingNew ? (
-              <>
-                <Select value={selectedInvestigationId} onValueChange={setSelectedInvestigationId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an investigation…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {investigations.map((inv) => (
-                      <SelectItem key={inv.id} value={inv.id}>{inv.title}</SelectItem>
-                    ))}
-                    {investigations.length === 0 && (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">No investigations yet</div>
-                    )}
-                  </SelectContent>
-                </Select>
-                <button
-                  onClick={() => setIsCreatingNew(true)}
-                  className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline font-medium"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Create new investigation
-                </button>
-              </>
-            ) : (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Investigation Name</label>
-                  <Input
-                    value={newInvestigationTitle}
-                    onChange={(e) => setNewInvestigationTitle(e.target.value)}
-                    placeholder="e.g. Byron Donalds — Florida Records"
-                    autoFocus
-                  />
-                </div>
-                <button
-                  onClick={() => setIsCreatingNew(false)}
-                  className="text-sm text-muted-foreground hover:underline"
-                >
-                  ← Back to existing investigations
-                </button>
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 justify-end mt-4">
-            <Button variant="outline" size="sm" onClick={() => setSaveModalResult(null)}>Cancel</Button>
-            <Button variant="accent" size="sm" className="gap-1.5" onClick={handleSave} disabled={saving}>
-              <Bookmark className="h-3.5 w-3.5" /> {saving ? "Saving…" : "Save"}
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </div>
