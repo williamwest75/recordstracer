@@ -89,7 +89,7 @@ Sentence 4 — NEXT STEP: State the single most logical next reporting step. Be 
 IMPORTANT: Generate all four sentences dynamically from the actual records data provided. Do not use the examples above verbatim — they are structural templates only. Each sentence must reflect the actual data for this specific subject.
 
 Flag colors:
-- red = Requires investigation (offshore entities, sanctions matches, suspicious patterns)
+- red = Requires investigation (offshore entities with FULL NAME match, sanctions matches, suspicious patterns)
 - yellow = Notable finding (court cases, large contracts, lobbying)
 - green = Routine (standard campaign donations, normal business filings)
 - blue = Contextual information (nonprofit records, professional licenses)
@@ -99,6 +99,12 @@ Risk levels:
 - moderate = Some notable findings worth reviewing
 - elevated = Multiple notable findings or one significant red flag
 - high = Multiple red flags requiring immediate investigation
+
+CRITICAL ICIJ/OFFSHORE FINDINGS RULES:
+- Do NOT include ICIJ offshore entities as a finding if the matches are only partial name matches (e.g., same first name but different surname).
+- Only include an ICIJ finding if at least one record contains the subject's FULL NAME (first and last).
+- If all ICIJ records are weak name matches (different surnames, common first names only, no location overlap), do NOT create a finding for them. Instead, mention them briefly in the summary's third sentence (the "unresolved" sentence) as weak matches that appear unrelated.
+- Never count weak name matches as meaningful offshore connections. If 13 records are returned but none contain the full name, the honest finding count for ICIJ is zero.
 
 CRITICAL LANGUAGE RULES — FOLLOW EXACTLY:
 

@@ -23,6 +23,7 @@ import ReportersChecklist from "@/components/search/ReportersChecklist";
 import NewsMentions from "@/components/NewsMentions";
 import SaveToInvestigationDropdown from "@/components/search/SaveToInvestigationDropdown";
 import CourtRecordsSection from "@/components/search/CourtRecordsSection";
+import OffshoreLeaksSection from "@/components/search/OffshoreLeaksSection";
 
 
 
@@ -345,6 +346,20 @@ const SearchResults = () => {
                     return (
                       <div key={key} id={`source-${key}`} className="scroll-mt-24">
                         <CourtRecordsSection
+                          items={items}
+                          name={name}
+                          state={state}
+                          onViewDetails={setSelectedResult}
+                        />
+                      </div>
+                    );
+                  }
+
+                  // Use specialized offshore leaks section with relevance scoring
+                  if (key === "offshore") {
+                    return (
+                      <div key={key} id={`source-${key}`} className="scroll-mt-24">
+                        <OffshoreLeaksSection
                           items={items}
                           name={name}
                           state={state}
