@@ -101,7 +101,7 @@ async function searchFEC(name: string, state: string) {
       await contribRes.text();
     }
   } catch (err) {
-    console.error("[FEC] Contributions error:", err);
+    console.error("[FEC] Contributions fetch failed");
   }
 
   try {
