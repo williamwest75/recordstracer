@@ -206,6 +206,7 @@ const SearchResults = () => {
 
   const tocItems = useMemo(() => {
     const items: { id: string; label: string; count?: number }[] = [];
+    items.push({ id: "source-briefing", label: "AI Subject Briefing" });
     for (const [key, { label }] of Object.entries(CATEGORY_META)) {
       const count = grouped[key]?.length ?? 0;
       if (count > 0) items.push({ id: `source-${key}`, label, count });
@@ -216,6 +217,48 @@ const SearchResults = () => {
     items.push({ id: "source-checklist", label: "Reporter's Checklist" });
     return items;
   }, [results, grouped]);
+
+  const [activeSection, setActiveSection] = useState("source-briefing");
+  const activeSectionRef = useRef(activeSection);
+  activeSectionRef.current = activeSection;
+
+  useEffect(() => {
+    if (tocItems.length === 0) return;
+    const sectionIds = tocItems.map((t) => t.id);
+    const ratios = new Map<string, number>();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          ratios.set(entry.target.id, entry.intersectionRatio);
+        }
+        let best = "";
+        let bestRatio = -1;
+        for (const id of sectionIds) {
+          const r = ratios.get(id) ?? 0;
+          if (r > bestRatio) {
+            bestRatio = r;
+            best = id;
+          }
+        }
+        if (best && bestRatio > 0) {
+          setActiveSection(best);
+        }
+      },
+      { threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] }
+    );
+
+    for (const id of sectionIds) {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, [tocItems]);
+
+  const scrollToSection = useCallback((id: string) => {
+    setActiveSection(id);
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const categoryForResult = (result: MockResult) => CATEGORY_META[result.category];
 
