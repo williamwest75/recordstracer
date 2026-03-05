@@ -46,9 +46,57 @@ const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> =
 };
 
 
-
-
-const DEFAULT_VISIBLE = 3;
+/* Collapsible source record section for a single category */
+const SourceRecordSection = ({
+  categoryKey, icon: Icon, label, items, name, onViewDetails, onSave,
+}: {
+  categoryKey: string;
+  icon: typeof Building2;
+  label: string;
+  items: MockResult[];
+  name: string;
+  onViewDetails: (r: MockResult) => void;
+  onSave: (r: MockResult) => void;
+}) => (
+  <Collapsible>
+    <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
+      <span className="flex items-center gap-2">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
+        <span className="text-[10px] text-muted-foreground/70">({items.length})</span>
+      </span>
+      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+    </CollapsibleTrigger>
+    <CollapsibleContent className="pt-3 pb-1 space-y-2 pl-4">
+      {items.map((item) => (
+        <div key={item.id} className="border border-border rounded-lg p-4 bg-card flex flex-col sm:flex-row sm:items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-semibold text-foreground">{item.source}</p>
+              {item.returnedName && (
+                <NameMatchBadge
+                  confidence={getNameMatchConfidence(name, item.returnedName)}
+                  searchedName={name}
+                  returnedName={item.returnedName}
+                  source={item.source}
+                />
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mt-0.5">{item.description}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onViewDetails(item)}>
+              <ExternalLink className="h-3.5 w-3.5" /> View
+            </Button>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => onSave(item)}>
+              <Bookmark className="h-3.5 w-3.5" /> Save
+            </Button>
+          </div>
+        </div>
+      ))}
+    </CollapsibleContent>
+  </Collapsible>
+);
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
