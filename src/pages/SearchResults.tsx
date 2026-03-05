@@ -184,6 +184,19 @@ const SearchResults = () => {
   const debugInfo = searchData?.debug ?? [];
   const searchTimestamp = useMemo(() => searchData ? new Date() : null, [searchData]);
 
+                  // Use specialized offshore leaks section with relevance scoring
+                  if (key === "offshore") {
+                    return (
+                      <div key={key} id={`source-${key}`} className="scroll-mt-24">
+                        <OffshoreLeaksSection
+                          items={items}
+                          name={name}
+                          state={state}
+                          onViewDetails={setSelectedResult}
+                        />
+                      </div>
+                    );
+                  }
 
 
   const grouped = results.reduce<Record<string, MockResult[]>>((acc, r) => {
