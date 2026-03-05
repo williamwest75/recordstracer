@@ -477,75 +477,8 @@ const SearchResults = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Save to Investigation Modal */}
-      <Dialog open={!!saveModalResult} onOpenChange={(open) => !open && setSaveModalResult(null)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-heading text-lg">Save to Investigation</DialogTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Choose an investigation or create a new one.
-            </p>
-          </DialogHeader>
 
-          {saveModalResult && (
-            <div className="bg-muted/50 border border-border rounded-md p-3 text-sm">
-              <p className="font-medium text-foreground">{saveModalResult.source}</p>
-              <p className="text-muted-foreground text-xs mt-0.5">{saveModalResult.description}</p>
-            </div>
-          )}
 
-          <div className="space-y-4 mt-2">
-            {!isCreatingNew ? (
-              <>
-                <Select value={selectedInvestigationId} onValueChange={setSelectedInvestigationId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an investigation…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {investigations.map((inv) => (
-                      <SelectItem key={inv.id} value={inv.id}>{inv.title}</SelectItem>
-                    ))}
-                    {investigations.length === 0 && (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">No investigations yet</div>
-                    )}
-                  </SelectContent>
-                </Select>
-                <button
-                  onClick={() => setIsCreatingNew(true)}
-                  className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline font-medium"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Create new investigation
-                </button>
-              </>
-            ) : (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Investigation Name</label>
-                  <Input
-                    value={newInvestigationTitle}
-                    onChange={(e) => setNewInvestigationTitle(e.target.value)}
-                    placeholder="e.g. Byron Donalds — Florida Records"
-                    autoFocus
-                  />
-                </div>
-                <button
-                  onClick={() => setIsCreatingNew(false)}
-                  className="text-sm text-muted-foreground hover:underline"
-                >
-                  ← Back to existing investigations
-                </button>
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 justify-end mt-4">
-            <Button variant="outline" size="sm" onClick={() => setSaveModalResult(null)}>Cancel</Button>
-            <Button variant="accent" size="sm" className="gap-1.5" onClick={handleSave} disabled={saving}>
-              <Bookmark className="h-3.5 w-3.5" /> {saving ? "Saving…" : "Save"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
