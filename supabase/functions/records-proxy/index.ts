@@ -101,7 +101,7 @@ async function searchFEC(name: string, state: string) {
       await contribRes.text();
     }
   } catch (err) {
-    console.error("[FEC] Contributions error:", err);
+    console.error("[FEC] Contributions fetch failed");
   }
 
   try {
@@ -122,17 +122,14 @@ async function searchFEC(name: string, state: string) {
 
   try {
     // Committee/PAC search
-    console.log("[FEC] Searching committees for:", name);
     const committeeUrl = `https://api.open.fec.gov/v1/committees/?q=${encodeURIComponent(name)}&per_page=10&api_key=${apiKey}`;
-    console.log("[FEC] Committee URL:", committeeUrl.replace(apiKey, "***"));
     const committeeRes = await fetch(committeeUrl);
     if (committeeRes.ok) {
       const data = await committeeRes.json();
       committees.push(...(data.results || []));
-      console.log("[FEC] Committees found:", committees.length);
     } else {
-      const errText = await committeeRes.text();
-      console.error("[FEC] Committees status:", committeeRes.status, errText.slice(0, 200));
+      console.error("[FEC] Committees status:", committeeRes.status);
+      await committeeRes.text();
     }
   } catch (err) {
     console.error("[FEC] Committees error:", err);
@@ -313,9 +310,7 @@ async function searchSanctions(name: string) {
     const apiKey = (Deno.env.get("OPENSANCTIONS_API_KEY") || "").replace(/[^\x20-\x7E]/g, "").trim();
     const apiKeyParam = apiKey ? `&api_key=${encodeURIComponent(apiKey)}` : "";
     const url = `https://api.opensanctions.org/search/default?q=${encodeURIComponent(name)}&limit=15${apiKeyParam}`;
-    console.log("[Sanctions] Searching:", url.replace(apiKey, "***"), "hasKey:", !!apiKey);
     const res = await fetch(url, { headers: { "Accept": "application/json" } });
-    console.log("[Sanctions] Response status:", res.status);
     
     if (res.ok) {
       const data = await res.json();
@@ -354,13 +349,11 @@ async function searchOffshoreLeaks(name: string) {
         q2: { query: name, type: "Intermediary", limit: 5 },
       },
     });
-    console.log("[ICIJ] Searching:", name);
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       body,
     });
-    console.log("[ICIJ] Response status:", res.status);
 
     if (res.ok) {
       const data = await res.json();
@@ -395,11 +388,9 @@ async function searchOffshoreLeaks(name: string) {
 async function searchLobbying(name: string) {
   try {
     const url = `https://lda.senate.gov/api/v1/filings/?filing_year=2024&client_name=${encodeURIComponent(name)}&page_size=15`;
-    console.log("[Lobbying] Searching:", url);
     const res = await fetch(url, {
       headers: { "Accept": "application/json" },
     });
-    console.log("[Lobbying] Response status:", res.status);
 
     if (res.ok) {
       const data = await res.json();
@@ -429,11 +420,9 @@ async function searchLobbying(name: string) {
 async function searchFAA(name: string) {
   try {
     const url = `https://registry.faa.gov/AircraftInquiry/Search/NameResult?Nametxt=${encodeURIComponent(name)}&sort_option=1&PageSize=20`;
-    console.log("[FAA] Searching:", url);
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
     });
-    console.log("[FAA] Response status:", res.status);
 
     if (!res.ok) return { success: false, aircraft: [], total: 0, error: `Status ${res.status}` };
 
@@ -463,7 +452,7 @@ async function searchFAA(name: string) {
         });
       }
     }
-    console.log("[FAA] Aircraft found:", aircraft.length);
+    
     return { success: true, aircraft, total: aircraft.length };
   } catch (err) {
     console.error("[FAA] Search error:", err);
@@ -498,18 +487,16 @@ function toStateAbbr(state: string): string {
 async function searchContactIntel(name: string, state: string) {
   const contacts: any[] = [];
   const stateCode = toStateAbbr(state);
-  console.log("[ContactIntel] Searching for:", name, "state:", state, "code:", stateCode);
   const apiKey = Deno.env.get("FEC_API_KEY") || "DEMO_KEY";
 
   // 1. FEC Candidate filings — address info from candidate detail
   try {
     const stateParam = stateCode ? `&state=${stateCode}` : "";
     const url = `https://api.open.fec.gov/v1/candidates/search/?name=${encodeURIComponent(name)}${stateParam}&per_page=5&api_key=${apiKey}`;
-    console.log("[ContactIntel] FEC candidate search…");
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
-      console.log("[ContactIntel] FEC candidates found:", (data.results || []).length);
+      
       for (const c of (data.results || [])) {
         try {
           const detailUrl = `https://api.open.fec.gov/v1/candidate/${c.candidate_id}/?api_key=${apiKey}`;
@@ -567,11 +554,10 @@ async function searchContactIntel(name: string, state: string) {
   try {
     const stateParam = stateCode ? `&contributor_state=${stateCode}` : "";
     const url = `https://api.open.fec.gov/v1/schedules/schedule_a/?contributor_name=${encodeURIComponent(name)}${stateParam}&per_page=5&sort=-contribution_receipt_date&api_key=${apiKey}`;
-    console.log("[ContactIntel] FEC contributions search…");
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
-      console.log("[ContactIntel] FEC contributions found:", (data.results || []).length);
+      
       const seen = new Set<string>();
       for (const c of (data.results || [])) {
         const addr = [c.contributor_street_1, c.contributor_street_2, c.contributor_city, c.contributor_state, c.contributor_zip]
@@ -594,7 +580,7 @@ async function searchContactIntel(name: string, state: string) {
   // 3. SunBiz — registered agent address from detail pages
   try {
     const searchUrl = `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?inquiryType=OfficerRegisteredAgentName&searchNameOrder=true&searchTerm=${encodeURIComponent(name)}&listingType=active`;
-    console.log("[ContactIntel] SunBiz search…");
+    
     const res = await fetch(searchUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
     });
@@ -607,7 +593,7 @@ async function searchContactIntel(name: string, state: string) {
       while ((linkMatch = linkRegex.exec(html)) !== null && detailUrls.length < 3) {
         detailUrls.push(`https://search.sunbiz.org${linkMatch[1]}`);
       }
-      console.log("[ContactIntel] SunBiz detail URLs found:", detailUrls.length);
+      
       for (const detailUrl of detailUrls) {
         try {
           const detailRes = await fetch(detailUrl, {
@@ -642,7 +628,7 @@ async function searchContactIntel(name: string, state: string) {
   // 4. Property appraiser search links by state
   const propertyLinks = getPropertyAppraiserLinks(state);
 
-  console.log("[ContactIntel] Total contacts found:", contacts.length);
+  
   return {
     success: true,
     contacts,
