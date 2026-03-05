@@ -74,10 +74,6 @@ function getDatabaseSourceUrl(database: string, name: string, state: string): st
 
 const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
   const { user } = useAuth();
-  const [briefing, setBriefing] = useState<Briefing | null>(null);
-  const [fallbackSummary, setFallbackSummary] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [expandedSections, setExpandedSections] = useState({
     findings: true,
     steps: true,
@@ -89,12 +85,9 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
     setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  useEffect(() => {
-    if (results.length === 0) {
-      setLoading(false);
-      return;
-    }
-
+  // Build a deterministic results summary for the query
+  const resultsSummary = (() => {
+    if (results.length === 0) return "";
     const categoryCounts: Record<string, { count: number; highlights: string[] }> = {};
     for (const r of results) {
       if (!categoryCounts[r.category]) {
@@ -105,60 +98,48 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
         categoryCounts[r.category].highlights.push(r.description);
       }
     }
-
-    const resultsSummary = Object.entries(categoryCounts)
+    return Object.entries(categoryCounts)
       .map(([cat, { count, highlights }]) =>
         `${cat}: ${count} record(s). Examples: ${highlights.join("; ")}`
       )
       .join("\n");
+  })();
 
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-
-    supabase.functions
-      .invoke("subject-summary", {
+  const { data: briefingData, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ["subject-briefing", name, state],
+    queryFn: async () => {
+      const { data, error: fnError } = await supabase.functions.invoke("subject-summary", {
         body: { name, state, resultsSummary },
-      })
-      .then(({ data, error: fnError }) => {
-        if (cancelled) return;
-        if (fnError) {
-          setError("Could not generate briefing");
-          console.error("Summary error:", fnError);
-        } else if (data?.error) {
-          setError(data.error);
-        } else if (data?.briefing) {
-          setBriefing(data.briefing);
-          // Persist risk_level and flag counts to the search record
-          if (user) {
-            const flagCount: Record<string, number> = { red: 0, yellow: 0, green: 0, blue: 0 };
-            for (const f of (data.briefing.findings || [])) {
-              if (flagCount[f.flag] !== undefined) flagCount[f.flag]++;
-            }
-            supabase
-              .from("searches")
-              .update({ risk_level: data.briefing.riskLevel, flag_count: flagCount })
-              .eq("user_id", user.id)
-              .eq("subject_name", name)
-              .eq("state", state)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .then(() => {});
-          }
-          // Fallback plain text
-          setFallbackSummary(data.summary);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError("Could not generate briefing");
-          setLoading(false);
-        }
       });
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+      return data as { briefing?: Briefing; summary?: string };
+    },
+    enabled: results.length > 0 && !!name && name.length >= 2,
+    staleTime: 1000 * 60 * 30,
+  });
 
-    return () => { cancelled = true; };
-  }, [name, state, results]);
+  const briefing = briefingData?.briefing ?? null;
+  const fallbackSummary = briefingData?.summary ?? "";
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Could not generate briefing") : "";
+
+  // Persist risk_level and flag counts when briefing arrives
+  useEffect(() => {
+    if (!briefing || !user) return;
+    const flagCount: Record<string, number> = { red: 0, yellow: 0, green: 0, blue: 0 };
+    for (const f of (briefing.findings || [])) {
+      if (flagCount[f.flag] !== undefined) flagCount[f.flag]++;
+    }
+    supabase
+      .from("searches")
+      .update({ risk_level: briefing.riskLevel, flag_count: flagCount })
+      .eq("user_id", user.id)
+      .eq("subject_name", name)
+      .eq("state", state)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .then(() => {});
+  }, [briefing, user, name, state]);
 
   if (results.length === 0) return null;
 

@@ -112,17 +112,12 @@ const SearchResults = () => {
   const rawState = sanitizeUrlParam(searchParams.get("state")) || "Unknown";
   const name = sanitizeInput(rawName);
   const state = isValidState(rawState) ? rawState : "All States / National";
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [results, setResults] = useState<MockResult[]>([]);
-  const [debugInfo, setDebugInfo] = useState<ApiDebugInfo[]>([]);
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
-  const [searchTimestamp, setSearchTimestamp] = useState<Date | null>(null);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading, loading: authLoading } = useAuth();
 
+  // Auth guard — redirect only after auth has hydrated
   useEffect(() => {
-    // Wait for auth to hydrate before making any redirect decision
     if (authLoading) return;
     if (!user) {
       toast({ title: "Sign in required", description: "Please sign in or create an account to search records." });
@@ -135,70 +130,57 @@ const SearchResults = () => {
       navigate("/pricing");
       return;
     }
+  }, [user, subscribed, subscriptionLoading, authLoading, navigate]);
 
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
+  const skipParam = sanitizeUrlParam(searchParams.get("skip"));
+  const searchOptions: SearchOptions = useMemo(() => ({
+    skip: skipParam ? skipParam.split(",").filter(s => /^[a-z]+$/.test(s)) : undefined,
+    middleInitial: sanitizeUrlParam(searchParams.get("mi"), 1) || undefined,
+    dob: sanitizeUrlParam(searchParams.get("dob"), 10) || undefined,
+    email: sanitizeUrlParam(searchParams.get("email"), 255) || undefined,
+    streetAddress: sanitizeUrlParam(searchParams.get("address")) || undefined,
+    city: sanitizeUrlParam(searchParams.get("city"), 100) || undefined,
+  }), [searchParams]);
 
-    const skipParam = sanitizeUrlParam(searchParams.get("skip"));
-    const options: SearchOptions = {
-      skip: skipParam ? skipParam.split(",").filter(s => /^[a-z]+$/.test(s)) : undefined,
-      middleInitial: sanitizeUrlParam(searchParams.get("mi"), 1) || undefined,
-      dob: sanitizeUrlParam(searchParams.get("dob"), 10) || undefined,
-      email: sanitizeUrlParam(searchParams.get("email"), 255) || undefined,
-      streetAddress: sanitizeUrlParam(searchParams.get("address")) || undefined,
-      city: sanitizeUrlParam(searchParams.get("city"), 100) || undefined,
-    };
+  const nameCheck = isValidName(name);
+  const canSearch = !!user && !!subscribed && !authLoading && !subscriptionLoading && nameCheck.valid;
 
-    const nameCheck = isValidName(name);
-    if (!nameCheck.valid) {
-      setError(true);
-      setLoading(false);
-      return;
-    }
+  const { data: searchData, isLoading: loading, isError: error } = useQuery({
+    queryKey: ["search-results", name, state, searchOptions],
+    queryFn: async () => {
+      const data = await searchAll(name, state, searchOptions);
+      console.log("[SearchResults] searchAll returned", data.results.length, "results, debug:", data.debug);
 
-    searchAll(name, state, options)
-      .then(async (data) => {
-        if (!cancelled) {
-          console.log("[SearchResults] searchAll returned", data.results.length, "results, debug:", data.debug);
-          setResults(data.results);
-          setDebugInfo(data.debug);
-          setSearchTimestamp(new Date());
-          setLoading(false);
-
-          // Persist search metrics for dashboard previews
-          if (user && data.results.length > 0) {
-            const categoryCounts: Record<string, number> = {};
-            for (const r of data.results) {
-              categoryCounts[r.category] = (categoryCounts[r.category] || 0) + 1;
-            }
-            const dbCount = Object.keys(categoryCounts).length;
-            const flagCount = { red: 0, yellow: 0, green: 0, blue: 0 };
-            // We'll update risk_level later when AI summary returns; for now store counts
-            await supabase
-              .from("searches")
-              .update({
-                result_count: data.results.length,
-                database_count: dbCount,
-                flag_count: flagCount,
-              })
-              .eq("user_id", user.id)
-              .eq("subject_name", name)
-              .eq("state", state)
-              .order("created_at", { ascending: false })
-              .limit(1);
-          }
+      // Persist search metrics for dashboard previews
+      if (user && data.results.length > 0) {
+        const categoryCounts: Record<string, number> = {};
+        for (const r of data.results) {
+          categoryCounts[r.category] = (categoryCounts[r.category] || 0) + 1;
         }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          console.error("[SearchResults] searchAll FAILED:", err);
-          setError(true);
-          setLoading(false);
-        }
-      });
-    return () => { cancelled = true; };
-  }, [name, state, searchParams, user, subscribed, subscriptionLoading, authLoading, navigate]);
+        const dbCount = Object.keys(categoryCounts).length;
+        const flagCount = { red: 0, yellow: 0, green: 0, blue: 0 };
+        await supabase
+          .from("searches")
+          .update({
+            result_count: data.results.length,
+            database_count: dbCount,
+            flag_count: flagCount,
+          })
+          .eq("user_id", user.id)
+          .eq("subject_name", name)
+          .eq("state", state)
+          .order("created_at", { ascending: false })
+          .limit(1);
+      }
+      return data;
+    },
+    enabled: canSearch,
+    staleTime: 1000 * 60 * 30,
+  });
+
+  const results = searchData?.results ?? [];
+  const debugInfo = searchData?.debug ?? [];
+  const searchTimestamp = useMemo(() => searchData ? new Date() : null, [searchData]);
 
 
 
