@@ -630,7 +630,7 @@ async function searchContactIntel(name: string, state: string) {
   // 4. Property appraiser search links by state
   const propertyLinks = getPropertyAppraiserLinks(state);
 
-  console.log("[ContactIntel] Total contacts found:", contacts.length);
+  
   return {
     success: true,
     contacts,

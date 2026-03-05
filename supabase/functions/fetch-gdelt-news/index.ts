@@ -205,7 +205,14 @@ serve(async (req) => {
         dateLimit.setDate(dateLimit.getDate() - days);
         const dateStr = dateLimit.toISOString().slice(0, 10).replace(/-/g, "");
 
-        const safeQuery = query.replace(/'/g, "\\'");
+        // Strict sanitization: only allow alphanumeric, spaces, hyphens, periods, apostrophes
+        const safeQuery = query.replace(/[^a-zA-Z0-9\s\-.']/g, "").trim().toLowerCase();
+        if (!safeQuery) {
+          throw new Error("Query contains no valid characters after sanitization");
+        }
+        // Escape BigQuery LIKE wildcards and backslashes
+        const likeEscaped = safeQuery.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+        const dateParam = dateLimit.toISOString().slice(0, 10);
 
         let sql: string;
 
@@ -214,8 +221,8 @@ serve(async (req) => {
           sql = `
             SELECT DATE, DocumentIdentifier AS url, V2Themes, V2Persons, V2Organizations, V2Tone
             FROM \`gdelt-bq.gdeltv2.gkg_partitioned\`
-            WHERE _PARTITIONTIME >= TIMESTAMP("${dateLimit.toISOString().slice(0, 10)}")
-              AND LOWER(DocumentIdentifier) LIKE '%${safeQuery.toLowerCase()}%'
+            WHERE _PARTITIONTIME >= TIMESTAMP("${dateParam}")
+              AND LOWER(DocumentIdentifier) LIKE '%${likeEscaped}%'
               ${gkgUsFilter}
             ORDER BY DATE DESC
             LIMIT 50
@@ -226,8 +233,8 @@ serve(async (req) => {
           sql = `
             SELECT MentionDateTime, MentionSourceName, MentionIdentifier AS url, MentionDocTone, Confidence
             FROM \`gdelt-bq.gdeltv2.eventmentions_partitioned\`
-            WHERE _PARTITIONTIME >= TIMESTAMP("${dateLimit.toISOString().slice(0, 10)}")
-              AND LOWER(MentionSourceName) LIKE '%${safeQuery.toLowerCase()}%'
+            WHERE _PARTITIONTIME >= TIMESTAMP("${dateParam}")
+              AND LOWER(MentionSourceName) LIKE '%${likeEscaped}%'
               ${mentionsUsFilter}
             ORDER BY MentionDateTime DESC
             LIMIT 50
@@ -238,10 +245,10 @@ serve(async (req) => {
           sql = `
             SELECT SQLDATE, Actor1Name, Actor2Name, EventCode, GoldsteinScale, NumMentions, AvgTone, SOURCEURL
             FROM \`gdelt-bq.gdeltv2.events_partitioned\`
-            WHERE _PARTITIONTIME >= TIMESTAMP("${dateLimit.toISOString().slice(0, 10)}")
-              AND (LOWER(Actor1Name) LIKE '%${safeQuery.toLowerCase()}%'
-                   OR LOWER(Actor2Name) LIKE '%${safeQuery.toLowerCase()}%'
-                   OR LOWER(SOURCEURL) LIKE '%${safeQuery.toLowerCase()}%')
+            WHERE _PARTITIONTIME >= TIMESTAMP("${dateParam}")
+              AND (LOWER(Actor1Name) LIKE '%${likeEscaped}%'
+                   OR LOWER(Actor2Name) LIKE '%${likeEscaped}%'
+                   OR LOWER(SOURCEURL) LIKE '%${likeEscaped}%')
               ${eventsUsFilter}
             ORDER BY SQLDATE DESC, NumMentions DESC
             LIMIT 50
@@ -249,7 +256,7 @@ serve(async (req) => {
           resultKey = "events";
         }
 
-        console.log("[GDELT-BQ] SQL:", sql);
+        console.log("[GDELT-BQ] query executed for mode:", mode);
         rows = await queryBigQuery(accessToken, sa.project_id, sql);
         console.log("[GDELT-BQ] rows returned:", rows.length);
       } catch (bqErr) {
