@@ -339,6 +339,21 @@ const SearchResults = () => {
                 {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
                   const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
                   if (items.length === 0) return null;
+
+                  // Use specialized court records section with relevance scoring
+                  if (key === "court") {
+                    return (
+                      <div key={key} id={`source-${key}`} className="scroll-mt-24">
+                        <CourtRecordsSection
+                          items={items}
+                          name={name}
+                          state={state}
+                          onViewDetails={setSelectedResult}
+                        />
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={key} id={`source-${key}`} className="scroll-mt-24">
                       <SourceRecordSection
