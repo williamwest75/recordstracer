@@ -23,10 +23,8 @@ import NewsMentions from "@/components/NewsMentions";
 import SaveToInvestigationDropdown from "@/components/search/SaveToInvestigationDropdown";
 
 
-interface Investigation {
-  id: string;
-  title: string;
-}
+
+
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
   business: { icon: Building2, label: "Business Registrations & Filings" },
