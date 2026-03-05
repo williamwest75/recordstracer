@@ -197,7 +197,7 @@ const SearchResults = () => {
         }
       });
     return () => { cancelled = true; };
-  }, [name, state, searchParams, user, subscribed, subscriptionLoading, navigate]);
+  }, [name, state, searchParams, user, subscribed, subscriptionLoading, authLoading, navigate]);
 
 
 
