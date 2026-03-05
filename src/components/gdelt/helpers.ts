@@ -1,5 +1,4 @@
 // Simplified — GDELT BigQuery removed, DOC API only
-// These helpers are retained for any legacy references but most are no longer needed.
 
 export const getTone = (row: any): number => {
   if (row.AvgTone) return Number(row.AvgTone);
