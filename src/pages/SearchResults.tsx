@@ -237,21 +237,18 @@ const SearchResults = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 container mx-auto px-4 lg:px-8 py-10 max-w-4xl">
+      <main className="flex-1 container mx-auto px-4 lg:px-8 py-10 max-w-3xl">
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" /> Back to search
         </Link>
 
+        {/* 1. Search Header */}
         <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground">
           Results for: <span className="text-accent">{name}</span>{state !== "All States / National" ? ` in ${state}` : " (National)"}
         </h1>
-        <p className="text-muted-foreground mt-1 text-sm">Searching public records across multiple databases…</p>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-accent" />
-            <p className="text-muted-foreground text-sm">Scanning FEC, SEC EDGAR, USASpending.gov, ProPublica, and state databases…</p>
-          </div>
+          <p className="text-muted-foreground mt-3 text-sm">Searching public records…</p>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <AlertCircle className="h-8 w-8 text-destructive" />
@@ -263,141 +260,81 @@ const SearchResults = () => {
             <p className="text-muted-foreground text-sm">No public records found for this search.</p>
           </div>
         ) : (
-          <div className="mt-8 space-y-8">
-            <ErrorBoundary><AiSubjectSummary name={name} state={state} results={results} /></ErrorBoundary>
-            <ErrorBoundary><SubjectProfile name={name} state={state} results={results} /></ErrorBoundary>
-            <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
+          <>
+            <p className="text-muted-foreground mt-1 text-sm">{results.length} records found across multiple databases</p>
 
-            {/* Dossier View: Brief, Timeline, Campaign Finance, Court Records, News, Public Records */}
-            <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
-
-            {/* ICIJ Offshore Leaks Explainer */}
-            {grouped["offshore"]?.length > 0 && (
-              <div className="border border-border rounded-lg p-4 bg-info-bg/30 text-sm" id="icij-explainer">
-                <p className="font-semibold text-foreground mb-1">ℹ️ About Offshore Leaks</p>
-                <p className="text-muted-foreground leading-relaxed">
-                  These results come from the International Consortium of Investigative Journalists' database of 810,000+ offshore entities from the Panama Papers, Paradise Papers, Pandora Papers, and other leaked documents.
-                </p>
-                <p className="text-warning text-xs mt-2 leading-relaxed">
-                  ⚠️ IMPORTANT: Offshore entities have many legitimate uses including international business, estate planning, and asset protection. Appearing in this database does NOT indicate illegal activity. Names may match different individuals. Always verify identity using addresses, dates, and jurisdictions before drawing conclusions.
-                </p>
-              </div>
-            )}
-
-            {/* OpenSanctions/PEP Explainer */}
-            {grouped["sanctions"]?.length > 0 && (
-              <div className="border border-border rounded-lg p-4 bg-info-bg/30 text-sm" id="sanctions-explainer">
-                <p className="font-semibold text-foreground mb-1">ℹ️ About Sanctions & PEP Results</p>
-                <p className="text-muted-foreground leading-relaxed">
-                  These results come from OpenSanctions, which aggregates 100+ sanctions lists, PEP databases, and watchlists. <strong>PEP (Politically Exposed Person)</strong> listings are standard for current or former public officials and do NOT indicate wrongdoing. Actual sanctions matches are flagged separately.
-                </p>
-              </div>
-            )}
-
-            {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
-              const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
-              const isExpanded = expandedCategories.has(key);
-              const visibleItems = isExpanded ? items : items.slice(0, DEFAULT_VISIBLE);
-              const hasMore = items.length > DEFAULT_VISIBLE;
-              return (
-                <section key={key} id={`category-${key}`}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Icon className="h-5 w-5 text-accent" />
-                    <h2 className="font-heading text-lg font-semibold text-foreground">{label}</h2>
-                    <span className="text-xs text-muted-foreground ml-1">({items.length})</span>
-                  </div>
-                  {items.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic pl-7">No records found in this category.</p>
-                  ) : (
-                    <div className="space-y-3 pl-7">
-                      {visibleItems.map((item) => (
-                        <div key={item.id} className="border border-border rounded-lg p-4 bg-card flex flex-col sm:flex-row sm:items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-sm font-semibold text-foreground">{item.source}</p>
-                              {item.relevance != null && (
-                                <span
-                                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                                    item.relevance >= 90 ? "bg-accent/15 text-accent" :
-                                    item.relevance >= 70 ? "bg-info-bg text-info" :
-                                    "bg-muted text-muted-foreground"
-                                  }`}
-                                  title="Name similarity indicates how closely the entity name matches your search term. It does NOT indicate a confirmed connection. Many entities share similar names. Always verify identity using additional details like addresses, dates, and jurisdictions."
-                                >
-                                  {item.relevance}% name similarity
-                                  {item.relevance < 70 && " · ⚠️ Weak — verify independently"}
-                                  {item.relevance >= 70 && item.relevance < 90 && " · Moderate"}
-                                  {item.relevance >= 90 && " · Strong"}
-                                </span>
-                              )}
-                              {item.returnedName && (
-                                <NameMatchBadge
-                                  confidence={getNameMatchConfidence(name, item.returnedName)}
-                                  searchedName={name}
-                                  returnedName={item.returnedName}
-                                  source={item.source}
-                                />
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-0.5">{item.description}</p>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSelectedResult(item)}>
-                              <ExternalLink className="h-3.5 w-3.5" /> View Details
-                            </Button>
-                            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => openSaveModal(item)}>
-                              <Bookmark className="h-3.5 w-3.5" /> Save
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                      {hasMore && !isExpanded && (
-                        <button
-                          onClick={() => setExpandedCategories(prev => new Set(prev).add(key))}
-                          className="inline-flex items-center gap-1.5 text-sm text-accent hover:underline font-medium pt-1"
-                        >
-                          <ChevronDown className="h-3.5 w-3.5" />
-                          Show all {items.length} results
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </section>
-              );
-            })}
-            <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
-
-            {/* Reporter's Checklist */}
-            <ErrorBoundary><ReportersChecklist name={name} state={state} results={results} /></ErrorBoundary>
-          </div>
-        )}
-
-        {/* Debug Info Panel */}
-        {!loading && debugInfo.length > 0 && (
-          <div className="mt-12 border border-border rounded-lg p-4 bg-muted/30">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">🔧 Debug Info</h3>
-            <div className="space-y-2">
-              {debugInfo.map((d) => (
-                <div key={d.api} className="flex items-center gap-3 text-sm">
-                  <span className={`inline-block w-2 h-2 rounded-full ${d.status === "success" ? "bg-green-500" : "bg-red-500"}`} />
-                  <span className="font-medium text-foreground w-40">{d.api}</span>
-                  <span className="text-muted-foreground">
-                    {d.status === "success"
-                      ? `${d.resultCount} result(s)${d.duration ? ` in ${(d.duration / 1000).toFixed(1)}s` : ""}`
-                      : `Error: ${d.error}`}
-                  </span>
-                </div>
-              ))}
+            {/* 2. Editorial Brief — full width, generous spacing */}
+            <div className="mt-10 mb-12">
+              <ErrorBoundary><AiSubjectSummary name={name} state={state} results={results} /></ErrorBoundary>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">Check browser console for full request/response logs.</p>
-          </div>
+
+            {/* 3. Section Divider */}
+            <div className="relative my-10">
+              <Separator />
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Source Records
+              </span>
+            </div>
+
+            {/* 4. Raw Source Data — collapsible sections */}
+            <div className="space-y-2">
+              {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
+                const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
+                if (items.length === 0) return null;
+                return (
+                  <SourceRecordSection
+                    key={key}
+                    categoryKey={key}
+                    icon={Icon}
+                    label={label}
+                    items={items}
+                    name={name}
+                    onViewDetails={setSelectedResult}
+                    onSave={openSaveModal}
+                  />
+                );
+              })}
+
+              {/* Dossier deep-dive sections as collapsible */}
+              <Collapsible>
+                <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Investigative Dossier</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-4 pb-2">
+                  <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
+                </CollapsibleContent>
+              </Collapsible>
+
+              <Collapsible>
+                <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Deep Research Analyst</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-4 pb-2">
+                  <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
+                </CollapsibleContent>
+              </Collapsible>
+
+              <Collapsible>
+                <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Reporter's Checklist</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-4 pb-2">
+                  <ErrorBoundary><ReportersChecklist name={name} state={state} results={results} /></ErrorBoundary>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          </>
         )}
       </main>
-      {/* FCRA Disclaimer */}
+
+      {/* 5. Footer Disclaimer */}
       {!loading && results.length > 0 && (
-        <div className="border-t border-border bg-muted/30 px-4 py-4 text-center">
-          <p className="text-[11px] text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Record Tracer searches publicly available government databases and open data sources. Search results reflect name-based matches and do not confirm identity, affiliation, or wrongdoing. Users are responsible for independently verifying all information before use in any publication or legal proceeding. Record Tracer is a research tool, not a background check service as defined under the Fair Credit Reporting Act (FCRA).
+        <div className="border-t border-border bg-muted/30 px-4 py-6 text-center">
+          <p className="text-[11px] text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Record matches do not confirm identity or imply wrongdoing. All findings require independent verification prior to publication.
           </p>
         </div>
       )}
