@@ -116,7 +116,6 @@ const SearchResults = () => {
   const [newInvestigationTitle, setNewInvestigationTitle] = useState("");
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading } = useAuth();
 
