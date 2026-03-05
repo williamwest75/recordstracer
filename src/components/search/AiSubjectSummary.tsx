@@ -268,16 +268,16 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
           )}
 
           {/* Cross-References */}
-          {briefing.crossReferences && briefing.crossReferences.length > 0 && (
+          {allCrossReferences.length > 0 && (
             <div>
-              <SectionHeading onClick={() => toggleSection("crossRefs")} expanded={expandedSections.crossRefs} count={briefing.crossReferences.length}>
+              <SectionHeading onClick={() => toggleSection("crossRefs")} expanded={expandedSections.crossRefs} count={allCrossReferences.length}>
                 <Link2 className="h-3.5 w-3.5" />
                 Cross-References
               </SectionHeading>
 
               {expandedSections.crossRefs && (
                 <div className="px-5 py-4 space-y-2">
-                  {briefing.crossReferences.map((ref, i) => (
+                  {allCrossReferences.map((ref, i) => (
                     <div key={i} className="flex gap-2.5 items-start p-3 rounded-lg bg-muted/30 border border-border/50">
                       <span className="text-muted-foreground shrink-0">🔗</span>
                       <p className="text-[13px] text-foreground leading-relaxed">{ref}</p>
