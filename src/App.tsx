@@ -19,7 +19,16 @@ import NewsPost from "./pages/NewsPost";
 import Pricing from "./pages/Pricing";
 // GdeltNews standalone page removed — now integrated as NewsMentions in search results
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: 1,
+      staleTime: 1000 * 60 * 30,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
