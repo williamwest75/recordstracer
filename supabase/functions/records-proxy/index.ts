@@ -422,11 +422,9 @@ async function searchLobbying(name: string) {
 async function searchFAA(name: string) {
   try {
     const url = `https://registry.faa.gov/AircraftInquiry/Search/NameResult?Nametxt=${encodeURIComponent(name)}&sort_option=1&PageSize=20`;
-    console.log("[FAA] Searching:", url);
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
     });
-    console.log("[FAA] Response status:", res.status);
 
     if (!res.ok) return { success: false, aircraft: [], total: 0, error: `Status ${res.status}` };
 
