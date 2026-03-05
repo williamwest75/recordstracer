@@ -62,11 +62,18 @@ async function getAccessToken(sa: {
   return access_token;
 }
 
-/** Run a BigQuery query and return rows. */
+interface BqParam {
+  name: string;
+  parameterType: { type: string };
+  parameterValue: { value: string };
+}
+
+/** Run a parameterized BigQuery query and return rows. */
 async function queryBigQuery(
   accessToken: string,
   projectId: string,
-  sql: string
+  sql: string,
+  params: BqParam[] = []
 ): Promise<any[]> {
   const url = `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`;
   const res = await fetch(url, {
@@ -78,6 +85,8 @@ async function queryBigQuery(
     body: JSON.stringify({
       query: sql,
       useLegacySql: false,
+      parameterMode: "NAMED",
+      queryParameters: params,
       maxResults: 50,
     }),
   });
@@ -203,62 +212,74 @@ serve(async (req) => {
 
         const dateLimit = new Date();
         dateLimit.setDate(dateLimit.getDate() - days);
-        const dateStr = dateLimit.toISOString().slice(0, 10).replace(/-/g, "");
+        const dateParam = dateLimit.toISOString().slice(0, 10);
 
-        // Strict sanitization: only allow alphanumeric, spaces, hyphens, periods, apostrophes
+        // Sanitize for LIKE pattern — no interpolation into SQL
         const safeQuery = query.replace(/[^a-zA-Z0-9\s\-.']/g, "").trim().toLowerCase();
         if (!safeQuery) {
           throw new Error("Query contains no valid characters after sanitization");
         }
-        // Escape BigQuery LIKE wildcards and backslashes
-        const likeEscaped = safeQuery.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
-        const dateParam = dateLimit.toISOString().slice(0, 10);
+        const likePattern = `%${safeQuery}%`;
+
+        const mkParam = (name: string, type: string, value: string): BqParam => ({
+          name,
+          parameterType: { type },
+          parameterValue: { value },
+        });
 
         let sql: string;
+        let bqParams: BqParam[];
 
         if (mode === "gkg") {
-          const gkgUsFilter = usOnly ? `AND V2Locations LIKE '%United States%'` : "";
           sql = `
             SELECT DATE, DocumentIdentifier AS url, V2Themes, V2Persons, V2Organizations, V2Tone
             FROM \`gdelt-bq.gdeltv2.gkg_partitioned\`
-            WHERE _PARTITIONTIME >= TIMESTAMP("${dateParam}")
-              AND LOWER(DocumentIdentifier) LIKE '%${likeEscaped}%'
-              ${gkgUsFilter}
+            WHERE _PARTITIONTIME >= TIMESTAMP(@dateParam)
+              AND LOWER(DocumentIdentifier) LIKE @query
+              ${usOnly ? "AND V2Locations LIKE '%United States%'" : ""}
             ORDER BY DATE DESC
             LIMIT 50
           `;
+          bqParams = [
+            mkParam("dateParam", "STRING", dateParam),
+            mkParam("query", "STRING", likePattern),
+          ];
           resultKey = "knowledge_graph";
         } else if (mode === "mentions") {
-          const mentionsUsFilter = usOnly ? `AND ActionGeo_CountryCode = 'US'` : "";
           sql = `
             SELECT MentionDateTime, MentionSourceName, MentionIdentifier AS url, MentionDocTone, Confidence
             FROM \`gdelt-bq.gdeltv2.eventmentions_partitioned\`
-            WHERE _PARTITIONTIME >= TIMESTAMP("${dateParam}")
-              AND LOWER(MentionSourceName) LIKE '%${likeEscaped}%'
-              ${mentionsUsFilter}
+            WHERE _PARTITIONTIME >= TIMESTAMP(@dateParam)
+              AND LOWER(MentionSourceName) LIKE @query
+              ${usOnly ? "AND ActionGeo_CountryCode = 'US'" : ""}
             ORDER BY MentionDateTime DESC
             LIMIT 50
           `;
+          bqParams = [
+            mkParam("dateParam", "STRING", dateParam),
+            mkParam("query", "STRING", likePattern),
+          ];
           resultKey = "mentions";
         } else {
-          const eventsUsFilter = usOnly ? `AND ActionGeo_CountryCode = 'US'` : "";
           sql = `
             SELECT SQLDATE, Actor1Name, Actor2Name, EventCode, GoldsteinScale, NumMentions, AvgTone, SOURCEURL
             FROM \`gdelt-bq.gdeltv2.events_partitioned\`
-            WHERE _PARTITIONTIME >= TIMESTAMP("${dateParam}")
-              AND (LOWER(Actor1Name) LIKE '%${likeEscaped}%'
-                   OR LOWER(Actor2Name) LIKE '%${likeEscaped}%'
-                   OR LOWER(SOURCEURL) LIKE '%${likeEscaped}%')
-              ${eventsUsFilter}
+            WHERE _PARTITIONTIME >= TIMESTAMP(@dateParam)
+              AND (LOWER(Actor1Name) LIKE @query
+                   OR LOWER(Actor2Name) LIKE @query
+                   OR LOWER(SOURCEURL) LIKE @query)
+              ${usOnly ? "AND ActionGeo_CountryCode = 'US'" : ""}
             ORDER BY SQLDATE DESC, NumMentions DESC
             LIMIT 50
           `;
+          bqParams = [
+            mkParam("dateParam", "STRING", dateParam),
+            mkParam("query", "STRING", likePattern),
+          ];
           resultKey = "events";
         }
 
-        console.log("[GDELT-BQ] query executed for mode:", mode);
-        rows = await queryBigQuery(accessToken, sa.project_id, sql);
-        console.log("[GDELT-BQ] rows returned:", rows.length);
+        rows = await queryBigQuery(accessToken, sa.project_id, sql, bqParams);
       } catch (bqErr) {
         console.warn("[GDELT-BQ] BigQuery failed, falling back to Doc API:", String(bqErr));
         rows = [];
