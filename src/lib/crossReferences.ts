@@ -66,10 +66,7 @@ export function detectCrossReferences(
   }
 
   // 2. Subject name in FEC AND PEP/sanctions
-  const subjectInSanctions = sanctionsRecords.some(r => {
-    const name = normalize(r.details?.Name || "");
-    return isSubjectName(name);
-  });
+  const subjectInSanctions = subjectInCategory(sanctionsRecords);
   if (subjectInFec && subjectInSanctions) {
     addUnique(`"${subjectName}" appears in both FEC campaign finance records and PEP/sanctions databases.`);
   }
