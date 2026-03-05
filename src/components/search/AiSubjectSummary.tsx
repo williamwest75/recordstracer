@@ -116,6 +116,23 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
   const fallbackSummary = briefingData?.summary ?? "";
   const error = queryError ? (queryError instanceof Error ? queryError.message : "Could not generate briefing") : "";
 
+  // Client-side cross-reference detection merged with AI-generated ones
+  const allCrossReferences = useMemo(() => {
+    const clientRefs = detectCrossReferences(results, name);
+    const aiRefs = briefing?.crossReferences || [];
+    // Merge, deduplicate by normalized content
+    const seen = new Set<string>();
+    const merged: string[] = [];
+    for (const ref of [...clientRefs, ...aiRefs]) {
+      const key = ref.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(ref);
+      }
+    }
+    return merged;
+  }, [results, name, briefing?.crossReferences]);
+
   // Persist risk_level and flag counts when briefing arrives
   useEffect(() => {
     if (!briefing || !user) return;
