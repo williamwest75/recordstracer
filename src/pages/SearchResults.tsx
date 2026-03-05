@@ -467,8 +467,9 @@ const SearchResults = () => {
                 <div className="flex items-center gap-2 justify-end">
                   <Button variant="outline" size="sm" onClick={() => setSelectedResult(null)}>Close</Button>
                   <Button variant="accent" size="sm" className="gap-1.5" onClick={() => { setSelectedResult(null); openSaveModal(selectedResult); }}>
-                    <FolderPlus className="h-3.5 w-3.5" /> Save to Investigation
-                  </Button>
+                <Separator className="my-2" />
+                <div className="flex items-center gap-2 justify-end">
+                  <Button variant="outline" size="sm" onClick={() => setSelectedResult(null)}>Close</Button>
                 </div>
               </>
             );
