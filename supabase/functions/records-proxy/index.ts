@@ -582,7 +582,7 @@ async function searchContactIntel(name: string, state: string) {
   // 3. SunBiz — registered agent address from detail pages
   try {
     const searchUrl = `https://search.sunbiz.org/Inquiry/CorporationSearch/SearchResults?inquiryType=OfficerRegisteredAgentName&searchNameOrder=true&searchTerm=${encodeURIComponent(name)}&listingType=active`;
-    console.log("[ContactIntel] SunBiz search…");
+    
     const res = await fetch(searchUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; RecordTracer/1.0)", Accept: "text/html" },
     });
