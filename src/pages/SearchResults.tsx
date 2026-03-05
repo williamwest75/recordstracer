@@ -21,6 +21,7 @@ import { sanitizeInput, sanitizeUrlParam, isValidName, isValidState } from "@/ut
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DossierView from "@/components/dossier/DossierView";
 import ReportersChecklist from "@/components/search/ReportersChecklist";
+import NewsMentions from "@/components/NewsMentions";
 
 
 interface Investigation {
