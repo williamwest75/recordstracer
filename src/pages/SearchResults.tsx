@@ -65,29 +65,44 @@ const SourceRecordSection = ({
     </CollapsibleTrigger>
     <CollapsibleContent className="pt-3 pb-1 space-y-2 pl-4">
       {items.map((item) => (
-        <div key={item.id} className="border border-border rounded-lg p-4 bg-card flex flex-col sm:flex-row sm:items-start gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-semibold text-foreground">{item.source}</p>
-              {item.returnedName && (
-                <NameMatchBadge
-                  confidence={getNameMatchConfidence(name, item.returnedName)}
-                  searchedName={name}
-                  returnedName={item.returnedName}
-                  source={item.source}
-                />
-              )}
+        <div key={item.id} className="border border-border rounded-lg p-4 bg-card flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-sm font-semibold text-foreground">{item.source}</p>
+                {item.returnedName && (
+                  <NameMatchBadge
+                    confidence={getNameMatchConfidence(name, item.returnedName)}
+                    searchedName={name}
+                    returnedName={item.returnedName}
+                    source={item.source}
+                  />
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground mt-0.5">{item.description}</p>
             </div>
-            <p className="text-sm text-muted-foreground mt-0.5">{item.description}</p>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onViewDetails(item)}>
+                <ExternalLink className="h-3.5 w-3.5" /> View
+              </Button>
+              <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => onSave(item)}>
+                <Bookmark className="h-3.5 w-3.5" /> Save
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => onViewDetails(item)}>
-              <ExternalLink className="h-3.5 w-3.5" /> View
-            </Button>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => onSave(item)}>
-              <Bookmark className="h-3.5 w-3.5" /> Save
-            </Button>
-          </div>
+          {/* Direct outbound source link */}
+          {item.sourceUrl && (
+            <div className="text-right">
+              <a
+                href={item.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+              >
+                Source: {item.source} ↗
+              </a>
+            </div>
+          )}
         </div>
       ))}
     </CollapsibleContent>
