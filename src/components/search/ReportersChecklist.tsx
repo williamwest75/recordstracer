@@ -229,14 +229,41 @@ const RequestTrackerInline = ({ subjectName, state, requestType, agencyName, rec
     if (!email) { setError("Email required for reminders."); return; }
     setSaving(true); setError("");
     try {
-      const { error: dbError } = await (supabase as any).from("records_requests").insert({        user_id: user.id, subject_name: subjectName, state, request_type: requestType,
-        agency_name: agencyName, records_description: recordsDescription,
-        requester_name: requesterName || null, requester_email: email,
-        requester_org: requesterOrg || null, filed_date: filedDate,
-        legal_deadline: deadlineStr, custom_reminder_date: customDate || null,
-        status: "filed", notes: notes || null, letter_text: letterText || null,
-      });
+      const { data: inserted, error: dbError } = await (supabase as any)
+        .from("records_requests")
+        .insert({
+          user_id: user.id, subject_name: subjectName, state, request_type: requestType,
+          agency_name: agencyName, records_description: recordsDescription,
+          requester_name: requesterName || null, requester_email: email,
+          requester_org: requesterOrg || null, filed_date: filedDate,
+          legal_deadline: deadlineStr, custom_reminder_date: customDate || null,
+          status: "filed", notes: notes || null, letter_text: letterText || null,
+        })
+        .select()
+        .single();
       if (dbError) throw dbError;
+
+      // Send confirmation email via direct fetch
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        await fetch(`${supabaseUrl}/functions/v1/send-foia-reminders`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            type: "confirmation",
+            email, requesterName, requesterOrg, subjectName, agencyName,
+            requestType, filedDate, legalDeadline: deadlineStr,
+            customDate, recordsDescription,
+          }),
+        });
+      } catch (_) {
+        // Confirmation email failure is non-blocking
+      }
+
       setSaved(true);
     } catch (err: any) { setError(err.message || "Failed to save."); }
     finally { setSaving(false); }
@@ -248,7 +275,7 @@ const RequestTrackerInline = ({ subjectName, state, requestType, agencyName, rec
         <CheckSquare className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-semibold text-green-800">Request tracked!</p>
-          <p className="text-xs text-green-700 mt-1">Reminders will be sent to <strong>{email}</strong> on days 3, 10, 20, and 30{customDate ? ` plus your custom date` : ""}.</p>
+          <p className="text-xs text-green-700 mt-1">A confirmation summary has been sent to <strong>{email}</strong>. Reminders will follow on days 3, 10, 20, and 30{customDate ? ` plus your custom date` : ""}.</p>
           <p className="text-xs text-green-600 mt-2">View and update this request in <strong>Dashboard → My Requests</strong>.</p>
         </div>
       </div>
