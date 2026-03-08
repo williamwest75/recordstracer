@@ -34,6 +34,7 @@ import { Search, FolderOpen, Clock, Plus, Trash2, Crown, Bookmark, FolderPlus } 
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import InvestigationCard from "@/components/dashboard/InvestigationCard";
+import TrackedRequests from "@/components/dashboard/TrackedRequests";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -376,6 +377,12 @@ const Dashboard = () => {
             )}
           </div>
         )}
+
+        {/* My Requests */}
+        <section className="mt-10">
+          <h2 className="font-heading text-xl font-bold text-foreground mb-4">My Requests</h2>
+          <TrackedRequests />
+        </section>
       </main>
       <Footer />
 
