@@ -34,6 +34,7 @@ import { Search, FolderOpen, Clock, Plus, Trash2, Crown, Bookmark, FolderPlus } 
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import InvestigationCard from "@/components/dashboard/InvestigationCard";
+import TrackedRequests from "@/components/dashboard/TrackedRequests";
 
 const Dashboard = () => {
   const { user } = useAuth();
