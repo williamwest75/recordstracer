@@ -98,7 +98,7 @@ function generateSunshineLetter(form: RequestForm, subjectName: string): string 
     : "I request certified copies of all responsive records.";
 
   const expeditedClause = form.expedited === "yes"
-    ? `\nI request expedited processing of this request as this matter involves an issue of imminent public concern. Delay in disclosure would impair the public interest in this information.\n`
+    ? `I request expedited processing of this request as this matter involves an issue of imminent public concern. Delay in disclosure would impair the public interest in this information.`
     : "";
 
   const recordsDetail = form.recordsDescription
@@ -123,8 +123,8 @@ Dear ${form.custodianName ? form.custodianName : "Records Custodian"}:
 Pursuant to Article I, Section 24 of the Florida Constitution and Chapter 119, Florida Statutes, I hereby request access to and copies of the following public records held by ${form.agencyName || "[Agency Name]"}:
 
 ${recordsDetail || "[Describe the specific records requested]"}
-
-${expeditedClause}${formatClause}
+${expeditedClause ? "\n" + expeditedClause.trim() + "\n" : ""}
+${formatClause}
 
 Under § 119.07(1)(a), F.S., you are required to permit inspection and copying of public records. If any portion of this request is denied, please cite the specific statutory exemption(s) relied upon and provide a written explanation as required by § 119.07(1)(f), F.S. Please also segregate and release all non-exempt portions of any partially exempt records.
 
@@ -229,8 +229,7 @@ const RequestTrackerInline = ({ subjectName, state, requestType, agencyName, rec
     if (!email) { setError("Email required for reminders."); return; }
     setSaving(true); setError("");
     try {
-      const { error: dbError } = await (supabase as any).from("records_requests").insert({
-        user_id: user.id, subject_name: subjectName, state, request_type: requestType,
+      const { error: dbError } = await (supabase as any).from("records_requests").insert({        user_id: user.id, subject_name: subjectName, state, request_type: requestType,
         agency_name: agencyName, records_description: recordsDescription,
         requester_name: requesterName || null, requester_email: email,
         requester_org: requesterOrg || null, filed_date: filedDate,
