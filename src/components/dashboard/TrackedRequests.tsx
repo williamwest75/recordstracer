@@ -264,7 +264,7 @@ const TrackedRequests = () => {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Delete this tracked request? This cannot be undone.")) return;
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("records_requests")
       .delete()
       .eq("id", id);
