@@ -140,7 +140,7 @@ const SearchResults = () => {
   }), [searchParams]);
 
   const nameCheck = isValidName(name);
-  const cconst canSearch = !!user && !authLoading && nameCheck.valid;ubscribed && !authLoading && !subscriptionLoading && nameCheck.valid;
+  const cconst canSearch = !!user && !autconst canSearch = !!user && !authLoading && nameCheck.valid;hLoading && nameCheck.valid;ubscribed && !authLoading && !subscriptionLoading && nameCheck.valid;
 
   const { data: searchData, isLoading: loading, isError: error } = useQuery({
     queryKey: ["search-results", name, state, searchOptions],
