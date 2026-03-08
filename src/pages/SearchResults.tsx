@@ -126,6 +126,11 @@ const SearchResults = () => {
       navigate("/auth");
       return;
     }
+    if (subscriptionLoading) return;
+    if (!subscribed) {
+      toast({ title: "Subscription required", description: "Choose a plan to start searching public records." });
+      navigate("/pricing");
+      return;
     }
   }, [user, subscribed, subscriptionLoading, authLoading, navigate]);
 
@@ -140,7 +145,7 @@ const SearchResults = () => {
   }), [searchParams]);
 
   const nameCheck = isValidName(name);
-  const cconst canSearch = !!user && !autconst canSearch = !!user && !authLoading && nameCheck.valid;hLoading && nameCheck.valid;ubscribed && !authLoading && !subscriptionLoading && nameCheck.valid;
+  const canSearch = !!user && !!subscribed && !authLoading && !subscriptionLoading && nameCheck.valid;
 
   const { data: searchData, isLoading: loading, isError: error } = useQuery({
     queryKey: ["search-results", name, state, searchOptions],
