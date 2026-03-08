@@ -253,7 +253,7 @@ const TrackedRequests = () => {
   };
 
   const handleStatusChange = async (id: string, status: string) => {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("records_requests")
       .update({ status })
       .eq("id", id);
