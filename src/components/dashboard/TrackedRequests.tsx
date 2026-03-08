@@ -244,7 +244,7 @@ const TrackedRequests = () => {
 
   const fetchRequests = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("records_requests")
       .select("*")
       .order("filed_date", { ascending: false });
