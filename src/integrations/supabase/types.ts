@@ -143,6 +143,87 @@ export type Database = {
         }
         Relationships: []
       }
+      records_requests: {
+        Row: {
+          agency_email: string | null
+          agency_name: string | null
+          created_at: string
+          custom_reminder_date: string | null
+          filed_date: string | null
+          id: string
+          legal_deadline: string | null
+          letter_text: string | null
+          notes: string | null
+          records_description: string | null
+          reminder_custom_sent: boolean
+          reminder_day10_sent: boolean
+          reminder_day20_sent: boolean
+          reminder_day3_sent: boolean
+          reminder_day30_sent: boolean
+          request_type: string
+          requester_email: string | null
+          requester_name: string | null
+          requester_org: string | null
+          state: string
+          status: string
+          subject_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_email?: string | null
+          agency_name?: string | null
+          created_at?: string
+          custom_reminder_date?: string | null
+          filed_date?: string | null
+          id?: string
+          legal_deadline?: string | null
+          letter_text?: string | null
+          notes?: string | null
+          records_description?: string | null
+          reminder_custom_sent?: boolean
+          reminder_day10_sent?: boolean
+          reminder_day20_sent?: boolean
+          reminder_day3_sent?: boolean
+          reminder_day30_sent?: boolean
+          request_type?: string
+          requester_email?: string | null
+          requester_name?: string | null
+          requester_org?: string | null
+          state: string
+          status?: string
+          subject_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_email?: string | null
+          agency_name?: string | null
+          created_at?: string
+          custom_reminder_date?: string | null
+          filed_date?: string | null
+          id?: string
+          legal_deadline?: string | null
+          letter_text?: string | null
+          notes?: string | null
+          records_description?: string | null
+          reminder_custom_sent?: boolean
+          reminder_day10_sent?: boolean
+          reminder_day20_sent?: boolean
+          reminder_day3_sent?: boolean
+          reminder_day30_sent?: boolean
+          request_type?: string
+          requester_email?: string | null
+          requester_name?: string | null
+          requester_org?: string | null
+          state?: string
+          status?: string
+          subject_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_results: {
         Row: {
           created_at: string
