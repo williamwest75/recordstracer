@@ -377,6 +377,12 @@ const Dashboard = () => {
             )}
           </div>
         )}
+
+        {/* My Requests */}
+        <section className="mt-10">
+          <h2 className="font-heading text-xl font-bold text-foreground mb-4">My Requests</h2>
+          <TrackedRequests />
+        </section>
       </main>
       <Footer />
 
