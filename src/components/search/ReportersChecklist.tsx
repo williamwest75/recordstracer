@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
-import { ClipboardList, ChevronDown, ChevronRight, Copy, Printer, CheckSquare, Loader2, Link2, FileText, ChevronLeft } from "lucide-react";
+import { ClipboardList, ChevronDown, ChevronRight, Copy, Printer, CheckSquare, Loader2, Link2, FileText, ChevronLeft, Bell } from "lucide-react";
 import type { RecordResult } from "@/lib/recordsApi";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   name: string;
@@ -135,7 +137,8 @@ Thank you for your prompt attention to this request.
 Sincerely,
 
 ${form.requesterName || "[Your Name]"}
-${form.requesterOrg ? form.requesterOrg + "\n" : ""}${form.requesterEmail || "[Email]"}
+${form.requesterOrg || "[News Organization]"}
+${form.requesterEmail || "[Email]"}
 ${form.requesterPhone || "[Phone]"}
 
 ---
@@ -196,6 +199,97 @@ Send via certified mail or email with delivery confirmation. Retain a copy for y
 Appeals of denials may be submitted within 90 days to the agency's FOIA Appeals Officer.`;
 }
 
+// ─── Inline Request Tracker ───────────────────────────────────────────────────
+
+const RequestTrackerInline = ({ subjectName, state, requestType, agencyName, recordsDescription, letterText, requesterName, requesterOrg, requesterEmail, onClose }: {
+  subjectName: string; state: string; requestType: "sunshine" | "foia";
+  agencyName: string; recordsDescription: string; letterText: string;
+  requesterName?: string; requesterOrg?: string; requesterEmail?: string;
+  onClose: () => void;
+}) => {
+  const { user } = useAuth();
+  const today = new Date().toISOString().split("T")[0];
+  const deadlineDays = requestType === "foia" ? 20 : 10;
+  const deadline = new Date(); deadline.setDate(deadline.getDate() + deadlineDays);
+  const deadlineStr = deadline.toISOString().split("T")[0];
+
+  const [email, setEmail] = useState(requesterEmail || user?.email || "");
+  const [filedDate, setFiledDate] = useState(today);
+  const [customDate, setCustomDate] = useState("");
+  const [notes, setNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+
+  const inputCls = "w-full text-sm border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:border-accent";
+  const labelCls = "block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1";
+
+  const handleSave = async () => {
+    if (!user) { setError("Sign in to track requests."); return; }
+    if (!email) { setError("Email required for reminders."); return; }
+    setSaving(true); setError("");
+    try {
+      const { error: dbError } = await (supabase as any).from("records_requests").insert({
+        user_id: user.id, subject_name: subjectName, state, request_type: requestType,
+        agency_name: agencyName, records_description: recordsDescription,
+        requester_name: requesterName || null, requester_email: email,
+        requester_org: requesterOrg || null, filed_date: filedDate,
+        legal_deadline: deadlineStr, custom_reminder_date: customDate || null,
+        status: "filed", notes: notes || null, letter_text: letterText || null,
+      });
+      if (dbError) throw dbError;
+      setSaved(true);
+    } catch (err: any) { setError(err.message || "Failed to save."); }
+    finally { setSaving(false); }
+  };
+
+  if (saved) return (
+    <div className="border border-green-200 bg-green-50 rounded-lg p-4">
+      <div className="flex items-start gap-2">
+        <CheckSquare className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-semibold text-green-800">Request tracked!</p>
+          <p className="text-xs text-green-700 mt-1">Reminders will be sent to <strong>{email}</strong> on days 3, 10, 20, and 30{customDate ? ` plus your custom date` : ""}.</p>
+          <p className="text-xs text-green-600 mt-2">View and update this request in <strong>Dashboard → My Requests</strong>.</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="border border-accent/30 bg-accent/5 rounded-lg p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground flex items-center gap-1.5"><Bell className="h-3.5 w-3.5 text-accent" /> Track &amp; Set Reminders</p>
+        <button onClick={onClose} className="text-xs text-muted-foreground hover:text-foreground">✕</button>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelCls}>Date Filed</label>
+          <input type="date" className={inputCls} value={filedDate} onChange={e => setFiledDate(e.target.value)} />
+        </div>
+        <div>
+          <label className={labelCls}>Custom Reminder (optional)</label>
+          <input type="date" className={inputCls} value={customDate} min={today} onChange={e => setCustomDate(e.target.value)} />
+        </div>
+      </div>
+      <div>
+        <label className={labelCls}>Send Reminders To</label>
+        <input type="email" className={inputCls} value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" />
+      </div>
+      <div>
+        <label className={labelCls}>Notes (optional)</label>
+        <input className={inputCls} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Tracking number, contact name, etc." />
+      </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <p className="text-[11px] text-muted-foreground">Reminders at day 3, 10, 20, 30 · Deadline: {deadline.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+      <button onClick={handleSave} disabled={saving || !email}
+        className="w-full flex items-center justify-center gap-2 py-2 rounded bg-accent text-accent-foreground text-sm font-semibold hover:bg-accent/90 disabled:opacity-40 transition-colors">
+        {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : <><Bell className="h-4 w-4" /> Save &amp; Enable Reminders</>}
+      </button>
+    </div>
+  );
+};
+
 // ─── Records Request Builder Component ───────────────────────────────────────
 
 const RecordsRequestBuilder = ({ state, results, subjectName, onClose }: {
@@ -206,8 +300,8 @@ const RecordsRequestBuilder = ({ state, results, subjectName, onClose }: {
 }) => {
   const isFL = state === "Florida" || state === "FL";
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<RequestForm>({
-    ...EMPTY_FORM,
+  const [showTracker, setShowTracker] = useState(false);
+  const [form, setForm] = useState<RequestForm>({    ...EMPTY_FORM,
     requestType: isFL ? "sunshine" : "foia",
     agencyName: results.find(r => r.details?.["Awarding Agency"])?.details?.["Awarding Agency"] || "",
   });
@@ -385,15 +479,13 @@ const RecordsRequestBuilder = ({ state, results, subjectName, onClose }: {
                   : "Required for FOIA tracking and fee waiver processing."}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Your Name</label>
-                <input className={inputCls} placeholder="First Last" value={form.requesterName} onChange={e => set("requesterName", e.target.value)} />
-              </div>
-              <div>
-                <label className={labelCls}>News Organization</label>
-                <input className={inputCls} placeholder="Publication or outlet" value={form.requesterOrg} onChange={e => set("requesterOrg", e.target.value)} />
-              </div>
+            <div>
+              <label className={labelCls}>Your Full Name (First &amp; Last)</label>
+              <input className={inputCls} placeholder="e.g. Joe Blow" value={form.requesterName} onChange={e => set("requesterName", e.target.value)} />
+            </div>
+            <div>
+              <label className={labelCls}>News Organization / Publication</label>
+              <input className={inputCls} placeholder="e.g. Bay News 9, Tampa Bay Times" value={form.requesterOrg} onChange={e => set("requesterOrg", e.target.value)} />
             </div>
             <div>
               <label className={labelCls}>Email Address</label>
@@ -452,6 +544,25 @@ const RecordsRequestBuilder = ({ state, results, subjectName, onClose }: {
             <div className="bg-muted/30 border border-border rounded px-4 py-3 max-h-[420px] overflow-y-auto">
               <pre className="text-xs text-foreground whitespace-pre-wrap font-sans leading-relaxed">{generatedLetter}</pre>
             </div>
+            {!showTracker ? (
+              <button onClick={() => setShowTracker(true)}
+                className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-accent/50 rounded-lg text-xs font-semibold text-accent hover:bg-accent/5 transition-colors">
+                <Bell className="h-4 w-4" /> Track this request &amp; get email reminders →
+              </button>
+            ) : (
+              <RequestTrackerInline
+                subjectName={subjectName}
+                state={state}
+                requestType={form.requestType}
+                agencyName={form.agencyName}
+                recordsDescription={form.recordsDescription}
+                letterText={generatedLetter}
+                requesterName={form.requesterName}
+                requesterOrg={form.requesterOrg}
+                requesterEmail={form.requesterEmail}
+                onClose={() => setShowTracker(false)}
+              />
+            )}
             <button onClick={() => setStep(1)} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1">
               <ChevronLeft className="h-3 w-3" /> Edit request
             </button>
