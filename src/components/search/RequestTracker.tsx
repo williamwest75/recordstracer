@@ -84,7 +84,7 @@ const RequestTracker = ({
     setError("");
 
     try {
-      const { error: dbError } = await supabase
+      const { error: dbError } = await (supabase as any)
         .from("records_requests")
         .insert({
           user_id: user.id,
