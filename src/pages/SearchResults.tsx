@@ -126,11 +126,6 @@ const SearchResults = () => {
       navigate("/auth");
       return;
     }
-    if (subscriptionLoading) return;
-    if (!subscribed) {
-      toast({ title: "Subscription required", description: "Choose a plan to start searching public records." });
-      navigate("/pricing");
-      return;
     }
   }, [user, subscribed, subscriptionLoading, authLoading, navigate]);
 
