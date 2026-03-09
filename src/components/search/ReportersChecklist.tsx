@@ -243,25 +243,24 @@ const RequestTrackerInline = ({ subjectName, state, requestType, agencyName, rec
         .single();
       if (dbError) throw dbError;
 
-      // Send confirmation email via direct fetch
+      // Send confirmation email via dedicated function
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        await fetch(`${supabaseUrl}/functions/v1/send-foia-reminders`, {
+        await fetch(`${supabaseUrl}/functions/v1/send-confirmation`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${supabaseKey}`,
           },
           body: JSON.stringify({
-            type: "confirmation",
             email, requesterName, requesterOrg, subjectName, agencyName,
             requestType, filedDate, legalDeadline: deadlineStr,
             customDate, recordsDescription,
           }),
         });
       } catch (_) {
-        // Confirmation email failure is non-blocking
+        // Non-blocking
       }
 
       setSaved(true);
@@ -828,7 +827,7 @@ const ReportersChecklist = ({ name, state, results }: Props) => {
         <div className="flex items-center gap-2.5">
           <ClipboardList className="h-5 w-5 text-accent" />
           <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">Reporter's Checklist</h2>
-          {checkedCount > 0 && <span className="text-[11px] bg-accent text-accent-foreground rounded-full px-2 py-0.5 font-semibold">{checkedCount} in progress</span>}
+          {checkedCount > 0 && <a href="/dashboard" className="text-[11px] bg-accent text-accent-foreground rounded-full px-2 py-0.5 font-semibold hover:bg-accent/90 transition-colors">{checkedCount} in progress →</a>}
         </div>
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
       </button>
@@ -882,7 +881,7 @@ const ReportersChecklist = ({ name, state, results }: Props) => {
                       ) : content ? (
                         <div className="border border-border rounded-lg overflow-hidden bg-background">
                           <div className="flex border-b border-border overflow-x-auto">
-                            {(["steps", "email", "questions"] as const).map((t) => (
+                            {(isRequestItem ? ["steps", "questions"] as const : ["steps", "email", "questions"] as const).map((t) => (
                               <button key={t} onClick={() => setActiveTab(prev => ({ ...prev, [item.id]: t }))}
                                 className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide whitespace-nowrap transition-colors ${tab === t ? "border-b-2 border-accent text-accent" : "text-muted-foreground hover:text-foreground"}`}>
                                 {t === "steps" ? "Next Steps" : t === "email" ? "Draft Email" : "Investigate"}
