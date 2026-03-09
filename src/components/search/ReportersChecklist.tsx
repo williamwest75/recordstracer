@@ -243,6 +243,24 @@ const RequestTrackerInline = ({ subjectName, state, requestType, agencyName, rec
         .single();
       if (dbError) throw dbError;
 
+      // Send confirmation email
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        await fetch(`${supabaseUrl}/functions/v1/send-confirmation`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            email, requesterName, requesterOrg, subjectName, agencyName,
+            requestType, filedDate, legalDeadline: deadlineStr,
+            customDate, recordsDescription,
+          }),
+        });
+      } catch (_) {}
+
       setSaved(true);
     } catch (err: any) { setError(err.message || "Failed to save."); }
     finally { setSaving(false); }
@@ -254,7 +272,7 @@ const RequestTrackerInline = ({ subjectName, state, requestType, agencyName, rec
         <CheckSquare className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-semibold text-green-800">Request tracked!</p>
-          <p className="text-xs text-green-700 mt-1">Request saved. Reminders will be sent to <strong>{email}</strong> on days 3, 10, 20, and 30{customDate ? ` plus your custom date` : ""}.</p>
+          <p className="text-xs text-green-700 mt-1">Request saved. A confirmation has been sent to <strong>{email}</strong>. Reminders will follow on days 3, 10, 20, and 30{customDate ? ` plus your custom date` : ""}.</p>
           <p className="text-xs text-green-600 mt-2">View and update this request in <strong>Dashboard → My Requests</strong>.</p>
         </div>
       </div>
