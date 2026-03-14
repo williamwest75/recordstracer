@@ -28,12 +28,12 @@ interface RecordsRequest {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
-  filed:        { label: "Filed",        color: "text-blue-600 bg-blue-50 border-blue-200",   icon: FileText },
-  acknowledged: { label: "Acknowledged", color: "text-amber-600 bg-amber-50 border-amber-200", icon: Clock },
-  received:     { label: "Records Received", color: "text-green-600 bg-green-50 border-green-200", icon: CheckCircle },
-  denied:       { label: "Denied",       color: "text-red-600 bg-red-50 border-red-200",       icon: XCircle },
-  appealed:     { label: "Appealed",     color: "text-purple-600 bg-purple-50 border-purple-200", icon: AlertCircle },
-  closed:       { label: "Closed",       color: "text-gray-500 bg-gray-50 border-gray-200",    icon: CheckCircle },
+  filed:        { label: "Filed",        color: "text-info bg-info-bg border-info-border",   icon: FileText },
+  acknowledged: { label: "Acknowledged", color: "text-warning bg-warning-bg border-warning-border", icon: Clock },
+  received:     { label: "Records Received", color: "text-success bg-success-bg border-success-border", icon: CheckCircle },
+  denied:       { label: "Denied",       color: "text-destructive bg-destructive/10 border-destructive/30",       icon: XCircle },
+  appealed:     { label: "Appealed",     color: "text-accent bg-accent/10 border-accent/30", icon: AlertCircle },
+  closed:       { label: "Closed",       color: "text-muted-foreground bg-muted border-border",    icon: CheckCircle },
 };
 
 const STATUS_OPTIONS = ["filed", "acknowledged", "received", "denied", "appealed", "closed"];
@@ -98,19 +98,19 @@ const RequestCard = ({ req, onStatusChange, onDelete }: {
       <div className="flex items-start justify-between gap-3 px-4 py-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded border ${req.request_type === "sunshine" ? "bg-cyan-50 text-cyan-700 border-cyan-200" : "bg-blue-50 text-blue-700 border-blue-200"}`}>
+            <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded border ${req.request_type === "sunshine" ? "bg-warning-bg text-warning border-warning-border" : "bg-info-bg text-info border-info-border"}`}>
               {req.request_type === "sunshine" ? "Sunshine Law" : "FOIA"}
             </span>
             <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded border flex items-center gap-1 ${STATUS_CONFIG[req.status]?.color}`}>
               <StatusIcon className="h-2.5 w-2.5" />{STATUS_CONFIG[req.status]?.label || req.status}
             </span>
             {urgency === "overdue" && (
-              <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border bg-red-100 text-red-700 border-red-300 animate-pulse">
+              <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border bg-destructive/10 text-destructive border-destructive/30 animate-pulse">
                 OVERDUE
               </span>
             )}
             {urgency === "urgent" && (
-              <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border bg-amber-100 text-amber-700 border-amber-300">
+              <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border bg-warning-bg text-warning border-warning-border">
                 DUE SOON
               </span>
             )}
@@ -130,8 +130,8 @@ const RequestCard = ({ req, onStatusChange, onDelete }: {
         <span className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
           {urgency === "closed" ? "Complete" :
-           urgency === "overdue" ? <span className="text-red-600 font-semibold">{Math.abs(daysLeft)} days overdue</span> :
-           <span className={daysLeft <= 5 ? "text-amber-600 font-semibold" : ""}>{daysLeft} days remaining</span>}
+           urgency === "overdue" ? <span className="text-destructive font-semibold">{Math.abs(daysLeft)} days overdue</span> :
+           <span className={daysLeft <= 5 ? "text-warning font-semibold" : ""}>{daysLeft} days remaining</span>}
         </span>
         <span className="text-border">·</span>
         <span>{daysFiled} days since filing</span>
@@ -188,9 +188,9 @@ const RequestCard = ({ req, onStatusChange, onDelete }: {
                 const reminderDate = new Date(req.filed_date + "T00:00:00");
                 reminderDate.setDate(reminderDate.getDate() + r.day);
                 return (
-                  <div key={r.day} className={`flex items-center gap-2 text-xs ${r.sent ? "text-green-600" : "text-muted-foreground"}`}>
+                  <div key={r.day} className={`flex items-center gap-2 text-xs ${r.sent ? "text-success" : "text-muted-foreground"}`}>
                     {r.sent
-                      ? <CheckCircle className="h-3 w-3 text-green-600 shrink-0" />
+                      ? <CheckCircle className="h-3 w-3 text-success shrink-0" />
                       : <div className="w-3 h-3 rounded-full border border-border shrink-0" />}
                     <span>{r.label}</span>
                     <span className="ml-auto text-muted-foreground/60">{reminderDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
@@ -292,9 +292,9 @@ const TrackedRequests = () => {
       <div className="grid grid-cols-4 gap-3">
         {[
           { label: "Total", value: requests.length, color: "text-foreground" },
-          { label: "Active", value: active, color: "text-blue-600" },
-          { label: "Overdue", value: overdue, color: overdue > 0 ? "text-red-600" : "text-muted-foreground" },
-          { label: "Closed", value: requests.length - active, color: "text-green-600" },
+          { label: "Active", value: active, color: "text-info" },
+          { label: "Overdue", value: overdue, color: overdue > 0 ? "text-destructive" : "text-muted-foreground" },
+          { label: "Closed", value: requests.length - active, color: "text-success" },
         ].map(stat => (
           <div key={stat.label} className="bg-card border border-border rounded-lg p-3 text-center">
             <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>

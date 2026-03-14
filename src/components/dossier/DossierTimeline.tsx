@@ -9,9 +9,9 @@ interface Props {
 const MAX_DEFAULT = 20;
 
 const typeConfig = {
-  donation: { icon: DollarSign, color: "text-green-600", dot: "bg-green-500" },
-  court: { icon: Scale, color: "text-blue-600", dot: "bg-blue-500" },
-  news: { icon: Newspaper, color: "text-orange-500", dot: "bg-orange-500" },
+  donation: { icon: DollarSign, color: "text-success", dot: "bg-success" },
+  court: { icon: Scale, color: "text-info", dot: "bg-info" },
+  news: { icon: Newspaper, color: "text-warning", dot: "bg-warning" },
 };
 
 const DossierTimeline = ({ events }: Props) => {

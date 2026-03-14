@@ -48,10 +48,10 @@ const News = () => {
       <Header />
       <main className="flex-1">
         {/* Subscribe banner */}
-        <section className="py-10" style={{ backgroundColor: "hsl(210, 36%, 23%)" }}>
+        <section className="py-10 bg-primary">
           <div className="container mx-auto px-4 lg:px-8 max-w-2xl text-center">
-            <h1 className="font-heading text-3xl md:text-4xl font-bold text-white mb-2">News &amp; Updates</h1>
-            <p className="mb-6" style={{ color: "hsl(43, 100%, 38%)" }}>Stay up to date with Record Tracer developments.</p>
+            <h1 className="font-heading text-3xl md:text-4xl font-bold text-primary-foreground mb-2">News &amp; Updates</h1>
+            <p className="mb-6 text-accent">Stay up to date with Record Tracer developments.</p>
             <form onSubmit={handleSubscribe} className="flex gap-2 max-w-md mx-auto">
               <Input
                 type="email"
@@ -59,7 +59,7 @@ const News = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                className="bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50"
               />
               <Button type="submit" disabled={subscribing} variant="accent" size="sm">
                 {subscribing ? "…" : "Subscribe"}

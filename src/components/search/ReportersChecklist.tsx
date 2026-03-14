@@ -267,13 +267,13 @@ const RequestTrackerInline = ({ subjectName, state, requestType, agencyName, rec
   };
 
   if (saved) return (
-    <div className="border border-green-200 bg-green-50 rounded-lg p-4">
+    <div className="border border-success-border bg-success-bg rounded-lg p-4">
       <div className="flex items-start gap-2">
-        <CheckSquare className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+        <CheckSquare className="h-4 w-4 text-success shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold text-green-800">Request tracked!</p>
-          <p className="text-xs text-green-700 mt-1">Request saved. A confirmation has been sent to <strong>{email}</strong>. Reminders will follow on days 3, 10, 20, and 30{customDate ? ` plus your custom date` : ""}.</p>
-          <p className="text-xs text-green-600 mt-2">View and update this request in <strong>Dashboard → My Requests</strong>.</p>
+          <p className="text-sm font-semibold text-success">Request tracked!</p>
+          <p className="text-xs text-success mt-1">Request saved. A confirmation has been sent to <strong>{email}</strong>. Reminders will follow on days 3, 10, 20, and 30{customDate ? ` plus your custom date` : ""}.</p>
+          <p className="text-xs text-success mt-2">View and update this request in <strong>Dashboard → My Requests</strong>.</p>
         </div>
       </div>
     </div>
@@ -520,9 +520,9 @@ const RecordsRequestBuilder = ({ state, results, subjectName, onClose }: {
             </div>
 
             {isSunshine && (
-              <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 mt-2">
-                <p className="text-xs text-amber-700 font-medium mb-1">Florida Sunshine Law — Key Facts</p>
-                <ul className="text-xs text-amber-700 space-y-1 list-disc pl-4">
+              <div className="bg-warning-bg border border-warning-border rounded px-3 py-2 mt-2">
+                <p className="text-xs text-warning font-medium mb-1">Florida Sunshine Law — Key Facts</p>
+                <ul className="text-xs text-warning space-y-1 list-disc pl-4">
                   <li>Agencies must acknowledge requests promptly and respond within a reasonable time (typically 3–10 business days)</li>
                   <li>You cannot be required to explain why you want records</li>
                   <li>Fees limited to actual cost of duplication — no research or staff time fees</li>
@@ -532,9 +532,9 @@ const RecordsRequestBuilder = ({ state, results, subjectName, onClose }: {
               </div>
             )}
             {!isSunshine && (
-              <div className="bg-blue-50 border border-blue-200 rounded px-3 py-2 mt-2">
-                <p className="text-xs text-blue-700 font-medium mb-1">FOIA — Key Facts</p>
-                <ul className="text-xs text-blue-700 space-y-1 list-disc pl-4">
+              <div className="bg-info-bg border border-info-border rounded px-3 py-2 mt-2">
+                <p className="text-xs text-info font-medium mb-1">FOIA — Key Facts</p>
+                <ul className="text-xs text-info space-y-1 list-disc pl-4">
                   <li>20 business days to respond (can be extended 10 days for unusual circumstances)</li>
                   <li>Fee waivers available for journalists and public interest requesters</li>
                   <li>Denials must cite specific exemptions — you have 90 days to appeal</li>
@@ -555,7 +555,7 @@ const RecordsRequestBuilder = ({ state, results, subjectName, onClose }: {
               <div className="flex items-center gap-2">
                 <button onClick={() => { navigator.clipboard.writeText(generatedLetter); setCopySuccess(true); setTimeout(() => setCopySuccess(false), 2000); }}
                   className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded border border-border hover:bg-muted transition-colors">
-                  {copySuccess ? <CheckSquare className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copySuccess ? <CheckSquare className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
                   {copySuccess ? "Copied!" : "Copy"}
                 </button>
                 <button onClick={handlePrint}
@@ -752,11 +752,11 @@ function buildExportText(checkedItems: Set<string>, expandedContents: Map<string
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  offshore: "bg-amber-50 text-amber-700 border-amber-200", donations: "bg-blue-50 text-blue-700 border-blue-200",
-  court: "bg-red-50 text-red-700 border-red-200", business: "bg-purple-50 text-purple-700 border-purple-200",
-  contracts: "bg-green-50 text-green-700 border-green-200", lobbying: "bg-orange-50 text-orange-700 border-orange-200",
-  foia: "bg-cyan-50 text-cyan-700 border-cyan-200", legal: "bg-rose-50 text-rose-700 border-rose-200",
-  always: "bg-gray-50 text-gray-600 border-gray-200", state: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  offshore: "bg-warning-bg text-warning border-warning-border", donations: "bg-info-bg text-info border-info-border",
+  court: "bg-destructive/10 text-destructive border-destructive/30", business: "bg-secondary text-secondary-foreground border-border",
+  contracts: "bg-success-bg text-success border-success-border", lobbying: "bg-warning-bg text-warning border-warning-border",
+  foia: "bg-info-bg text-info border-info-border", legal: "bg-destructive/10 text-destructive border-destructive/30",
+  always: "bg-muted text-muted-foreground border-border", state: "bg-info-bg text-info border-info-border",
 };
 const CATEGORY_LABELS: Record<string, string> = {
   offshore: "Offshore", donations: "Campaign Finance", court: "Court Records", business: "Business",
@@ -970,7 +970,7 @@ const ReportersChecklist = ({ name, state, results }: Props) => {
               <p className="text-xs text-muted-foreground"><span className="font-semibold text-foreground">{checkedCount} item{checkedCount !== 1 ? "s" : ""}</span> selected for export</p>
               <div className="flex items-center gap-2">
                 <button onClick={handleCopyExport} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded border border-border hover:bg-muted transition-colors">
-                  {copySuccess ? <CheckSquare className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copySuccess ? <CheckSquare className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
                   {copySuccess ? "Copied!" : "Copy Action Plan"}
                 </button>
                 <button onClick={handlePrint} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded bg-accent text-accent-foreground hover:bg-accent/90 transition-colors">
