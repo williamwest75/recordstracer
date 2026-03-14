@@ -46,7 +46,7 @@ serve(async (req) => {
       });
     }
 
-    const validSources = ["sec", "propublica", "sunbiz", "fec", "courtlistener", "sanctions", "icij", "lobbying", "faa", "contact-intel", "ofac", "state-campaign-finance", "social-osint", "sec-insider"];
+    const validSources = ["sec", "propublica", "sunbiz", "fec", "courtlistener", "sanctions", "icij", "lobbying", "faa", "contact-intel", "ofac", "state-campaign-finance", "social-osint", "sec-insider", "osha", "epa-echo", "sam-gov", "opensecrets", "muckrock", "fda"];
     if (!validSources.includes(source)) {
       return new Response(JSON.stringify({ error: "Invalid source" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -69,6 +69,12 @@ serve(async (req) => {
     if (source === "state-campaign-finance") result = await searchStateCampaignFinance(searchName, state);
     if (source === "social-osint") result = await searchSocialOSINT(searchName);
     if (source === "sec-insider") result = await searchSECInsider(searchName);
+    if (source === "osha") result = await searchOSHA(searchName);
+    if (source === "epa-echo") result = await searchEPAECHO(searchName);
+    if (source === "sam-gov") result = await searchSAMgov(searchName);
+    if (source === "opensecrets") result = await searchOpenSecrets(searchName);
+    if (source === "muckrock") result = await searchMuckRock(searchName);
+    if (source === "fda") result = await searchFDA(searchName);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -896,4 +902,348 @@ async function searchSocialOSINT(name: string) {
   }
 
   return { success: true, profiles, alephResults: [], alephTotal: 0 };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OSHA Violations — Workplace safety inspections & violations
+// ═══════════════════════════════════════════════════════════════
+async function searchOSHA(name: string) {
+  const results: any[] = [];
+  try {
+    // OSHA Enforcement API — search by establishment name
+    const url = `https://enforcedata.dol.gov/api/search?query=${encodeURIComponent(name)}&agency=osha&size=15`;
+    const res = await fetch(url, { headers: { "Accept": "application/json" } });
+    if (res.ok) {
+      const data = await res.json();
+      const hits = data?.hits?.hits || data?.results || [];
+      for (const hit of hits.slice(0, 15)) {
+        const s = hit._source || hit;
+        results.push({
+          establishment: s.estab_name || s.establishment_name || name,
+          activity_nr: s.activity_nr || "",
+          open_date: s.open_date || "",
+          close_case_date: s.close_case_date || "",
+          site_city: s.site_city || "",
+          site_state: s.site_state || "",
+          sic_code: s.sic_code || "",
+          violation_type: s.viol_type || s.violation_type || "",
+          penalty: s.current_penalty || s.initial_penalty || 0,
+          nr_instances: s.nr_instances || 0,
+          description: s.hazsub1 || s.violation_desc || s.standard || "",
+        });
+      }
+    }
+
+    // Fallback: try OSHA establishment search
+    if (results.length === 0) {
+      const fallbackUrl = `https://enforcedata.dol.gov/api/search?query=${encodeURIComponent(name)}&agency=osha&size=10&sort=open_date:desc`;
+      const fallbackRes = await fetch(fallbackUrl, { headers: { "Accept": "application/json" } });
+      if (fallbackRes.ok) {
+        const fallbackData = await fallbackRes.json();
+        const hits = fallbackData?.hits?.hits || [];
+        for (const hit of hits.slice(0, 10)) {
+          const s = hit._source || hit;
+          results.push({
+            establishment: s.estab_name || name,
+            activity_nr: s.activity_nr || "",
+            open_date: s.open_date || "",
+            site_city: s.site_city || "",
+            site_state: s.site_state || "",
+            penalty: s.current_penalty || 0,
+            description: s.standard || "",
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[OSHA] Search error:", err);
+  }
+  return { success: true, results, total: results.length };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EPA ECHO — Environmental compliance & enforcement
+// ═══════════════════════════════════════════════════════════════
+async function searchEPAECHO(name: string) {
+  const results: any[] = [];
+  try {
+    // EPA ECHO facility search
+    const url = `https://echodata.epa.gov/echo/dfr_rest_services.get_facility_info?p_fn=${encodeURIComponent(name)}&output=JSON`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const text = await res.text();
+      try {
+        const data = JSON.parse(text);
+        const facilities = data?.Results?.Facilities || [];
+        for (const f of facilities.slice(0, 15)) {
+          results.push({
+            name: f.FacName || f.CWPName || name,
+            registry_id: f.RegistryID || f.FacFIPSCode || "",
+            address: f.FacStreet || "",
+            city: f.FacCity || "",
+            state: f.FacState || "",
+            zip: f.FacZip || "",
+            programs: [
+              f.CWPFlag === "Y" ? "Clean Water Act" : "",
+              f.CAA_FLAG === "Y" || f.AirFlag === "Y" ? "Clean Air Act" : "",
+              f.RCRAFlag === "Y" ? "RCRA Hazardous Waste" : "",
+              f.TRI_FLAG === "Y" || f.TriFlag === "Y" ? "Toxic Release Inventory" : "",
+              f.SDWISFlag === "Y" ? "Safe Drinking Water" : "",
+            ].filter(Boolean).join(", "),
+            compliance_status: f.CWPStatus || f.FacComplianceStatus || "Unknown",
+            inspections_5yr: f.FacInspectionCount || f.Insp5yrCnt || "0",
+            violations_3yr: f.FacViolationCount || f.CWPSNCStatus || "0",
+            penalties_5yr: f.FacPenaltyCount || "0",
+            formal_actions: f.FacFormalActionCount || "0",
+            lat: f.FacLat || "",
+            lon: f.FacLong || "",
+            url: f.RegistryID ? `https://echo.epa.gov/detailed-facility-report?fid=${f.RegistryID}` : "",
+          });
+        }
+      } catch { /* parse error */ }
+    }
+
+    // Fallback: ECHO text search
+    if (results.length === 0) {
+      const fallbackUrl = `https://echodata.epa.gov/echo/cwa_rest_services.get_facilities?p_fn=${encodeURIComponent(name)}&output=JSON`;
+      const fallbackRes = await fetch(fallbackUrl);
+      if (fallbackRes.ok) {
+        try {
+          const fallbackData = await fallbackRes.json();
+          const facs = fallbackData?.Results?.Facilities || [];
+          for (const f of facs.slice(0, 10)) {
+            results.push({
+              name: f.CWPName || name,
+              registry_id: f.SourceID || "",
+              city: f.CWPCity || "",
+              state: f.CWPState || "",
+              compliance_status: f.CWPStatus || "Unknown",
+              violations_3yr: f.CWPSNCStatus || "",
+              url: f.SourceID ? `https://echo.epa.gov/detailed-facility-report?fid=${f.SourceID}` : "",
+            });
+          }
+        } catch { /* parse error */ }
+      }
+    }
+  } catch (err) {
+    console.error("[EPA] ECHO search error:", err);
+  }
+  return { success: true, results, total: results.length };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SAM.gov — Federal contractor registrations & exclusions
+// ═══════════════════════════════════════════════════════════════
+async function searchSAMgov(name: string) {
+  const results: any[] = [];
+  try {
+    // SAM.gov Entity/Exclusions API (free, no key required for basic search)
+    const url = `https://api.sam.gov/entity-information/v3/entities?api_key=DEMO_KEY&legalBusinessName=${encodeURIComponent(name)}&registrationStatus=A&page=0&size=10`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      const entities = data?.entityData || [];
+      for (const e of entities.slice(0, 10)) {
+        const core = e.entityRegistration || {};
+        const addr = e.coreData?.physicalAddress || {};
+        results.push({
+          type: "registration",
+          name: core.legalBusinessName || name,
+          uei: core.ueiSAM || "",
+          cage_code: core.cageCode || "",
+          status: core.registrationStatus || "",
+          expiration: core.registrationExpirationDate || "",
+          entity_type: core.entityTypeDesc || "",
+          city: addr.city || "",
+          state: addr.stateOrProvinceCode || "",
+          country: addr.countryCode || "",
+          url: core.ueiSAM ? `https://sam.gov/entity/${core.ueiSAM}/coreData` : "https://sam.gov",
+        });
+      }
+    }
+
+    // Exclusions (debarments)
+    const exclUrl = `https://api.sam.gov/entity-information/v3/exclusions?api_key=DEMO_KEY&q=${encodeURIComponent(name)}&page=0&size=10`;
+    const exclRes = await fetch(exclUrl);
+    if (exclRes.ok) {
+      const exclData = await exclRes.json();
+      const exclusions = exclData?.results || exclData?.entityData || [];
+      for (const ex of exclusions.slice(0, 10)) {
+        results.push({
+          type: "exclusion",
+          name: ex.firm || ex.name || name,
+          classification: ex.classificationType || ex.exclusionType || "Debarred",
+          exclusion_type: ex.exclusionType || "",
+          agency: ex.excludingAgency || "",
+          active_date: ex.activeDateStr || ex.activeDate || "",
+          termination_date: ex.terminationDateStr || ex.terminationDate || "",
+          description: ex.additionalComments || "",
+          url: "https://sam.gov/search?keywords=" + encodeURIComponent(name) + "&dateRange=&index=exc",
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[SAM] Search error:", err);
+  }
+  return { success: true, results, total: results.length };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OpenSecrets — PAC networks, dark money, industry donations
+// ═══════════════════════════════════════════════════════════════
+async function searchOpenSecrets(name: string) {
+  const results: any[] = [];
+  try {
+    // OpenSecrets donor lookup (public search links + candidate search)
+    const donorUrl = `https://www.opensecrets.org/api/index.php?method=candContrib&output=json&apikey=&cid=&cycle=2024`;
+    // Since OpenSecrets requires an API key for full data, we provide enriched search links
+    const nameParts = name.split(/\s+/);
+    const lastName = nameParts[nameParts.length - 1] || name;
+
+    results.push({
+      type: "donor_search",
+      source: "OpenSecrets Donor Lookup",
+      url: `https://www.opensecrets.org/donor-lookup/results?name=${encodeURIComponent(name)}&order=desc`,
+      description: `Individual & PAC contributions for "${name}"`,
+    });
+    results.push({
+      type: "pac_search",
+      source: "OpenSecrets PAC Search",
+      url: `https://www.opensecrets.org/political-action-committees-pacs/search?q=${encodeURIComponent(name)}`,
+      description: `PAC registrations and spending matching "${name}"`,
+    });
+    results.push({
+      type: "lobbying_search",
+      source: "OpenSecrets Lobbying Search",
+      url: `https://www.opensecrets.org/federal-lobbying/search?q=${encodeURIComponent(name)}`,
+      description: `Lobbying filings and clients matching "${name}"`,
+    });
+    results.push({
+      type: "527_search",
+      source: "OpenSecrets 527 Groups",
+      url: `https://www.opensecrets.org/527s/search.php?q=${encodeURIComponent(name)}`,
+      description: `527 political organizations matching "${name}"`,
+    });
+    results.push({
+      type: "revolving_door",
+      source: "OpenSecrets Revolving Door",
+      url: `https://www.opensecrets.org/revolving/search_result.php?search=${encodeURIComponent(lastName)}`,
+      description: `Government-to-lobbying revolving door profiles for "${lastName}"`,
+    });
+  } catch (err) {
+    console.error("[OpenSecrets] Search error:", err);
+  }
+  return { success: true, results, total: results.length };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MuckRock — FOIA archive search
+// ═══════════════════════════════════════════════════════════════
+async function searchMuckRock(name: string) {
+  const results: any[] = [];
+  try {
+    const url = `https://www.muckrock.com/api_v1/foia/?search=${encodeURIComponent(name)}&format=json&page_size=10`;
+    const res = await fetch(url, { headers: { "Accept": "application/json" } });
+    if (res.ok) {
+      const data = await res.json();
+      const requests = data?.results || [];
+      for (const r of requests.slice(0, 10)) {
+        results.push({
+          title: r.title || "Untitled FOIA Request",
+          agency: r.agency?.name || r.agency || "Unknown Agency",
+          status: r.status || "unknown",
+          date_submitted: r.datetime_submitted || r.date_submitted || "",
+          date_done: r.datetime_done || "",
+          user: r.user?.username || "",
+          description: r.description || "",
+          url: r.absolute_url ? `https://www.muckrock.com${r.absolute_url}` : `https://www.muckrock.com/foi/search/?q=${encodeURIComponent(name)}`,
+          documents_count: r.communications_count || 0,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[MuckRock] Search error:", err);
+  }
+
+  // Always include the search link
+  results.push({
+    type: "search_link",
+    title: "Search MuckRock FOIA Archive",
+    url: `https://www.muckrock.com/foi/search/?q=${encodeURIComponent(name)}`,
+    description: `Browse all FOIA requests mentioning "${name}"`,
+  });
+
+  return { success: true, results, total: results.length };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FDA — Inspections, warning letters, recalls
+// ═══════════════════════════════════════════════════════════════
+async function searchFDA(name: string) {
+  const results: any[] = [];
+  try {
+    // FDA Warning Letters
+    const warnUrl = `https://api.fda.gov/other/substance.json?search="${encodeURIComponent(name)}"&limit=5`;
+    // openFDA enforcement/recall search
+    const recallUrl = `https://api.fda.gov/food/enforcement.json?search=recalling_firm:"${encodeURIComponent(name)}"&limit=10`;
+    const recallRes = await fetch(recallUrl);
+    if (recallRes.ok) {
+      const recallData = await recallRes.json();
+      const recalls = recallData?.results || [];
+      for (const r of recalls.slice(0, 10)) {
+        results.push({
+          type: "recall",
+          firm: r.recalling_firm || name,
+          product: r.product_description || "",
+          reason: r.reason_for_recall || "",
+          classification: r.classification || "",
+          status: r.status || "",
+          date: r.recall_initiation_date || r.report_date || "",
+          city: r.city || "",
+          state: r.state || "",
+          distribution: r.distribution_pattern || "",
+          url: `https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfres/res.cfm?start_search=1&event_id=&panel=&date_posted_start=&date_posted_end=&sort=default&recession_start_date_start=&recession_start_date_end=&recall_number=&classification=&center=&recall_type=&status=&fullsearch=${encodeURIComponent(name)}`,
+        });
+      }
+    }
+
+    // Drug enforcement
+    const drugUrl = `https://api.fda.gov/drug/enforcement.json?search=openfda.manufacturer_name:"${encodeURIComponent(name)}"&limit=10`;
+    const drugRes = await fetch(drugUrl);
+    if (drugRes.ok) {
+      const drugData = await drugRes.json();
+      const drugRecalls = drugData?.results || [];
+      for (const r of drugRecalls.slice(0, 5)) {
+        results.push({
+          type: "drug_recall",
+          firm: r.recalling_firm || name,
+          product: r.product_description || "",
+          reason: r.reason_for_recall || "",
+          classification: r.classification || "",
+          status: r.status || "",
+          date: r.recall_initiation_date || "",
+          url: `https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfres/res.cfm?fullsearch=${encodeURIComponent(name)}`,
+        });
+      }
+    }
+
+    // FDA Warning Letters search link (no good free API for this)
+    results.push({
+      type: "search_link",
+      source: "FDA Warning Letters",
+      url: `https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/compliance-actions-and-activities/warning-letters?search_api_fulltext=${encodeURIComponent(name)}`,
+      description: `FDA warning letters mentioning "${name}"`,
+    });
+
+    // FDA Inspection search link
+    results.push({
+      type: "search_link",
+      source: "FDA Inspection Database",
+      url: `https://datadashboard.fda.gov/ora/cd/inspections.htm`,
+      description: `FDA inspection observations and 483s`,
+    });
+  } catch (err) {
+    console.error("[FDA] Search error:", err);
+  }
+  return { success: true, results, total: results.length };
 }

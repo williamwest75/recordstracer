@@ -39,6 +39,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   assets: "Asset Records",
   property: "Property Records",
   licenses: "Professional Licenses",
+  violations: "Violations & Enforcement (OSHA / EPA / FDA)",
+  foia: "FOIA Archive (MuckRock)",
 };
 
 function heading(text: string, level: typeof HeadingLevel.HEADING_1 | typeof HeadingLevel.HEADING_2) {

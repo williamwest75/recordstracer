@@ -817,6 +817,194 @@ export async function searchSocialOSINT(name: string): Promise<RecordResult[]> {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// OSHA Violations — Workplace safety
+// ═══════════════════════════════════════════════════════════════
+export async function searchOSHA(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("osha", name);
+    if (data.success && data.results?.length > 0) {
+      for (const r of data.results) {
+        const penalty = r.penalty ? formatMoney(Number(r.penalty)) : "N/A";
+        results.push({
+          id: `osha-${++id}`, source: "OSHA Violation", category: "violations",
+          description: `${r.establishment || name} — ${r.violation_type || "Inspection"} ${r.open_date ? `(${r.open_date})` : ""}`,
+          details: {
+            Establishment: r.establishment || name,
+            City: r.site_city || "N/A", State: r.site_state || "N/A",
+            "Open Date": r.open_date || "N/A", "Close Date": r.close_case_date || "N/A",
+            Penalty: penalty, Instances: String(r.nr_instances || "N/A"),
+            "Violation Type": r.violation_type || "N/A",
+          },
+          sourceUrl: `https://www.osha.gov/pls/imis/establishment.search?p_logger=1&establishment=${encodeURIComponent(name)}`,
+          returnedName: r.establishment,
+        });
+      }
+    }
+  } catch (err) { console.error("[OSHA] Search failed:", err); }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EPA ECHO — Environmental compliance
+// ═══════════════════════════════════════════════════════════════
+export async function searchEPAECHO(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("epa-echo", name);
+    if (data.success && data.results?.length > 0) {
+      for (const f of data.results) {
+        results.push({
+          id: `epa-${++id}`, source: "EPA ECHO Facility", category: "violations",
+          description: `${f.name || name} (${f.city || "?"}, ${f.state || "?"}) — ${f.compliance_status || "Unknown status"}`,
+          details: {
+            Facility: f.name || name,
+            Address: f.address || "N/A", City: f.city || "N/A", State: f.state || "N/A",
+            Programs: f.programs || "N/A",
+            "Compliance Status": f.compliance_status || "N/A",
+            "Inspections (5yr)": String(f.inspections_5yr || "0"),
+            "Violations (3yr)": String(f.violations_3yr || "0"),
+            "Formal Actions": String(f.formal_actions || "0"),
+          },
+          sourceUrl: f.url || `https://echo.epa.gov/facilities/facility-search/results?search_type=FacilitySearch&p_fn=${encodeURIComponent(name)}`,
+          returnedName: f.name,
+        });
+      }
+    }
+  } catch (err) { console.error("[EPA] Search failed:", err); }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SAM.gov — Federal contractor registrations & exclusions
+// ═══════════════════════════════════════════════════════════════
+export async function searchSAMgov(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("sam-gov", name);
+    if (data.success && data.results?.length > 0) {
+      for (const r of data.results) {
+        if (r.type === "exclusion") {
+          results.push({
+            id: `sam-excl-${++id}`, source: "SAM.gov Exclusion (Debarment)", category: "sanctions",
+            description: `${r.name || name} — ${r.classification || "Excluded"} by ${r.agency || "Unknown"}`,
+            details: {
+              Name: r.name || name, Classification: r.classification || "N/A",
+              Agency: r.agency || "N/A",
+              "Active Date": r.active_date || "N/A", "Termination Date": r.termination_date || "N/A",
+            },
+            sourceUrl: r.url || "https://sam.gov",
+            returnedName: r.name,
+          });
+        } else {
+          results.push({
+            id: `sam-reg-${++id}`, source: "SAM.gov Registration", category: "contracts",
+            description: `${r.name || name} — ${r.entity_type || "Entity"} (${r.city || "?"}, ${r.state || "?"})`,
+            details: {
+              Name: r.name || name, UEI: r.uei || "N/A", "CAGE Code": r.cage_code || "N/A",
+              Status: r.status || "N/A", Expiration: r.expiration || "N/A",
+              City: r.city || "N/A", State: r.state || "N/A",
+            },
+            sourceUrl: r.url || "https://sam.gov",
+            returnedName: r.name,
+          });
+        }
+      }
+    }
+  } catch (err) { console.error("[SAM] Search failed:", err); }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OpenSecrets — PAC networks, dark money, revolving door
+// ═══════════════════════════════════════════════════════════════
+export async function searchOpenSecrets(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("opensecrets", name);
+    if (data.success && data.results?.length > 0) {
+      for (const r of data.results) {
+        results.push({
+          id: `os-${++id}`, source: r.source || "OpenSecrets", category: "donations",
+          description: r.description || `OpenSecrets record for "${name}"`,
+          details: { Type: r.type || "N/A", Source: r.source || "OpenSecrets" },
+          sourceUrl: r.url || "https://www.opensecrets.org",
+        });
+      }
+    }
+  } catch (err) { console.error("[OpenSecrets] Search failed:", err); }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MuckRock — FOIA archive search
+// ═══════════════════════════════════════════════════════════════
+export async function searchMuckRock(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("muckrock", name);
+    if (data.success && data.results?.length > 0) {
+      for (const r of data.results) {
+        results.push({
+          id: `mr-${++id}`, source: r.type === "search_link" ? "MuckRock Archive" : "MuckRock FOIA Request", category: "foia",
+          description: r.title || `FOIA request for "${name}"`,
+          details: {
+            Agency: r.agency || "N/A", Status: r.status || "N/A",
+            "Date Submitted": r.date_submitted || "N/A",
+            Requester: r.user || "N/A",
+            Documents: String(r.documents_count || 0),
+          },
+          sourceUrl: r.url || `https://www.muckrock.com/foi/search/?q=${encodeURIComponent(name)}`,
+        });
+      }
+    }
+  } catch (err) { console.error("[MuckRock] Search failed:", err); }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FDA — Recalls, enforcement, warning letters
+// ═══════════════════════════════════════════════════════════════
+export async function searchFDA(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("fda", name);
+    if (data.success && data.results?.length > 0) {
+      for (const r of data.results) {
+        if (r.type === "search_link") {
+          results.push({
+            id: `fda-link-${++id}`, source: r.source || "FDA", category: "violations",
+            description: r.description || `FDA records for "${name}"`,
+            details: { Source: r.source || "FDA" },
+            sourceUrl: r.url,
+          });
+        } else {
+          results.push({
+            id: `fda-${++id}`, source: r.type === "drug_recall" ? "FDA Drug Recall" : "FDA Food Recall", category: "violations",
+            description: `${r.firm || name} — ${(r.reason || "Recall").slice(0, 120)}`,
+            details: {
+              Firm: r.firm || name, Product: (r.product || "N/A").slice(0, 100),
+              Reason: (r.reason || "N/A").slice(0, 100),
+              Classification: r.classification || "N/A", Status: r.status || "N/A",
+              Date: r.date || "N/A", City: r.city || "N/A", State: r.state || "N/A",
+            },
+            sourceUrl: r.url || "https://www.fda.gov",
+            returnedName: r.firm,
+          });
+        }
+      }
+    }
+  } catch (err) { console.error("[FDA] Search failed:", err); }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Search All — with per-source progress callbacks
 // ═══════════════════════════════════════════════════════════════
 export interface SearchOptions {
@@ -860,6 +1048,12 @@ export async function searchAll(
     { key: "faa", skipKey: "", label: "FAA Aircraft Registry", fn: () => searchFAA(name) },
     { key: "state-campaign", skipKey: "fec", label: "State Campaign Finance", fn: () => searchStateCampaignFinance(name, state) },
     { key: "social-osint", skipKey: "", label: "OSINT / OCCRP Aleph", fn: () => searchSocialOSINT(name) },
+    { key: "osha", skipKey: "", label: "OSHA Violations", fn: () => searchOSHA(name) },
+    { key: "epa", skipKey: "", label: "EPA ECHO", fn: () => searchEPAECHO(name) },
+    { key: "sam", skipKey: "contracts", label: "SAM.gov", fn: () => searchSAMgov(name) },
+    { key: "opensecrets", skipKey: "fec", label: "OpenSecrets", fn: () => searchOpenSecrets(name) },
+    { key: "muckrock", skipKey: "", label: "MuckRock FOIA Archive", fn: () => searchMuckRock(name) },
+    { key: "fda", skipKey: "", label: "FDA Inspections", fn: () => searchFDA(name) },
   ];
 
   const sourceStatuses: SourceStatus[] = sourceDefs.map(s => ({

@@ -185,6 +185,8 @@ export function generateReport(data: ReportData): void {
     assets: "Asset Records",
     property: "Property Records",
     licenses: "Professional Licenses",
+    violations: "Violations & Enforcement (OSHA / EPA / FDA)",
+    foia: "FOIA Archive (MuckRock)",
   };
 
   for (const [cat, items] of Object.entries(grouped)) {
