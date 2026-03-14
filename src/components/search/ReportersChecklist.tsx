@@ -970,7 +970,7 @@ const ReportersChecklist = ({ name, state, results }: Props) => {
               <p className="text-xs text-muted-foreground"><span className="font-semibold text-foreground">{checkedCount} item{checkedCount !== 1 ? "s" : ""}</span> selected for export</p>
               <div className="flex items-center gap-2">
                 <button onClick={handleCopyExport} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded border border-border hover:bg-muted transition-colors">
-                  {copySuccess ? <CheckSquare className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copySuccess ? <CheckSquare className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
                   {copySuccess ? "Copied!" : "Copy Action Plan"}
                 </button>
                 <button onClick={handlePrint} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded bg-accent text-accent-foreground hover:bg-accent/90 transition-colors">
