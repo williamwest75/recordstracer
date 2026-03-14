@@ -390,6 +390,13 @@ const SearchResults = () => {
 
               {/* Main source records column */}
               <div className="flex-1 min-w-0 space-y-2">
+                {/* Entity Resolution — above source records */}
+                {entityClusters.length > 0 && (
+                  <div id="source-entities" className="scroll-mt-24">
+                    <ErrorBoundary><EntityClusterCard clusters={entityClusters} /></ErrorBoundary>
+                  </div>
+                )}
+
                 {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
                   const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
                   if (items.length === 0) return null;
@@ -435,6 +442,11 @@ const SearchResults = () => {
                     </div>
                   );
                 })}
+
+                {/* Contact Intelligence — first-class section */}
+                <div id="source-contact-intel" className="scroll-mt-24">
+                  <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
+                </div>
 
                 {/* News Coverage section */}
                 <div id="source-news-coverage" className="scroll-mt-24 border border-border rounded-lg p-4">
