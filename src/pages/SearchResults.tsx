@@ -372,6 +372,10 @@ const SearchResults = () => {
                   <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
                 </div>
 
+                <div id="source-foia" className="scroll-mt-24">
+                  <ErrorBoundary><FoiaLetterGenerator name={name} state={state} results={results} /></ErrorBoundary>
+                </div>
+
                 <div id="source-checklist" className="scroll-mt-24">
                   <Collapsible>
                     <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
