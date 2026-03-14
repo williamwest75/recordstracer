@@ -1156,7 +1156,7 @@ async function searchMuckRock(name: string) {
           date_done: r.datetime_done || "",
           user: r.user?.username || "",
           description: r.description || "",
-          url: r.absolute_url ? `https://www.muckrock.com${r.absolute_url}` : `https://www.muckrock.com/foi/search/?q=${encodeURIComponent(name)}`,
+          url: r.absolute_url ? (r.absolute_url.startsWith("http") ? r.absolute_url : `https://www.muckrock.com${r.absolute_url}`) : `https://www.muckrock.com/foi/search/?q=${encodeURIComponent(name)}`,
           documents_count: r.communications_count || 0,
         });
       }
