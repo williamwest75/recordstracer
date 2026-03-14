@@ -18,6 +18,7 @@ import News from "./pages/News";
 import NewsPost from "./pages/NewsPost";
 import Pricing from "./pages/Pricing";
 import BatchSearch from "./pages/BatchSearch";
+import StateCoverage from "./pages/StateCoverage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
