@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/landing/Header";
@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, FolderOpen, Clock, Plus, Trash2, Crown, Bookmark, FolderPlus } from "lucide-react";
+import { Search, FolderOpen, Clock, Plus, Trash2, Crown, Bookmark, FolderPlus, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import InvestigationCard from "@/components/dashboard/InvestigationCard";
@@ -39,6 +39,7 @@ import TrackedRequests from "@/components/dashboard/TrackedRequests";
 const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searches, setSearches] = useState<Tables<"searches">[]>([]);
   const [investigations, setInvestigations] = useState<Tables<"investigations">[]>([]);
   const [savedResults, setSavedResults] = useState<Record<string, any[]>>({});
@@ -299,6 +300,26 @@ const Dashboard = () => {
                             )}
                           </p>
                         </Link>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 text-muted-foreground hover:text-accent"
+                          title="Re-search (compare changes)"
+                          onClick={() => {
+                            // Store previous result count for comparison, then navigate with fresh query
+                            const key = `prev_results_${s.subject_name}_${s.state}`;
+                            // We don't have the actual result IDs from dashboard, but we store an empty set
+                            // to trigger the "re-search" mode. The search results page will detect this.
+                            try {
+                              // Mark that a re-search is happening — results page will populate IDs on next load
+                              sessionStorage.setItem(key, JSON.stringify([]));
+                            } catch { /* ignore */ }
+                            // Navigate with a cache-bust param to force a fresh search
+                            navigate(`/search-results?name=${encodeURIComponent(s.subject_name)}&state=${encodeURIComponent(s.state)}&t=${Date.now()}`);
+                          }}
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
