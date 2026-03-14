@@ -26,6 +26,9 @@ import SaveToInvestigationDropdown from "@/components/search/SaveToInvestigation
 import CourtRecordsSection from "@/components/search/CourtRecordsSection";
 import OffshoreLeaksSection from "@/components/search/OffshoreLeaksSection";
 import MobileToc from "@/components/search/MobileToc";
+import ContactIntelligence from "@/components/search/ContactIntelligence";
+import EntityClusterCard from "@/components/search/EntityClusterCard";
+import { clusterEntities } from "@/lib/entityResolution";
 import { generateReport, type ReportData } from "@/lib/generateReport";
 
 
@@ -193,6 +196,7 @@ const SearchResults = () => {
   const searchTimestamp = useMemo(() => searchData ? new Date() : null, [searchData]);
 
 
+  const entityClusters = useMemo(() => clusterEntities(results, name), [results, name]);
 
   const grouped = results.reduce<Record<string, MockResult[]>>((acc, r) => {
     (acc[r.category] ??= []).push(r);
@@ -202,16 +206,20 @@ const SearchResults = () => {
   const tocItems = useMemo(() => {
     const items: { id: string; label: string; count?: number }[] = [];
     items.push({ id: "source-briefing", label: "AI Subject Briefing" });
+    if (entityClusters.length > 0) {
+      items.push({ id: "source-entities", label: "Entity Resolution", count: entityClusters.length });
+    }
     for (const [key, { label }] of Object.entries(CATEGORY_META)) {
       const count = grouped[key]?.length ?? 0;
       if (count > 0) items.push({ id: `source-${key}`, label, count });
     }
+    items.push({ id: "source-contact-intel", label: "Contact Intelligence" });
     items.push({ id: "source-news-coverage", label: "News Coverage" });
     items.push({ id: "source-dossier", label: "Investigative Dossier" });
     items.push({ id: "source-deep-research", label: "Deep Research Analyst" });
     items.push({ id: "source-checklist", label: "Reporter's Checklist" });
     return items;
-  }, [results, grouped]);
+  }, [results, grouped, entityClusters]);
 
   const [activeSection, setActiveSection] = useState("source-briefing");
   const activeSectionRef = useRef(activeSection);
@@ -382,6 +390,13 @@ const SearchResults = () => {
 
               {/* Main source records column */}
               <div className="flex-1 min-w-0 space-y-2">
+                {/* Entity Resolution — above source records */}
+                {entityClusters.length > 0 && (
+                  <div id="source-entities" className="scroll-mt-24">
+                    <ErrorBoundary><EntityClusterCard clusters={entityClusters} /></ErrorBoundary>
+                  </div>
+                )}
+
                 {Object.entries(CATEGORY_META).map(([key, { icon: Icon, label }]) => {
                   const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
                   if (items.length === 0) return null;
@@ -427,6 +442,11 @@ const SearchResults = () => {
                     </div>
                   );
                 })}
+
+                {/* Contact Intelligence — first-class section */}
+                <div id="source-contact-intel" className="scroll-mt-24">
+                  <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
+                </div>
 
                 {/* News Coverage section */}
                 <div id="source-news-coverage" className="scroll-mt-24 border border-border rounded-lg p-4">

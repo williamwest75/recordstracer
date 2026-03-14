@@ -6,7 +6,6 @@ import DossierTimeline from "./DossierTimeline";
 import DossierCampaignFinance from "./DossierCampaignFinance";
 import DossierCourtRecords from "./DossierCourtRecords";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import NewsMentions from "@/components/NewsMentions";
 import PublicRecordsLinks from "@/components/search/PublicRecordsLinks";
 
 interface Props {
@@ -41,10 +40,6 @@ const DossierView = ({ searchName, state, newsData }: Props) => {
 
       <ErrorBoundary>
         <DossierCourtRecords data={courtQuery.data} isLoading={courtQuery.isLoading} isError={courtQuery.isError} searchName={searchName} />
-      </ErrorBoundary>
-
-      <ErrorBoundary>
-        <NewsMentions searchQuery={searchName} defaultExpanded />
       </ErrorBoundary>
 
       <ErrorBoundary>
