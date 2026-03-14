@@ -1,6 +1,6 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, AlertCircle, FileText, ChevronRight, Newspaper } from "lucide-react";
+import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, AlertCircle, FileText, ChevronRight, Newspaper, Shield, UserSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
