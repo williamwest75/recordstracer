@@ -105,12 +105,12 @@ const RequestCard = ({ req, onStatusChange, onDelete }: {
               <StatusIcon className="h-2.5 w-2.5" />{STATUS_CONFIG[req.status]?.label || req.status}
             </span>
             {urgency === "overdue" && (
-              <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border bg-red-100 text-red-700 border-red-300 animate-pulse">
+              <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border bg-destructive/10 text-destructive border-destructive/30 animate-pulse">
                 OVERDUE
               </span>
             )}
             {urgency === "urgent" && (
-              <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border bg-amber-100 text-amber-700 border-amber-300">
+              <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded border bg-warning-bg text-warning border-warning-border">
                 DUE SOON
               </span>
             )}
