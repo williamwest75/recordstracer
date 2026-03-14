@@ -520,9 +520,9 @@ const RecordsRequestBuilder = ({ state, results, subjectName, onClose }: {
             </div>
 
             {isSunshine && (
-              <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 mt-2">
-                <p className="text-xs text-amber-700 font-medium mb-1">Florida Sunshine Law — Key Facts</p>
-                <ul className="text-xs text-amber-700 space-y-1 list-disc pl-4">
+              <div className="bg-warning-bg border border-warning-border rounded px-3 py-2 mt-2">
+                <p className="text-xs text-warning font-medium mb-1">Florida Sunshine Law — Key Facts</p>
+                <ul className="text-xs text-warning space-y-1 list-disc pl-4">
                   <li>Agencies must acknowledge requests promptly and respond within a reasonable time (typically 3–10 business days)</li>
                   <li>You cannot be required to explain why you want records</li>
                   <li>Fees limited to actual cost of duplication — no research or staff time fees</li>
@@ -532,9 +532,9 @@ const RecordsRequestBuilder = ({ state, results, subjectName, onClose }: {
               </div>
             )}
             {!isSunshine && (
-              <div className="bg-blue-50 border border-blue-200 rounded px-3 py-2 mt-2">
-                <p className="text-xs text-blue-700 font-medium mb-1">FOIA — Key Facts</p>
-                <ul className="text-xs text-blue-700 space-y-1 list-disc pl-4">
+              <div className="bg-info-bg border border-info-border rounded px-3 py-2 mt-2">
+                <p className="text-xs text-info font-medium mb-1">FOIA — Key Facts</p>
+                <ul className="text-xs text-info space-y-1 list-disc pl-4">
                   <li>20 business days to respond (can be extended 10 days for unusual circumstances)</li>
                   <li>Fee waivers available for journalists and public interest requesters</li>
                   <li>Denials must cite specific exemptions — you have 90 days to appeal</li>
