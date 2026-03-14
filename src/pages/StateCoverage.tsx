@@ -102,7 +102,7 @@ const StateCoverage = () => {
                   {deep > 0 && (
                     <p className="text-[11px] text-accent mt-2">{deep} deep-linked</p>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
