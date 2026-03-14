@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MapPin, Building2, Scale, Vote, Home, Gavel, FileSearch, ArrowLeft } from "lucide-react";
 import Header from "@/components/landing/Header";
@@ -22,67 +22,8 @@ const categoryIcons = [
   { key: "clerkCounties", icon: FileSearch, label: "Clerk" },
 ] as const;
 
-// Simplified SVG paths for US states — viewBox 0 0 960 600
-const STATE_PATHS: Record<string, string> = {
-  AL: "M628,425 L628,468 L622,493 L631,494 L632,502 L619,502 L612,493 L612,425Z",
-  AK: "M161,485 L183,485 L183,510 L193,520 L183,530 L161,530 L150,520 L150,510Z",
-  AZ: "M205,395 L275,395 L275,470 L240,490 L205,470Z",
-  AR: "M560,415 L610,415 L610,460 L560,460Z",
-  CA: "M120,285 L165,285 L185,340 L185,430 L150,455 L120,430Z",
-  CO: "M295,305 L385,305 L385,365 L295,365Z",
-  CT: "M852,215 L876,210 L880,230 L858,235Z",
-  DE: "M810,305 L822,298 L825,320 L812,320Z",
-  FL: "M645,465 L700,460 L730,495 L720,535 L685,555 L660,530 L640,495Z",
-  GA: "M650,395 L695,395 L700,458 L650,465Z",
-  HI: "M260,515 L295,510 L300,530 L270,535Z",
-  ID: "M220,175 L260,175 L275,265 L235,285 L220,250Z",
-  IL: "M580,275 L610,275 L615,365 L590,380 L575,365 L575,310Z",
-  IN: "M620,280 L650,275 L655,360 L620,365Z",
-  IA: "M510,250 L575,250 L575,305 L510,305Z",
-  KS: "M420,335 L510,335 L510,390 L420,390Z",
-  KY: "M620,345 L700,335 L710,365 L640,375 L620,365Z",
-  LA: "M555,462 L605,462 L610,510 L580,520 L555,500Z",
-  ME: "M870,115 L895,105 L905,150 L880,180 L870,155Z",
-  MD: "M765,300 L810,290 L815,320 L770,325Z",
-  MA: "M850,195 L890,190 L892,205 L852,210Z",
-  MI: "M600,175 L650,175 L660,195 L640,230 L615,250 L600,230Z M620,145 L660,140 L665,175 L625,180Z",
-  MN: "M480,135 L545,135 L545,230 L480,230Z",
-  MS: "M590,420 L618,420 L618,493 L605,500 L590,490Z",
-  MO: "M520,320 L575,320 L580,400 L540,415 L520,395Z",
-  MT: "M260,120 L380,120 L380,195 L260,195Z",
-  NE: "M380,275 L475,270 L480,325 L380,330Z",
-  NV: "M185,260 L230,260 L240,385 L195,385Z",
-  NH: "M862,145 L878,140 L880,190 L862,195Z",
-  NJ: "M820,260 L835,250 L838,300 L822,310Z",
-  NM: "M260,395 L345,395 L345,485 L260,485Z",
-  NY: "M770,170 L845,160 L855,210 L810,235 L775,230 L770,200Z",
-  NC: "M675,370 L780,360 L790,385 L760,395 L675,395Z",
-  ND: "M390,130 L475,130 L475,195 L390,195Z",
-  OH: "M655,265 L705,260 L710,335 L660,340Z",
-  OK: "M390,395 L505,395 L510,380 L510,340 L420,340 L420,380 L390,395Z",
-  OR: "M120,160 L215,160 L220,245 L145,260 L120,230Z",
-  PA: "M735,235 L815,225 L820,280 L740,285Z",
-  RI: "M870,215 L880,212 L882,228 L872,230Z",
-  SC: "M690,390 L745,375 L760,400 L720,420 L690,410Z",
-  SD: "M390,200 L475,200 L475,268 L390,273Z",
-  TN: "M610,375 L720,365 L725,395 L610,405Z",
-  TX: "M345,400 L445,395 L505,400 L510,450 L490,510 L440,545 L380,530 L345,485Z",
-  UT: "M245,270 L300,270 L300,375 L245,385Z",
-  VT: "M848,140 L862,138 L864,190 L850,193Z",
-  VA: "M700,310 L790,300 L800,345 L720,360 L695,340Z",
-  WA: "M135,95 L225,95 L225,165 L145,170 L135,140Z",
-  WV: "M710,295 L740,290 L750,340 L730,360 L710,340Z",
-  WI: "M540,145 L595,150 L600,240 L545,245 L535,210Z",
-  WY: "M285,195 L375,195 L375,275 L285,275Z",
-};
 
-function getMapColor(count: number, min: number, max: number): string {
-  const t = max === min ? 1 : (count - min) / (max - min);
-  const h = 210 + t * (43 - 210);
-  const s = 15 + t * (100 - 15);
-  const l = 80 - t * 38;
-  return `hsl(${h}, ${s}%, ${l}%)`;
-}
+
 
 const StateCoverage = () => {
   const navigate = useNavigate();
@@ -90,21 +31,8 @@ const StateCoverage = () => {
   const totalAll = useMemo(() => states.reduce((sum, s) => sum + totalSources(s), 0), [states]);
   const totalDeep = useMemo(() => states.reduce((sum, s) => sum + deepLinkCount(s), 0), [states]);
 
-  const [hovered, setHovered] = useState<string | null>(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  const stateMap = useMemo(() => {
-    const m: Record<string, { data: StateRecordSet; total: number }> = {};
-    states.forEach(s => { m[s.stateCode] = { data: s, total: totalSources(s) }; });
-    return m;
-  }, [states]);
 
-  const { min, max } = useMemo(() => {
-    const counts = Object.values(stateMap).map(s => s.total);
-    return { min: Math.min(...counts), max: Math.max(...counts) };
-  }, [stateMap]);
-
-  const hoveredState = hovered ? stateMap[hovered] : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -143,75 +71,8 @@ const StateCoverage = () => {
           </div>
         </section>
 
-        {/* Map */}
-        <section className="container mx-auto px-4 lg:px-8 py-10 border-b border-border">
-          <h2 className="font-heading text-xl font-semibold text-foreground mb-4">Interactive Coverage Map</h2>
-          <p className="text-sm text-muted-foreground mb-6">Click any state to start a search pre-filled with that state.</p>
-          <div className="max-w-4xl mx-auto relative">
-            <svg
-              viewBox="0 0 960 600"
-              className="w-full h-auto"
-              onMouseMove={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-              }}
-              onMouseLeave={() => setHovered(null)}
-            >
-              {Object.entries(STATE_PATHS).map(([code, path]) => {
-                const info = stateMap[code];
-                if (!info) return null;
-                const isHovered = hovered === code;
-                return (
-                  <path
-                    key={code}
-                    d={path}
-                    fill={getMapColor(info.total, min, max)}
-                    stroke="hsl(var(--border))"
-                    strokeWidth={isHovered ? 2 : 0.75}
-                    className="cursor-pointer transition-all duration-150"
-                    style={{
-                      opacity: hovered && !isHovered ? 0.5 : 1,
-                      filter: isHovered ? "brightness(1.15)" : undefined,
-                    }}
-                    onMouseEnter={() => setHovered(code)}
-                    onClick={() => navigate(`/?state=${encodeURIComponent(info.data.stateName)}`)}
-                  />
-                );
-              })}
-            </svg>
 
-            {hoveredState && (
-              <div
-                className="pointer-events-none absolute z-10 rounded-md border border-border bg-popover px-3 py-2 shadow-lg"
-                style={{
-                  left: mousePos.x + 12,
-                  top: mousePos.y - 10,
-                  transform: "translateY(-100%)",
-                }}
-              >
-                <p className="text-sm font-semibold text-popover-foreground">
-                  {hoveredState.data.stateName}
-                  <span className="ml-1.5 text-xs font-normal text-muted-foreground">({hovered})</span>
-                </p>
-                <p className="text-xs text-accent font-medium">{hoveredState.total} sources</p>
-              </div>
-            )}
 
-            <div className="flex items-center gap-2 mt-3 justify-center">
-              <span className="text-[11px] text-muted-foreground">Fewer sources</span>
-              <div className="flex h-3 rounded-sm overflow-hidden">
-                {Array.from({ length: 8 }, (_, i) => (
-                  <div
-                    key={i}
-                    className="w-5 h-full"
-                    style={{ background: getMapColor(min + (i / 7) * (max - min), min, max) }}
-                  />
-                ))}
-              </div>
-              <span className="text-[11px] text-muted-foreground">More sources</span>
-            </div>
-          </div>
-        </section>
 
         {/* Grid */}
         <section className="container mx-auto px-4 lg:px-8 py-10">

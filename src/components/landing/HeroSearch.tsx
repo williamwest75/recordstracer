@@ -13,8 +13,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Search, ChevronDown, ChevronUp, CalendarIcon, RotateCcw } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
@@ -69,6 +69,15 @@ const HeroSearch = () => {
   const [name, setName] = useState("");
   const [suffix, setSuffix] = useState("");
   const [state, setState] = useState("All States / National");
+  const [searchParams] = useSearchParams();
+
+  // Pre-fill state from URL param (e.g. from /coverage click)
+  useEffect(() => {
+    const stateParam = searchParams.get("state");
+    if (stateParam && US_STATES.includes(stateParam)) {
+      setState(stateParam);
+    }
+  }, [searchParams]);
 
   // Advanced filters
   const [middleInitial, setMiddleInitial] = useState("");
@@ -163,7 +172,7 @@ const HeroSearch = () => {
   };
 
   return (
-    <section className="relative py-20 lg:py-28">
+    <section id="search" className="relative py-20 lg:py-28 scroll-mt-20">
       <div className="container mx-auto px-4 lg:px-8 max-w-3xl text-center">
         <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-tight">
           Uncover the public record.
