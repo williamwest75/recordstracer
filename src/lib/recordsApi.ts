@@ -679,14 +679,14 @@ export interface SourceStatus {
 }
 
 export type ProgressCallback = (sources: SourceStatus[]) => void;
+export type ResultsCallback = (results: RecordResult[], sourceLabel: string) => void;
 
 export async function searchAll(
-  name: string, state: string, options?: SearchOptions, onProgress?: ProgressCallback
+  name: string, state: string, options?: SearchOptions, onProgress?: ProgressCallback, onResults?: ResultsCallback
 ): Promise<{ results: RecordResult[]; debug: ApiDebugInfo[] }> {
   const debug: ApiDebugInfo[] = [];
   const skip = new Set(options?.skip || []);
 
-  // Define all sources with their keys and functions
   const sourceDefs: { key: string; skipKey: string; label: string; fn: () => Promise<RecordResult[]> }[] = [
     { key: "fec", skipKey: "fec", label: "FEC Campaign Finance", fn: () => searchFEC(name, state) },
     { key: "sec", skipKey: "business", label: "SEC EDGAR", fn: () => searchSEC(name) },
@@ -700,17 +700,13 @@ export async function searchAll(
     { key: "faa", skipKey: "", label: "FAA Aircraft Registry", fn: () => searchFAA(name) },
   ];
 
-  // Initialize status tracking
   const sourceStatuses: SourceStatus[] = sourceDefs.map(s => ({
     label: s.label,
     status: (s.skipKey && skip.has(s.skipKey)) ? "skipped" as const : "pending" as const,
     resultCount: 0,
   }));
 
-  const emitProgress = () => {
-    onProgress?.([...sourceStatuses]);
-  };
-
+  const emitProgress = () => { onProgress?.([...sourceStatuses]); };
   emitProgress();
 
   const tasks = sourceDefs.map(async (source, index) => {
@@ -726,10 +722,13 @@ export async function searchAll(
     try {
       const r = await source.fn();
       const duration = Date.now() - start;
+      const scored = r.map(rec => ({ ...rec, relevance: computeRelevance(rec, name, state) }));
       debug.push({ api: source.label, status: "success", resultCount: r.length, duration });
       sourceStatuses[index] = { ...sourceStatuses[index], status: "success", resultCount: r.length, duration };
       emitProgress();
-      return r;
+      // Stream results as they arrive
+      onResults?.(scored, source.label);
+      return scored;
     } catch (err) {
       const duration = Date.now() - start;
       debug.push({ api: source.label, status: "error", resultCount: 0, error: String(err), duration });
@@ -741,17 +740,9 @@ export async function searchAll(
 
   const allResults = await Promise.all(tasks);
   const results = allResults.flat();
+  results.sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
 
-  // Score relevance for each result
-  const scored = results.map(r => ({
-    ...r,
-    relevance: computeRelevance(r, name, state),
-  }));
-
-  // Sort by relevance descending
-  scored.sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
-
-  return { results: scored, debug };
+  return { results, debug };
 }
 
 /**
