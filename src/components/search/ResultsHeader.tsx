@@ -58,10 +58,13 @@ const ResultsHeader = ({ name, state, results, searchTimestamp }: ResultsHeaderP
             </span>
           )}
         </p>
-        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={handleDownload}>
-          <Download className="h-3.5 w-3.5" />
-          Download Report
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <SearchAlertButton subjectName={name} state={state} />
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleDownload}>
+            <Download className="h-3.5 w-3.5" />
+            Download Report
+          </Button>
+        </div>
       </div>
     </>
   );

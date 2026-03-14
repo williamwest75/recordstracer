@@ -86,6 +86,7 @@ const InvestigationCard = ({ investigation, savedResults, onDelete, onDeleteResu
               <Download className="h-4 w-4" />
             </Button>
           )}
+          <ShareInvestigationDialog investigationId={investigation.id} investigationTitle={investigation.title} />
           {expanded ? (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
           ) : (
