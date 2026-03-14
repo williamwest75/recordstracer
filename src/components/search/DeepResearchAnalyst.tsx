@@ -159,7 +159,7 @@ const DeepResearchAnalyst = ({ name, state, results }: DeepResearchAnalystProps)
         {analysis && !loading && (
           <>
             {/* Analysis card with gold left border */}
-            <div className="border-l-4 border-[hsl(42,70%,55%)] bg-muted/30 rounded-r-md p-5 space-y-1">
+            <div className="border-l-4 border-accent bg-muted/30 rounded-r-md p-5 space-y-1">
               {renderAnalysis(analysis)}
             </div>
 
