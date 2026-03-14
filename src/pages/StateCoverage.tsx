@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MapPin, Building2, Scale, Vote, Home, Gavel, FileSearch, ArrowLeft } from "lucide-react";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
+import UsMap from "@/components/coverage/UsMap";
 import { getAllStateRecords, type StateRecordSet } from "@/data/state-records-registry";
 
 function totalSources(s: StateRecordSet) {
