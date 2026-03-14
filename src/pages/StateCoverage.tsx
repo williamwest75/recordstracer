@@ -71,9 +71,10 @@ const StateCoverage = () => {
               const total = totalSources(s);
               const deep = deepLinkCount(s);
               return (
-                <div
+                <button
+                  onClick={() => navigate(`/?state=${encodeURIComponent(s.stateName)}`)}
                   key={s.stateCode}
-                  className="rounded-lg border border-border bg-card p-4 hover:border-accent/40 transition-colors"
+                  className="rounded-lg border border-border bg-card p-4 hover:border-accent/40 transition-colors text-left cursor-pointer group"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
