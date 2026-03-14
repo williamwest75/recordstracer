@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, FileText, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { generateReport, type ReportData } from "@/lib/generateReport";
+import { generateReportDocx } from "@/lib/generateReportDocx";
 import type { MockResult } from "@/lib/recordsApi";
 import SearchAlertButton from "@/components/search/SearchAlertButton";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ResultsHeaderProps {
   name: string;
@@ -13,7 +17,10 @@ interface ResultsHeaderProps {
 }
 
 const ResultsHeader = ({ name, state, results, searchTimestamp }: ResultsHeaderProps) => {
-  const handleDownload = () => {
+  const [exporting, setExporting] = useState(false);
+  const { toast } = useToast();
+
+  const gatherReportData = (): ReportData => {
     const briefingEl = document.querySelector('[data-briefing-summary]');
     let findings: ReportData["findings"];
     let nextSteps: ReportData["nextSteps"];
@@ -27,7 +34,7 @@ const ResultsHeader = ({ name, state, results, searchTimestamp }: ResultsHeaderP
       if (c) crossReferences = JSON.parse(c);
     } catch { /* ignore parse errors */ }
 
-    generateReport({
+    return {
       name,
       state,
       results,
@@ -36,7 +43,24 @@ const ResultsHeader = ({ name, state, results, searchTimestamp }: ResultsHeaderP
       nextSteps,
       crossReferences,
       timestamp: searchTimestamp || new Date(),
-    });
+    };
+  };
+
+  const handleDownloadPdf = () => {
+    generateReport(gatherReportData());
+  };
+
+  const handleDownloadDocx = async () => {
+    setExporting(true);
+    try {
+      await generateReportDocx(gatherReportData());
+      toast({ title: "Word document exported", description: "Your .docx report has been downloaded." });
+    } catch (err) {
+      console.error("DOCX export error:", err);
+      toast({ title: "Export failed", description: "Could not generate Word document.", variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -60,10 +84,24 @@ const ResultsHeader = ({ name, state, results, searchTimestamp }: ResultsHeaderP
         </p>
         <div className="flex items-center gap-2 shrink-0">
           <SearchAlertButton subjectName={name} state={state} />
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleDownload}>
-            <Download className="h-3.5 w-3.5" />
-            Download Report
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5" disabled={exporting}>
+                <Download className="h-3.5 w-3.5" />
+                {exporting ? "Exporting\u2026" : "Download Report"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleDownloadPdf} className="gap-2 cursor-pointer">
+                <FileText className="h-4 w-4 text-destructive" />
+                Download as PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownloadDocx} className="gap-2 cursor-pointer">
+                <FileSpreadsheet className="h-4 w-4 text-primary" />
+                Download as Word (.docx)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </>
