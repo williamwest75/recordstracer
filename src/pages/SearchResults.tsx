@@ -196,6 +196,7 @@ const SearchResults = () => {
   const searchTimestamp = useMemo(() => searchData ? new Date() : null, [searchData]);
 
 
+  const entityClusters = useMemo(() => clusterEntities(results, name), [results, name]);
 
   const grouped = results.reduce<Record<string, MockResult[]>>((acc, r) => {
     (acc[r.category] ??= []).push(r);
@@ -205,16 +206,20 @@ const SearchResults = () => {
   const tocItems = useMemo(() => {
     const items: { id: string; label: string; count?: number }[] = [];
     items.push({ id: "source-briefing", label: "AI Subject Briefing" });
+    if (entityClusters.length > 0) {
+      items.push({ id: "source-entities", label: "Entity Resolution", count: entityClusters.length });
+    }
     for (const [key, { label }] of Object.entries(CATEGORY_META)) {
       const count = grouped[key]?.length ?? 0;
       if (count > 0) items.push({ id: `source-${key}`, label, count });
     }
+    items.push({ id: "source-contact-intel", label: "Contact Intelligence" });
     items.push({ id: "source-news-coverage", label: "News Coverage" });
     items.push({ id: "source-dossier", label: "Investigative Dossier" });
     items.push({ id: "source-deep-research", label: "Deep Research Analyst" });
     items.push({ id: "source-checklist", label: "Reporter's Checklist" });
     return items;
-  }, [results, grouped]);
+  }, [results, grouped, entityClusters]);
 
   const [activeSection, setActiveSection] = useState("source-briefing");
   const activeSectionRef = useRef(activeSection);
