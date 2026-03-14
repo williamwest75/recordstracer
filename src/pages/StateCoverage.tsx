@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MapPin, Building2, Scale, Vote, Home, Gavel, FileSearch, ArrowLeft } from "lucide-react";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
+import UsMap from "@/components/coverage/UsMap";
 import { getAllStateRecords, type StateRecordSet } from "@/data/state-records-registry";
 
 function totalSources(s: StateRecordSet) {
@@ -62,6 +63,15 @@ const StateCoverage = () => {
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Deep-Linked</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Map */}
+        <section className="container mx-auto px-4 lg:px-8 py-10 border-b border-border">
+          <h2 className="font-heading text-xl font-semibold text-foreground mb-4">Interactive Coverage Map</h2>
+          <p className="text-sm text-muted-foreground mb-6">Click any state to start a search pre-filled with that state.</p>
+          <div className="max-w-4xl mx-auto">
+            <UsMap states={states} totalSourcesFn={totalSources} />
           </div>
         </section>
 
