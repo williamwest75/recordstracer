@@ -267,13 +267,13 @@ const RequestTrackerInline = ({ subjectName, state, requestType, agencyName, rec
   };
 
   if (saved) return (
-    <div className="border border-green-200 bg-green-50 rounded-lg p-4">
+    <div className="border border-success-border bg-success-bg rounded-lg p-4">
       <div className="flex items-start gap-2">
-        <CheckSquare className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+        <CheckSquare className="h-4 w-4 text-success shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold text-green-800">Request tracked!</p>
-          <p className="text-xs text-green-700 mt-1">Request saved. A confirmation has been sent to <strong>{email}</strong>. Reminders will follow on days 3, 10, 20, and 30{customDate ? ` plus your custom date` : ""}.</p>
-          <p className="text-xs text-green-600 mt-2">View and update this request in <strong>Dashboard → My Requests</strong>.</p>
+          <p className="text-sm font-semibold text-success">Request tracked!</p>
+          <p className="text-xs text-success mt-1">Request saved. A confirmation has been sent to <strong>{email}</strong>. Reminders will follow on days 3, 10, 20, and 30{customDate ? ` plus your custom date` : ""}.</p>
+          <p className="text-xs text-success mt-2">View and update this request in <strong>Dashboard → My Requests</strong>.</p>
         </div>
       </div>
     </div>
