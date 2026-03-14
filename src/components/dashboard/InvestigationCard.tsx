@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ChevronUp, ExternalLink, FileText, Search, Trash2, Download } from "lucide-react";
+import ShareInvestigationDialog from "@/components/dashboard/ShareInvestigationDialog";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
