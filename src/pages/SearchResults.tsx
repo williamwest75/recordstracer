@@ -29,6 +29,7 @@ import ResultsHeader from "@/components/search/ResultsHeader";
 import TocSidebar from "@/components/search/TocSidebar";
 import RecordDetailModal from "@/components/search/RecordDetailModal";
 import SourceRecordSection from "@/components/search/SourceRecordSection";
+import NewResultsBadge from "@/components/search/NewResultsBadge";
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
   business: { icon: Building2, label: "Business Registrations & Filings" },
@@ -52,8 +53,18 @@ const SearchResults = () => {
   const state = isValidState(rawState) ? rawState : "All States / National";
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
   const [sourceProgress, setSourceProgress] = useState<SourceStatus[]>([]);
+  const [streamedResults, setStreamedResults] = useState<MockResult[]>([]);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading, loading: authLoading } = useAuth();
+
+  // Re-search change detection: load previous result IDs from sessionStorage
+  const previousResultIds = useMemo(() => {
+    try {
+      const key = `prev_results_${name}_${state}`;
+      const stored = sessionStorage.getItem(key);
+      return stored ? new Set<string>(JSON.parse(stored)) : null;
+    } catch { return null; }
+  }, [name, state]);
 
   // Auth guard
   useEffect(() => {
@@ -88,10 +99,21 @@ const SearchResults = () => {
     setSourceProgress(sources);
   }, []);
 
+  // Progressive results callback — accumulate results as each source completes
+  const handleResults = useCallback((newResults: MockResult[]) => {
+    setStreamedResults(prev => [...prev, ...newResults]);
+  }, []);
+
+  // Reset streamed results when search params change
+  useEffect(() => {
+    setStreamedResults([]);
+  }, [name, state, searchOptions]);
+
   const { data: searchData, isLoading: loading, isError: error } = useQuery({
     queryKey: ["search-results", name, state, searchOptions],
     queryFn: async () => {
-      const data = await searchAll(name, state, searchOptions, handleProgress);
+      setStreamedResults([]);
+      const data = await searchAll(name, state, searchOptions, handleProgress, handleResults);
       if (user && data.results.length > 0) {
         const categoryCounts: Record<string, number> = {};
         for (const r of data.results) {
@@ -108,15 +130,31 @@ const SearchResults = () => {
           .order("created_at", { ascending: false })
           .limit(1);
       }
+      // Store current result IDs for future re-search comparison
+      try {
+        const key = `prev_results_${name}_${state}`;
+        sessionStorage.setItem(key, JSON.stringify(data.results.map(r => r.id)));
+      } catch { /* ignore storage errors */ }
       return data;
     },
     enabled: canSearch,
     staleTime: 1000 * 60 * 30,
   });
 
-  const results = searchData?.results ?? [];
+  // Use final results when query is done, otherwise use streamed results for progressive rendering
+  const results = searchData?.results ?? streamedResults;
+  const isSearchComplete = !!searchData;
   const searchTimestamp = useMemo(() => searchData ? new Date() : null, [searchData]);
   const entityClusters = useMemo(() => clusterEntities(results, name), [results, name]);
+
+  // Change detection stats
+  const changeStats = useMemo(() => {
+    if (!previousResultIds || !isSearchComplete) return null;
+    const newIds = results.filter(r => !previousResultIds.has(r.id));
+    const removedCount = [...previousResultIds].filter(id => !results.some(r => r.id === id)).length;
+    if (newIds.length === 0 && removedCount === 0) return { newCount: 0, removedCount: 0, unchanged: true };
+    return { newCount: newIds.length, removedCount, unchanged: false };
+  }, [results, previousResultIds, isSearchComplete]);
 
   const grouped = results.reduce<Record<string, MockResult[]>>((acc, r) => {
     (acc[r.category] ??= []).push(r);
@@ -176,27 +214,58 @@ const SearchResults = () => {
 
   const categoryForResult = (result: MockResult) => CATEGORY_META[result.category];
 
+  const hasResults = results.length > 0;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container mx-auto px-4 lg:px-8 py-10 max-w-5xl">
-        {loading ? (
-          <div className="mt-8">
+        {/* Show progress bar while loading (even if we have partial results) */}
+        {loading && (
+          <div className="mb-6">
             <SearchProgress sources={sourceProgress} isComplete={false} />
           </div>
-        ) : error ? (
+        )}
+
+        {error ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <AlertCircle className="h-8 w-8 text-destructive" />
             <p className="text-muted-foreground text-sm">Something went wrong. Please try again.</p>
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Retry</Button>
           </div>
-        ) : results.length === 0 ? (
+        ) : !hasResults && !loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <p className="text-muted-foreground text-sm">No public records found for this search.</p>
           </div>
-        ) : (
+        ) : hasResults ? (
           <>
             <ResultsHeader name={name} state={state} results={results} searchTimestamp={searchTimestamp} />
+
+            {/* Re-search change detection banner */}
+            {changeStats && !changeStats.unchanged && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-info-border bg-info-bg px-4 py-2.5">
+                <span className="text-xs font-semibold text-info">
+                  Re-search comparison:
+                </span>
+                {changeStats.newCount > 0 && (
+                  <span className="text-xs font-medium text-success">
+                    +{changeStats.newCount} new record{changeStats.newCount !== 1 ? "s" : ""}
+                  </span>
+                )}
+                {changeStats.removedCount > 0 && (
+                  <span className="text-xs font-medium text-destructive">
+                    −{changeStats.removedCount} removed
+                  </span>
+                )}
+              </div>
+            )}
+            {changeStats?.unchanged && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2.5">
+                <span className="text-xs text-muted-foreground">
+                  No changes since your last search for this subject.
+                </span>
+              </div>
+            )}
 
             {/* Editorial Brief */}
             <div id="source-briefing" className="mt-10 mb-12 scroll-mt-24">
@@ -215,7 +284,6 @@ const SearchResults = () => {
             <div className="flex gap-8 relative">
               <TocSidebar items={tocItems} activeSection={activeSection} onNavigate={scrollToSection} />
 
-              {/* Main source records column */}
               <div className="flex-1 min-w-0 space-y-2">
                 {entityClusters.length > 0 && (
                   <div id="source-entities" className="scroll-mt-24">
@@ -227,9 +295,15 @@ const SearchResults = () => {
                   const items = (grouped[key] || []).sort((a, b) => (b.relevance ?? 0) - (a.relevance ?? 0));
                   if (items.length === 0) return null;
 
+                  // Count new items in this category for re-search badge
+                  const newCount = previousResultIds
+                    ? items.filter(i => !previousResultIds.has(i.id)).length
+                    : 0;
+
                   if (key === "court") {
                     return (
-                      <div key={key} id={`source-${key}`} className="scroll-mt-24">
+                      <div key={key} id={`source-${key}`} className="scroll-mt-24 relative">
+                        {newCount > 0 && <NewResultsBadge count={newCount} />}
                         <CourtRecordsSection items={items} name={name} state={state} onViewDetails={setSelectedResult} />
                       </div>
                     );
@@ -237,14 +311,16 @@ const SearchResults = () => {
 
                   if (key === "offshore") {
                     return (
-                      <div key={key} id={`source-${key}`} className="scroll-mt-24">
+                      <div key={key} id={`source-${key}`} className="scroll-mt-24 relative">
+                        {newCount > 0 && <NewResultsBadge count={newCount} />}
                         <OffshoreLeaksSection items={items} name={name} state={state} onViewDetails={setSelectedResult} />
                       </div>
                     );
                   }
 
                   return (
-                    <div key={key} id={`source-${key}`} className="scroll-mt-24">
+                    <div key={key} id={`source-${key}`} className="scroll-mt-24 relative">
+                      {newCount > 0 && <NewResultsBadge count={newCount} />}
                       <SourceRecordSection categoryKey={key} icon={Icon} label={label} items={items} name={name} onViewDetails={setSelectedResult} />
                     </div>
                   );
@@ -288,14 +364,14 @@ const SearchResults = () => {
               </div>
             </div>
           </>
-        )}
+        ) : null}
       </main>
 
-      {!loading && results.length > 0 && (
+      {hasResults && (
         <MobileToc items={tocItems} activeSection={activeSection} onNavigate={scrollToSection} />
       )}
 
-      {!loading && results.length > 0 && (
+      {hasResults && (
         <div className="border-t border-border bg-muted/30 px-4 py-6 text-center">
           <p className="text-[11px] text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Record matches do not confirm identity or imply wrongdoing. All findings require independent verification prior to publication.

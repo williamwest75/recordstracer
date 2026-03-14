@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, ChevronUp, ExternalLink, FileText, Search, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, FileText, Search, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Tables } from "@/integrations/supabase/types";
 import type { Json } from "@/integrations/supabase/types";
+import { generateInvestigationReport } from "@/lib/generateInvestigationReport";
 
 interface SavedResult {
   id: string;
@@ -39,6 +40,20 @@ const InvestigationCard = ({ investigation, savedResults, onDelete, onDeleteResu
   const resultCount = savedResults.length;
   const visibleResults = showAll ? savedResults : savedResults.slice(0, MAX_VISIBLE);
 
+  const handleExport = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    generateInvestigationReport({
+      title: investigation.title,
+      description: investigation.description,
+      createdAt: investigation.created_at,
+      savedResults: savedResults.map(sr => ({
+        result_data: sr.result_data,
+        notes: sr.notes,
+        created_at: sr.created_at,
+      })),
+    });
+  };
+
   return (
     <div className="border border-border rounded-lg bg-card overflow-hidden">
       {/* Header */}
@@ -59,6 +74,17 @@ const InvestigationCard = ({ investigation, savedResults, onDelete, onDeleteResu
           </p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {resultCount > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-accent"
+              title="Export investigation as PDF"
+              onClick={handleExport}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          )}
           {expanded ? (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
           ) : (
