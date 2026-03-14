@@ -40,7 +40,8 @@ const Header = () => {
 
         <nav className="hidden md:flex items-center gap-8">
           <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Home</Link>
-          <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
+          <a href="/#search" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Search</a>
+          <Link to="/coverage" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">50 States</Link>
 
           {/* About dropdown */}
           <div className="relative" ref={dropdownRef}>
