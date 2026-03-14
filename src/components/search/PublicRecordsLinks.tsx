@@ -19,30 +19,12 @@ import {
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  PROFESSIONAL_LICENSE_SOURCES,
-  CAMPAIGN_FINANCE_SOURCES,
-  FEDERAL_RECORD_SOURCES,
-  STATEWIDE_SOURCES,
-  COUNTY_PROPERTY_SOURCES,
-  COUNTY_CLERK_SOURCES,
-  type RecordSource,
-  type CountyPropertySource,
-} from "@/data/florida-public-records";
+import type { RecordSource, CountyPropertySource } from "@/data/florida-public-records";
+import { getStateRecords, getSupportedStates } from "@/data/state-records-registry";
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  Briefcase,
-  Stethoscope,
-  Scale,
-  DollarSign,
-  Building2,
-  Gavel,
-  ShieldAlert,
-  AlertTriangle,
-  Vote,
-  FileText,
-  Home,
-  Search,
+  Briefcase, Stethoscope, Scale, DollarSign, Building2, Gavel,
+  ShieldAlert, AlertTriangle, Vote, FileText, Home, Search,
 };
 
 interface PublicRecordsLinksProps {
@@ -119,7 +101,8 @@ const DEFAULT_COUNTIES = 8;
 export default function PublicRecordsLinks({ searchName, state }: PublicRecordsLinksProps) {
   const [showAllCounties, setShowAllCounties] = useState(false);
   const [copied, setCopied] = useState(false);
-  const isFlorida = state.toLowerCase().includes("florida") || state.toLowerCase() === "fl";
+
+  const stateData = getStateRecords(state);
 
   const copyName = useCallback(() => {
     navigator.clipboard.writeText(searchName).then(() => {
@@ -128,120 +111,107 @@ export default function PublicRecordsLinks({ searchName, state }: PublicRecordsL
     });
   }, [searchName]);
 
-  if (!isFlorida) return null;
+  if (!stateData) {
+    return (
+      <section className="rounded-lg border border-border bg-card p-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <Search className="h-5 w-5 text-muted-foreground" />
+          <h2 className="font-heading text-lg font-semibold text-foreground">Public Records Links</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          State-specific public records links are available for{" "}
+          {getSupportedStates().join(", ")}. 
+          Select one of these states to see deep-linked record portals.
+        </p>
+      </section>
+    );
+  }
 
   const visiblePropertyCounties = showAllCounties
-    ? COUNTY_PROPERTY_SOURCES
-    : COUNTY_PROPERTY_SOURCES.slice(0, DEFAULT_COUNTIES);
+    ? stateData.propertyCounties
+    : stateData.propertyCounties.slice(0, DEFAULT_COUNTIES);
 
   return (
     <section className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
         <Search className="h-5 w-5 text-accent" />
         <h2 className="font-heading text-lg font-semibold text-foreground">
-          Florida Public Records
+          {stateData.stateName} Public Records
         </h2>
         <span className="text-xs text-muted-foreground ml-1">
           Search for "{searchName}" in state databases
         </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={copyName}
-          className="ml-auto h-7 gap-1.5 text-xs"
-        >
+        <Button variant="outline" size="sm" onClick={copyName} className="ml-auto h-7 gap-1.5 text-xs">
           {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           {copied ? "Copied!" : "Copy Name"}
         </Button>
       </div>
 
-      {/* Professional Licenses */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
-          Professional Licenses
-        </h3>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {PROFESSIONAL_LICENSE_SOURCES.map((s) => (
-            <SourceCard key={s.id} source={s} searchName={searchName} />
-          ))}
+      {stateData.licenses.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">Professional Licenses</h3>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {stateData.licenses.map((s) => <SourceCard key={s.id} source={s} searchName={searchName} />)}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Political & Campaign Finance */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
-          Political & Campaign Finance
-        </h3>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {CAMPAIGN_FINANCE_SOURCES.map((s) => (
-            <SourceCard key={s.id} source={s} searchName={searchName} />
-          ))}
+      {stateData.campaignFinance.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">Political & Campaign Finance</h3>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {stateData.campaignFinance.map((s) => <SourceCard key={s.id} source={s} searchName={searchName} />)}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Federal Records */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
-          Federal Records
-        </h3>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {FEDERAL_RECORD_SOURCES.map((s) => (
-            <SourceCard key={s.id} source={s} searchName={searchName} />
-          ))}
+      {stateData.federal.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">Federal Records</h3>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {stateData.federal.map((s) => <SourceCard key={s.id} source={s} searchName={searchName} />)}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Statewide Records */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
-          Statewide Records
-        </h3>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {STATEWIDE_SOURCES.map((s) => (
-            <SourceCard key={s.id} source={s} searchName={searchName} />
-          ))}
+      {stateData.statewide.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">Statewide Records</h3>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {stateData.statewide.map((s) => <SourceCard key={s.id} source={s} searchName={searchName} />)}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* County Property Appraisers */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
-          County Property Appraisers
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {visiblePropertyCounties.map((s) => (
-            <CountyLink key={s.county} source={s} />
-          ))}
+      {stateData.propertyCounties.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">County Property Appraisers</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {visiblePropertyCounties.map((s) => <CountyLink key={s.county} source={s} />)}
+          </div>
+          {stateData.propertyCounties.length > DEFAULT_COUNTIES && (
+            <button
+              onClick={() => setShowAllCounties((v) => !v)}
+              className="inline-flex items-center gap-1 text-xs text-accent hover:underline font-medium"
+            >
+              {showAllCounties ? (
+                <><ChevronUp className="h-3 w-3" /> Show fewer</>
+              ) : (
+                <><ChevronDown className="h-3 w-3" /> Show all {stateData.propertyCounties.length} counties</>
+              )}
+            </button>
+          )}
         </div>
-        {COUNTY_PROPERTY_SOURCES.length > DEFAULT_COUNTIES && (
-          <button
-            onClick={() => setShowAllCounties((v) => !v)}
-            className="inline-flex items-center gap-1 text-xs text-accent hover:underline font-medium"
-          >
-            {showAllCounties ? (
-              <>
-                <ChevronUp className="h-3 w-3" /> Show fewer
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-3 w-3" /> Show all {COUNTY_PROPERTY_SOURCES.length} counties
-              </>
-            )}
-          </button>
-        )}
-      </div>
+      )}
 
-      {/* County Clerk / Official Records */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">
-          County Clerk / Official Records
-        </h3>
-        <div className="flex flex-wrap gap-1.5">
-          {COUNTY_CLERK_SOURCES.map((s) => (
-            <CountyLink key={s.county} source={s} />
-          ))}
+      {stateData.clerkCounties.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground pl-1">County Clerk / Official Records</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {stateData.clerkCounties.map((s) => <CountyLink key={s.county} source={s} />)}
+          </div>
         </div>
-      </div>
+      )}
 
       <p className="text-[11px] text-muted-foreground/60 pl-1">
         These links open external government websites. Deep-linked sources pre-populate the search name; others require manual entry.
