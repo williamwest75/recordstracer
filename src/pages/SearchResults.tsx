@@ -25,6 +25,7 @@ import NewsMentions from "@/components/NewsMentions";
 import SaveToInvestigationDropdown from "@/components/search/SaveToInvestigationDropdown";
 import CourtRecordsSection from "@/components/search/CourtRecordsSection";
 import OffshoreLeaksSection from "@/components/search/OffshoreLeaksSection";
+import MobileToc from "@/components/search/MobileToc";
 import { generateReport, type ReportData } from "@/lib/generateReport";
 
 
@@ -471,6 +472,11 @@ const SearchResults = () => {
           </>
         )}
       </main>
+
+      {/* Mobile TOC — floating bottom sheet */}
+      {!loading && results.length > 0 && (
+        <MobileToc items={tocItems} activeSection={activeSection} onNavigate={scrollToSection} />
+      )}
 
       {/* 5. Footer Disclaimer */}
       {!loading && results.length > 0 && (
