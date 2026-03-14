@@ -40,7 +40,6 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [searches, setSearches] = useState<Tables<"searches">[]>([]);
   const [investigations, setInvestigations] = useState<Tables<"investigations">[]>([]);
   const [savedResults, setSavedResults] = useState<Record<string, any[]>>({});
