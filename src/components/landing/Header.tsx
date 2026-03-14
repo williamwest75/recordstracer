@@ -98,9 +98,10 @@ const Header = () => {
       {mobileOpen && (
         <nav className="md:hidden border-t border-border bg-card px-4 py-4 space-y-3">
           <Link to="/" className="block text-sm font-medium text-muted-foreground hover:text-foreground">Home</Link>
+          <a href="/#search" className="block text-sm font-medium text-muted-foreground hover:text-foreground">Search</a>
+          <Link to="/coverage" className="block text-sm font-medium text-muted-foreground hover:text-foreground">50 States</Link>
           <Link to="/about" className="block text-sm font-medium text-muted-foreground hover:text-foreground">About Us</Link>
           <Link to="/news" className="block text-sm font-medium text-muted-foreground hover:text-foreground pl-4">News</Link>
-          <Link to="/coverage" className="block text-sm font-medium text-muted-foreground hover:text-foreground pl-4">50-State Coverage</Link>
           <Link to="/pricing" className="block text-sm font-medium text-muted-foreground hover:text-foreground">Pricing</Link>
           <Link to="/founding-member" className="block text-sm font-medium text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
             Founding Members

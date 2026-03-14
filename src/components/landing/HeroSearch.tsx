@@ -172,7 +172,7 @@ const HeroSearch = () => {
   };
 
   return (
-    <section className="relative py-20 lg:py-28">
+    <section id="search" className="relative py-20 lg:py-28 scroll-mt-20">
       <div className="container mx-auto px-4 lg:px-8 max-w-3xl text-center">
         <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-tight">
           Uncover the public record.
