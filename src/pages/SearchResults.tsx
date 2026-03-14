@@ -31,6 +31,9 @@ import RecordDetailModal from "@/components/search/RecordDetailModal";
 import SourceRecordSection from "@/components/search/SourceRecordSection";
 import NewResultsBadge from "@/components/search/NewResultsBadge";
 import RelationshipMap from "@/components/search/RelationshipMap";
+import RecordProfileSummary from "@/components/search/RecordProfileSummary";
+import CrossReferenceAlerts from "@/components/search/CrossReferenceAlerts";
+import FoiaLetterGenerator from "@/components/search/FoiaLetterGenerator";
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
   business: { icon: Building2, label: "Business Registrations & Filings" },
@@ -164,7 +167,9 @@ const SearchResults = () => {
 
   const tocItems = useMemo(() => {
     const items: { id: string; label: string; count?: number }[] = [];
+    items.push({ id: "source-profile", label: "Record Profile Summary" });
     items.push({ id: "source-briefing", label: "AI Subject Briefing" });
+    items.push({ id: "source-cross-refs", label: "Connection Alerts" });
     if (entityClusters.length > 0) {
       items.push({ id: "source-entities", label: "Entity Resolution", count: entityClusters.length });
     }
@@ -177,6 +182,7 @@ const SearchResults = () => {
     items.push({ id: "source-news-coverage", label: "News Coverage" });
     items.push({ id: "source-dossier", label: "Investigative Dossier" });
     items.push({ id: "source-deep-research", label: "Deep Research Analyst" });
+    items.push({ id: "source-foia", label: "FOIA Letter Generator" });
     items.push({ id: "source-checklist", label: "Reporter's Checklist" });
     return items;
   }, [results, grouped, entityClusters]);
@@ -269,9 +275,19 @@ const SearchResults = () => {
               </div>
             )}
 
+            {/* Record Profile Summary */}
+            <div id="source-profile" className="mt-10 mb-6 scroll-mt-24">
+              <ErrorBoundary><RecordProfileSummary name={name} state={state} results={results} /></ErrorBoundary>
+            </div>
+
             {/* Editorial Brief */}
-            <div id="source-briefing" className="mt-10 mb-12 scroll-mt-24">
+            <div id="source-briefing" className="mb-6 scroll-mt-24">
               <ErrorBoundary><AiSubjectSummary name={name} state={state} results={results} /></ErrorBoundary>
+            </div>
+
+            {/* Connection Alerts */}
+            <div id="source-cross-refs" className="mb-12 scroll-mt-24">
+              <ErrorBoundary><CrossReferenceAlerts results={results} searchName={name} /></ErrorBoundary>
             </div>
 
             {/* Section Divider */}
@@ -354,6 +370,10 @@ const SearchResults = () => {
 
                 <div id="source-deep-research" className="scroll-mt-24">
                   <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
+                </div>
+
+                <div id="source-foia" className="scroll-mt-24">
+                  <ErrorBoundary><FoiaLetterGenerator name={name} state={state} results={results} /></ErrorBoundary>
                 </div>
 
                 <div id="source-checklist" className="scroll-mt-24">
