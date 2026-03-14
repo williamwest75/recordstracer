@@ -43,10 +43,6 @@ const DossierView = ({ searchName, state, newsData }: Props) => {
       </ErrorBoundary>
 
       <ErrorBoundary>
-        <NewsMentions searchQuery={searchName} defaultExpanded />
-      </ErrorBoundary>
-
-      <ErrorBoundary>
         <PublicRecordsLinks searchName={searchName} state={state} />
       </ErrorBoundary>
     </div>

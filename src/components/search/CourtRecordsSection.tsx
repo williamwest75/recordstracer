@@ -140,6 +140,28 @@ const CourtRecordsSection = ({ items, name, state, onViewDetails }: CourtRecords
         {visibleCount === 0 && weakCount === 0 && (
           <p className="text-xs text-muted-foreground py-3 text-center">No court records found.</p>
         )}
+
+        {/* PACER guidance */}
+        <div className="mt-3 p-3.5 rounded-lg bg-info-bg/30 border border-info-border/40">
+          <div className="flex items-start gap-2">
+            <Info className="h-3.5 w-3.5 text-info shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                These results come from the RECAP archive of PACER filings. Recently filed cases, sealed records,
+                and cases not previously accessed may not appear.
+              </p>
+              <a
+                href={`https://pcl.uscourts.gov/pcl/pages/search.jsf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-accent hover:underline mt-1.5 font-medium"
+              >
+                <ExternalLink className="h-3 w-3" />
+                Search PACER directly for complete federal court records ↗
+              </a>
+            </div>
+          </div>
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );
