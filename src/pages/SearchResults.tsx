@@ -327,6 +327,10 @@ const SearchResults = () => {
                   );
                 })}
 
+                <div id="source-relationships" className="scroll-mt-24">
+                  <ErrorBoundary><RelationshipMap results={results} searchName={name} /></ErrorBoundary>
+                </div>
+
                 <div id="source-contact-intel" className="scroll-mt-24">
                   <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
                 </div>

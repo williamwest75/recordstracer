@@ -51,7 +51,7 @@ const App = () => (
             <Route path="/news" element={<News />} />
             <Route path="/news/:slug" element={<NewsPost />} />
             <Route path="/pricing" element={<Pricing />} />
-            {/* /gdelt-news removed — News Mentions now lives inside search results */}
+            <Route path="/batch-search" element={<BatchSearch />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
