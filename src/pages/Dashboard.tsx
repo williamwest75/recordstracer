@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, FolderOpen, Clock, Plus, Trash2, Crown, Bookmark, FolderPlus, RefreshCw } from "lucide-react";
+import { Search, FolderOpen, Clock, Plus, Trash2, Crown, Bookmark, FolderPlus, RefreshCw, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import InvestigationCard from "@/components/dashboard/InvestigationCard";
