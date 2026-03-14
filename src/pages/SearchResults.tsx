@@ -30,6 +30,7 @@ import TocSidebar from "@/components/search/TocSidebar";
 import RecordDetailModal from "@/components/search/RecordDetailModal";
 import SourceRecordSection from "@/components/search/SourceRecordSection";
 import NewResultsBadge from "@/components/search/NewResultsBadge";
+import RelationshipMap from "@/components/search/RelationshipMap";
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
   business: { icon: Building2, label: "Business Registrations & Filings" },
@@ -171,6 +172,7 @@ const SearchResults = () => {
       const count = grouped[key]?.length ?? 0;
       if (count > 0) items.push({ id: `source-${key}`, label, count });
     }
+    items.push({ id: "source-relationships", label: "Relationship Map" });
     items.push({ id: "source-contact-intel", label: "Contact Intelligence" });
     items.push({ id: "source-news-coverage", label: "News Coverage" });
     items.push({ id: "source-dossier", label: "Investigative Dossier" });
@@ -325,6 +327,10 @@ const SearchResults = () => {
                     </div>
                   );
                 })}
+
+                <div id="source-relationships" className="scroll-mt-24">
+                  <ErrorBoundary><RelationshipMap results={results} searchName={name} /></ErrorBoundary>
+                </div>
 
                 <div id="source-contact-intel" className="scroll-mt-24">
                   <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
