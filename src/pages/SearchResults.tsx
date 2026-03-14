@@ -1,6 +1,6 @@
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, ArrowLeft, AlertCircle, FileText, ChevronRight, List, Newspaper } from "lucide-react";
+import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, ArrowLeft, AlertCircle, FileText, ChevronRight, List, Newspaper, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -25,6 +25,7 @@ import NewsMentions from "@/components/NewsMentions";
 import SaveToInvestigationDropdown from "@/components/search/SaveToInvestigationDropdown";
 import CourtRecordsSection from "@/components/search/CourtRecordsSection";
 import OffshoreLeaksSection from "@/components/search/OffshoreLeaksSection";
+import { generateReport, type ReportData } from "@/lib/generateReport";
 
 
 
@@ -284,14 +285,49 @@ const SearchResults = () => {
           </div>
         ) : (
           <>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {results.length} records found across multiple databases
-              {searchTimestamp && (
-                <span className="text-muted-foreground/50 ml-2 text-xs">
-                  · Generated {searchTimestamp.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
-                </span>
-              )}
-            </p>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-muted-foreground text-sm">
+                {results.length} records found across multiple databases
+                {searchTimestamp && (
+                  <span className="text-muted-foreground/50 ml-2 text-xs">
+                    · Generated {searchTimestamp.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </span>
+                )}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 shrink-0"
+                onClick={() => {
+                  const briefingEl = document.querySelector('[data-briefing-summary]');
+                  let findings: ReportData["findings"];
+                  let nextSteps: ReportData["nextSteps"];
+                  let crossReferences: ReportData["crossReferences"];
+                  try {
+                    const f = briefingEl?.getAttribute('data-briefing-findings');
+                    if (f) findings = JSON.parse(f);
+                    const n = briefingEl?.getAttribute('data-briefing-nextsteps');
+                    if (n) nextSteps = JSON.parse(n);
+                    const c = briefingEl?.getAttribute('data-briefing-crossrefs');
+                    if (c) crossReferences = JSON.parse(c);
+                  } catch { /* ignore parse errors */ }
+
+                  generateReport({
+                    name,
+                    state,
+                    results,
+                    briefingSummary: briefingEl?.getAttribute('data-briefing-summary') || undefined,
+                    findings,
+                    nextSteps,
+                    crossReferences,
+                    timestamp: searchTimestamp || new Date(),
+                  });
+                }}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download Report
+              </Button>
+            </div>
 
             {/* 2. Editorial Brief — full width, generous spacing */}
             <div id="source-briefing" className="mt-10 mb-12 scroll-mt-24">
