@@ -275,9 +275,19 @@ const SearchResults = () => {
               </div>
             )}
 
+            {/* Record Profile Summary */}
+            <div id="source-profile" className="mt-10 mb-6 scroll-mt-24">
+              <ErrorBoundary><RecordProfileSummary name={name} state={state} results={results} /></ErrorBoundary>
+            </div>
+
             {/* Editorial Brief */}
-            <div id="source-briefing" className="mt-10 mb-12 scroll-mt-24">
+            <div id="source-briefing" className="mb-6 scroll-mt-24">
               <ErrorBoundary><AiSubjectSummary name={name} state={state} results={results} /></ErrorBoundary>
+            </div>
+
+            {/* Connection Alerts */}
+            <div id="source-cross-refs" className="mb-12 scroll-mt-24">
+              <ErrorBoundary><CrossReferenceAlerts results={results} searchName={name} /></ErrorBoundary>
             </div>
 
             {/* Section Divider */}
