@@ -299,16 +299,29 @@ const SearchResults = () => {
                 size="sm"
                 className="gap-1.5 shrink-0"
                 onClick={() => {
-                  // Grab briefing data from the DOM/query cache if available
                   const briefingEl = document.querySelector('[data-briefing-summary]');
-                  const reportData: ReportData = {
+                  let findings: ReportData["findings"];
+                  let nextSteps: ReportData["nextSteps"];
+                  let crossReferences: ReportData["crossReferences"];
+                  try {
+                    const f = briefingEl?.getAttribute('data-briefing-findings');
+                    if (f) findings = JSON.parse(f);
+                    const n = briefingEl?.getAttribute('data-briefing-nextsteps');
+                    if (n) nextSteps = JSON.parse(n);
+                    const c = briefingEl?.getAttribute('data-briefing-crossrefs');
+                    if (c) crossReferences = JSON.parse(c);
+                  } catch { /* ignore parse errors */ }
+
+                  generateReport({
                     name,
                     state,
                     results,
                     briefingSummary: briefingEl?.getAttribute('data-briefing-summary') || undefined,
+                    findings,
+                    nextSteps,
+                    crossReferences,
                     timestamp: searchTimestamp || new Date(),
-                  };
-                  generateReport(reportData);
+                  });
                 }}
               >
                 <Download className="h-3.5 w-3.5" />
