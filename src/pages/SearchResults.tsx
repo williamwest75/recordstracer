@@ -171,6 +171,7 @@ const SearchResults = () => {
       const count = grouped[key]?.length ?? 0;
       if (count > 0) items.push({ id: `source-${key}`, label, count });
     }
+    items.push({ id: "source-relationships", label: "Relationship Map" });
     items.push({ id: "source-contact-intel", label: "Contact Intelligence" });
     items.push({ id: "source-news-coverage", label: "News Coverage" });
     items.push({ id: "source-dossier", label: "Investigative Dossier" });
