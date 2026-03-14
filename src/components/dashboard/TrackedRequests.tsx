@@ -130,8 +130,8 @@ const RequestCard = ({ req, onStatusChange, onDelete }: {
         <span className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
           {urgency === "closed" ? "Complete" :
-           urgency === "overdue" ? <span className="text-red-600 font-semibold">{Math.abs(daysLeft)} days overdue</span> :
-           <span className={daysLeft <= 5 ? "text-amber-600 font-semibold" : ""}>{daysLeft} days remaining</span>}
+           urgency === "overdue" ? <span className="text-destructive font-semibold">{Math.abs(daysLeft)} days overdue</span> :
+           <span className={daysLeft <= 5 ? "text-warning font-semibold" : ""}>{daysLeft} days remaining</span>}
         </span>
         <span className="text-border">·</span>
         <span>{daysFiled} days since filing</span>
