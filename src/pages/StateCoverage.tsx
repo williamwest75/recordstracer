@@ -143,75 +143,8 @@ const StateCoverage = () => {
           </div>
         </section>
 
-        {/* Map */}
-        <section className="container mx-auto px-4 lg:px-8 py-10 border-b border-border">
-          <h2 className="font-heading text-xl font-semibold text-foreground mb-4">Interactive Coverage Map</h2>
-          <p className="text-sm text-muted-foreground mb-6">Click any state to start a search pre-filled with that state.</p>
-          <div className="max-w-4xl mx-auto relative">
-            <svg
-              viewBox="0 0 960 600"
-              className="w-full h-auto"
-              onMouseMove={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-              }}
-              onMouseLeave={() => setHovered(null)}
-            >
-              {Object.entries(STATE_PATHS).map(([code, path]) => {
-                const info = stateMap[code];
-                if (!info) return null;
-                const isHovered = hovered === code;
-                return (
-                  <path
-                    key={code}
-                    d={path}
-                    fill={getMapColor(info.total, min, max)}
-                    stroke="hsl(var(--border))"
-                    strokeWidth={isHovered ? 2 : 0.75}
-                    className="cursor-pointer transition-all duration-150"
-                    style={{
-                      opacity: hovered && !isHovered ? 0.5 : 1,
-                      filter: isHovered ? "brightness(1.15)" : undefined,
-                    }}
-                    onMouseEnter={() => setHovered(code)}
-                    onClick={() => navigate(`/?state=${encodeURIComponent(info.data.stateName)}`)}
-                  />
-                );
-              })}
-            </svg>
 
-            {hoveredState && (
-              <div
-                className="pointer-events-none absolute z-10 rounded-md border border-border bg-popover px-3 py-2 shadow-lg"
-                style={{
-                  left: mousePos.x + 12,
-                  top: mousePos.y - 10,
-                  transform: "translateY(-100%)",
-                }}
-              >
-                <p className="text-sm font-semibold text-popover-foreground">
-                  {hoveredState.data.stateName}
-                  <span className="ml-1.5 text-xs font-normal text-muted-foreground">({hovered})</span>
-                </p>
-                <p className="text-xs text-accent font-medium">{hoveredState.total} sources</p>
-              </div>
-            )}
 
-            <div className="flex items-center gap-2 mt-3 justify-center">
-              <span className="text-[11px] text-muted-foreground">Fewer sources</span>
-              <div className="flex h-3 rounded-sm overflow-hidden">
-                {Array.from({ length: 8 }, (_, i) => (
-                  <div
-                    key={i}
-                    className="w-5 h-full"
-                    style={{ background: getMapColor(min + (i / 7) * (max - min), min, max) }}
-                  />
-                ))}
-              </div>
-              <span className="text-[11px] text-muted-foreground">More sources</span>
-            </div>
-          </div>
-        </section>
 
         {/* Grid */}
         <section className="container mx-auto px-4 lg:px-8 py-10">
