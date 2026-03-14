@@ -18,6 +18,7 @@ import News from "./pages/News";
 import NewsPost from "./pages/NewsPost";
 import Pricing from "./pages/Pricing";
 import BatchSearch from "./pages/BatchSearch";
+import StateCoverage from "./pages/StateCoverage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +53,7 @@ const App = () => (
             <Route path="/news/:slug" element={<NewsPost />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/batch-search" element={<BatchSearch />} />
+            <Route path="/coverage" element={<StateCoverage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

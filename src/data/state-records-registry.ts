@@ -145,6 +145,10 @@ export function getStateRecords(state: string): StateRecordSet | null {
   return REGISTRY[key] || null;
 }
 
+export function getAllStateRecords(): StateRecordSet[] {
+  return getSupportedStates().map(name => REGISTRY[name.toLowerCase()]).filter(Boolean);
+}
+
 export function getSupportedStates(): string[] {
   return [
     "Alabama", "Alaska", "Arizona", "Arkansas", "California",
