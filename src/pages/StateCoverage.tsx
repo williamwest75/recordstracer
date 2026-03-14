@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MapPin, Building2, Scale, Vote, Home, Gavel, FileSearch, ArrowLeft } from "lucide-react";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
@@ -23,6 +23,7 @@ const categoryIcons = [
 ] as const;
 
 const StateCoverage = () => {
+  const navigate = useNavigate();
   const states = useMemo(() => getAllStateRecords(), []);
   const totalAll = useMemo(() => states.reduce((sum, s) => sum + totalSources(s), 0), [states]);
   const totalDeep = useMemo(() => states.reduce((sum, s) => sum + deepLinkCount(s), 0), [states]);
@@ -71,9 +72,10 @@ const StateCoverage = () => {
               const total = totalSources(s);
               const deep = deepLinkCount(s);
               return (
-                <div
+                <button
+                  onClick={() => navigate(`/?state=${encodeURIComponent(s.stateName)}`)}
                   key={s.stateCode}
-                  className="rounded-lg border border-border bg-card p-4 hover:border-accent/40 transition-colors"
+                  className="rounded-lg border border-border bg-card p-4 hover:border-accent/40 transition-colors text-left cursor-pointer group"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -101,7 +103,7 @@ const StateCoverage = () => {
                   {deep > 0 && (
                     <p className="text-[11px] text-accent mt-2">{deep} deep-linked</p>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>
