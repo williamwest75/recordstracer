@@ -733,3 +733,167 @@ async function fetchCourtListener(name: string) {
     return { success: false, error: String(err), cases: [], totalCases: 0, parties: [], totalParties: 0 };
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// OFAC SDN — US Treasury Sanctions List (direct)
+// ═══════════════════════════════════════════════════════════════
+async function searchOFAC(name: string) {
+  try {
+    const url = `https://sanctionssearch.ofac.treas.gov/api/search?query=${encodeURIComponent(name)}&limit=20`;
+    const res = await fetch(url, {
+      headers: { "Accept": "application/json", "User-Agent": "RecordTracer/1.0" },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const results = (data.results || data.matches || []).map((r: any) => ({
+        name: r.name || r.sdnName || "Unknown",
+        type: r.sdnType || r.type || "Unknown",
+        program: r.program || (r.programs || []).join(", ") || "N/A",
+        title: r.title || "",
+        remarks: r.remarks || "",
+        ids: (r.ids || []).map((i: any) => `${i.idType}: ${i.idNumber}`).join("; "),
+        addresses: (r.addresses || []).map((a: any) =>
+          [a.address1, a.city, a.stateOrProvince, a.country].filter(Boolean).join(", ")
+        ),
+        aliases: (r.akas || r.aliases || []).map((a: any) => a.name || a).slice(0, 5),
+      }));
+      return { success: true, results, total: data.total || results.length };
+    }
+    return { success: true, results: [], total: 0 };
+  } catch (err) {
+    console.error("[OFAC] Search error:", err);
+    return { success: false, error: String(err), results: [], total: 0 };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEC EDGAR — Insider Trading (Form 4) specific search
+// ═══════════════════════════════════════════════════════════════
+async function searchSECInsider(name: string) {
+  try {
+    const url = `https://efts.sec.gov/LATEST/search-index?q=%22${encodeURIComponent(name)}%22&forms=4,4/A,3,5&from=0&size=20`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "RecordTracer InvestigativeJournalismTool/1.0 contact@recordtracer.com",
+        Accept: "application/json",
+      },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const hits = data.hits?.hits || [];
+      return {
+        success: true,
+        filings: hits.map((h: any) => ({
+          entityName: h._source?.entity_name || "Unknown",
+          formType: h._source?.form_type || "Form 4",
+          fileDate: h._source?.file_date || "N/A",
+          fileNum: h._source?.file_num || "",
+          periodOfReport: h._source?.period_of_report || "",
+          displayNames: h._source?.display_names || [],
+        })),
+        totalFilings: data.hits?.total?.value || hits.length,
+      };
+    }
+    return { success: false, filings: [], totalFilings: 0, error: `Status ${res.status}` };
+  } catch (err) {
+    console.error("[SEC Insider] Search error:", err);
+    return { success: false, error: String(err), filings: [], totalFilings: 0 };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// State Campaign Finance — FollowTheMoney / OpenSecrets / State portals
+// ═══════════════════════════════════════════════════════════════
+async function searchStateCampaignFinance(name: string, state: string) {
+  const results: any[] = [];
+  const stateCode = toStateAbbr(state);
+
+  // FollowTheMoney + OpenSecrets search links
+  results.push({
+    type: "link",
+    source: "FollowTheMoney Donor Search",
+    url: `https://www.followthemoney.org/search/contributions/?d-cntrbr=${encodeURIComponent(name)}${stateCode ? `&s=${stateCode}` : ""}`,
+    description: `Search state-level contributions by ${name}`,
+  });
+  results.push({
+    type: "link",
+    source: "FollowTheMoney Candidate Search",
+    url: `https://www.followthemoney.org/search/candidates/?c-t-eid=1&c-r-ot=${encodeURIComponent(name)}${stateCode ? `&s=${stateCode}` : ""}`,
+    description: `Search state-level candidates matching ${name}`,
+  });
+  results.push({
+    type: "link",
+    source: "OpenSecrets Donor Lookup",
+    url: `https://www.opensecrets.org/search?q=${encodeURIComponent(name)}&type=donors`,
+    description: `Federal + state influence data for ${name}`,
+  });
+
+  // State-specific campaign finance portals
+  const statePortals: Record<string, { name: string; searchUrl: string }[]> = {
+    FL: [{ name: "FL Division of Elections", searchUrl: `https://dos.elections.myflorida.com/campaign-finance/contributions/?search=${encodeURIComponent(name)}` }],
+    NY: [{ name: "NY Board of Elections", searchUrl: `https://publicreporting.elections.ny.gov/CandidateContributionSearch/CandidateContributionSearch` }],
+    CA: [{ name: "CA Secretary of State Cal-Access", searchUrl: `https://cal-access.sos.ca.gov/Campaign/Committees/list.aspx?view=contributor&session=2025&contributorName=${encodeURIComponent(name)}` }],
+    TX: [{ name: "TX Ethics Commission", searchUrl: `https://www.ethics.state.tx.us/search/cf/AdvancedContributionSearchResults.php` }],
+    IL: [{ name: "IL State Board of Elections", searchUrl: `https://www.elections.il.gov/CampaignDisclosure/ContributionSearchByAllContributions.aspx` }],
+    PA: [{ name: "PA Dept of State", searchUrl: `https://www.campaignfinanceonline.pa.gov/pages/CFAnnualTotals.aspx` }],
+    OH: [{ name: "OH Secretary of State", searchUrl: `https://www6.ohiosos.gov/ords/f?p=CFDISCLOSURE:73` }],
+    GA: [{ name: "GA Campaign Finance", searchUrl: `https://media.ethics.ga.gov/search/Campaign/Campaign_Namesearch.aspx` }],
+    MI: [{ name: "MI Secretary of State", searchUrl: `https://miboecfr.nictusa.com/cgi-bin/cfr/contrib_anls_res.cgi` }],
+    NJ: [{ name: "NJ ELEC", searchUrl: `https://www.elec.state.nj.us/ELECReport/SearchContributions.aspx` }],
+  };
+
+  const relevantStates = stateCode && statePortals[stateCode]
+    ? [stateCode]
+    : Object.keys(statePortals).slice(0, 5);
+
+  for (const sc of relevantStates) {
+    for (const portal of (statePortals[sc] || [])) {
+      results.push({
+        type: "portal",
+        source: portal.name,
+        url: portal.searchUrl,
+        state: sc,
+        description: `${portal.name} campaign finance records`,
+      });
+    }
+  }
+
+  return { success: true, results, total: results.length };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Social/OSINT Footprint — OCCRP Aleph + profile search links
+// ═══════════════════════════════════════════════════════════════
+async function searchSocialOSINT(name: string) {
+  const profiles = [
+    { platform: "LinkedIn", searchUrl: `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(name)}`, icon: "linkedin" },
+    { platform: "Twitter/X", searchUrl: `https://x.com/search?q=${encodeURIComponent(name)}&f=user`, icon: "twitter" },
+    { platform: "Google Scholar", searchUrl: `https://scholar.google.com/scholar?q=author:${encodeURIComponent(name)}`, icon: "scholar" },
+    { platform: "ORCID", searchUrl: `https://orcid.org/orcid-search/search?searchQuery=${encodeURIComponent(name)}`, icon: "orcid" },
+    { platform: "Crunchbase", searchUrl: `https://www.crunchbase.com/textsearch?q=${encodeURIComponent(name)}`, icon: "crunchbase" },
+  ];
+
+  // OCCRP Aleph — investigative journalism database
+  try {
+    const alephUrl = `https://aleph.occrp.org/api/2/entities?q=${encodeURIComponent(name)}&filter:schemata=Thing&limit=10`;
+    const res = await fetch(alephUrl, { headers: { "Accept": "application/json" } });
+    if (res.ok) {
+      const data = await res.json();
+      const entities = (data.results || []).map((r: any) => ({
+        name: r.properties?.name?.[0] || r.caption || "Unknown",
+        schema: r.schema || "",
+        collection: r.collection?.label || "",
+        countries: (r.properties?.country || []).join(", "),
+        entityId: r.id || "",
+        sourceUrl: r.id ? `https://aleph.occrp.org/entities/${r.id}` : "",
+      }));
+      return { success: true, profiles, alephResults: entities, alephTotal: data.total || entities.length };
+    }
+  } catch (err) {
+    console.error("[OSINT] Aleph error:", err);
+  }
+
+  return { success: true, profiles, alephResults: [], alephTotal: 0 };
+}
