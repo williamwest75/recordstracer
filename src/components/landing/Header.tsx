@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { FileSearch, Menu, X, ChevronDown } from "lucide-react";
 import BetaBanner from "@/components/BetaBanner";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
