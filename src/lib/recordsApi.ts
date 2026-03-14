@@ -659,7 +659,7 @@ export async function searchFAA(name: string): Promise<RecordResult[]> {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Search All
+// Search All — with per-source progress callbacks
 // ═══════════════════════════════════════════════════════════════
 export interface SearchOptions {
   skip?: string[];  // database keys to skip: business, fec, court, contracts, sunbiz, contact, occrp
@@ -670,45 +670,74 @@ export interface SearchOptions {
   city?: string;
 }
 
+export interface SourceStatus {
+  label: string;
+  status: "pending" | "loading" | "success" | "error" | "skipped";
+  resultCount: number;
+  duration?: number;
+  error?: string;
+}
+
+export type ProgressCallback = (sources: SourceStatus[]) => void;
+
 export async function searchAll(
-  name: string, state: string, options?: SearchOptions
+  name: string, state: string, options?: SearchOptions, onProgress?: ProgressCallback
 ): Promise<{ results: RecordResult[]; debug: ApiDebugInfo[] }> {
   const debug: ApiDebugInfo[] = [];
   const skip = new Set(options?.skip || []);
 
-  const run = async (label: string, fn: () => Promise<RecordResult[]>): Promise<RecordResult[]> => {
-    const start = Date.now();
-    try {
-      const r = await fn();
-      debug.push({ api: label, status: "success", resultCount: r.length, duration: Date.now() - start });
-      return r;
-    } catch (err) {
-      debug.push({ api: label, status: "error", resultCount: 0, error: String(err), duration: Date.now() - start });
+  // Define all sources with their keys and functions
+  const sourceDefs: { key: string; skipKey: string; label: string; fn: () => Promise<RecordResult[]> }[] = [
+    { key: "fec", skipKey: "fec", label: "FEC Campaign Finance", fn: () => searchFEC(name, state) },
+    { key: "sec", skipKey: "business", label: "SEC EDGAR", fn: () => searchSEC(name) },
+    { key: "usaspending", skipKey: "contracts", label: "USASpending.gov", fn: () => searchUSASpending(name, state) },
+    { key: "propublica", skipKey: "business", label: "ProPublica Nonprofits", fn: () => searchProPublicaNonprofits(name) },
+    { key: "sunbiz", skipKey: "sunbiz", label: "Florida SunBiz", fn: () => searchSunBiz(name) },
+    { key: "court", skipKey: "court", label: "CourtListener", fn: () => searchCourtListener(name) },
+    { key: "sanctions", skipKey: "", label: "OpenSanctions", fn: () => searchSanctions(name) },
+    { key: "icij", skipKey: "", label: "ICIJ Offshore Leaks", fn: () => searchOffshoreLeaks(name) },
+    { key: "lobbying", skipKey: "", label: "Senate Lobbying (LDA)", fn: () => searchLobbying(name) },
+    { key: "faa", skipKey: "", label: "FAA Aircraft Registry", fn: () => searchFAA(name) },
+  ];
+
+  // Initialize status tracking
+  const sourceStatuses: SourceStatus[] = sourceDefs.map(s => ({
+    label: s.label,
+    status: (s.skipKey && skip.has(s.skipKey)) ? "skipped" as const : "pending" as const,
+    resultCount: 0,
+  }));
+
+  const emitProgress = () => {
+    onProgress?.([...sourceStatuses]);
+  };
+
+  emitProgress();
+
+  const tasks = sourceDefs.map(async (source, index) => {
+    if (source.skipKey && skip.has(source.skipKey)) {
+      debug.push({ api: source.label, status: "success", resultCount: 0 });
       return [];
     }
-  };
 
-  const skipRun = (key: string, label: string): Promise<RecordResult[]> => {
-    if (skip.has(key)) {
-      debug.push({ api: label, status: "success", resultCount: 0 });
-      return Promise.resolve([]);
+    sourceStatuses[index] = { ...sourceStatuses[index], status: "loading" };
+    emitProgress();
+
+    const start = Date.now();
+    try {
+      const r = await source.fn();
+      const duration = Date.now() - start;
+      debug.push({ api: source.label, status: "success", resultCount: r.length, duration });
+      sourceStatuses[index] = { ...sourceStatuses[index], status: "success", resultCount: r.length, duration };
+      emitProgress();
+      return r;
+    } catch (err) {
+      const duration = Date.now() - start;
+      debug.push({ api: source.label, status: "error", resultCount: 0, error: String(err), duration });
+      sourceStatuses[index] = { ...sourceStatuses[index], status: "error", resultCount: 0, error: String(err), duration };
+      emitProgress();
+      return [];
     }
-    return Promise.resolve(null as any); // sentinel — not used
-  };
-
-  const tasks: Promise<RecordResult[]>[] = [];
-
-  // business = SEC + ProPublica + SunBiz (sunbiz also has its own toggle)
-  tasks.push(skip.has("fec") ? skipRun("fec", "FEC Campaign Finance") : run("FEC Campaign Finance", () => searchFEC(name, state)));
-  tasks.push(skip.has("business") ? skipRun("business", "SEC EDGAR") : run("SEC EDGAR", () => searchSEC(name)));
-  tasks.push(skip.has("contracts") ? skipRun("contracts", "USASpending.gov") : run("USASpending.gov", () => searchUSASpending(name, state)));
-  tasks.push(skip.has("business") ? skipRun("business-np", "ProPublica Nonprofits") : run("ProPublica Nonprofits", () => searchProPublicaNonprofits(name)));
-  tasks.push(skip.has("sunbiz") ? skipRun("sunbiz", "Florida SunBiz") : run("Florida SunBiz", () => searchSunBiz(name)));
-  tasks.push(skip.has("court") ? skipRun("court", "CourtListener") : run("CourtListener", () => searchCourtListener(name)));
-  tasks.push(run("OpenSanctions", () => searchSanctions(name)));
-  tasks.push(run("ICIJ Offshore Leaks", () => searchOffshoreLeaks(name)));
-  tasks.push(run("Senate Lobbying (LDA)", () => searchLobbying(name)));
-  tasks.push(run("FAA Aircraft Registry", () => searchFAA(name)));
+  });
 
   const allResults = await Promise.all(tasks);
   const results = allResults.flat();

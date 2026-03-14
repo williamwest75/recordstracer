@@ -111,10 +111,10 @@ const DeepResearchAnalyst = ({ name, state, results }: DeepResearchAnalystProps)
 
   return (
     <section className="mt-10">
-      {/* Navy header bar */}
-      <div className="bg-[hsl(220,40%,18%)] rounded-t-lg px-5 py-3 flex items-center gap-2.5">
-        <FileSearch className="h-4.5 w-4.5 text-white/80" />
-        <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-white">
+      {/* Header bar */}
+      <div className="bg-primary rounded-t-lg px-5 py-3 flex items-center gap-2.5">
+        <FileSearch className="h-4.5 w-4.5 text-primary-foreground/80" />
+        <h2 className="font-heading text-sm font-semibold uppercase tracking-wider text-primary-foreground">
           Deep Research Analyst
         </h2>
       </div>
@@ -159,7 +159,7 @@ const DeepResearchAnalyst = ({ name, state, results }: DeepResearchAnalystProps)
         {analysis && !loading && (
           <>
             {/* Analysis card with gold left border */}
-            <div className="border-l-4 border-[hsl(42,70%,55%)] bg-muted/30 rounded-r-md p-5 space-y-1">
+            <div className="border-l-4 border-accent bg-muted/30 rounded-r-md p-5 space-y-1">
               {renderAnalysis(analysis)}
             </div>
 

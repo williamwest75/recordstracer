@@ -10,12 +10,13 @@ import Footer from "@/components/landing/Footer";
 import AiSubjectSummary from "@/components/search/AiSubjectSummary";
 import DeepResearchAnalyst from "@/components/search/DeepResearchAnalyst";
 import NameMatchBadge from "@/components/search/NameMatchBadge";
+import SearchProgress from "@/components/search/SearchProgress";
 import { getNameMatchConfidence } from "@/lib/nameMatch";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { searchAll, type MockResult, type ApiDebugInfo, type SearchOptions } from "@/lib/recordsApi";
+import { searchAll, type MockResult, type ApiDebugInfo, type SearchOptions, type SourceStatus } from "@/lib/recordsApi";
 import { sanitizeInput, sanitizeUrlParam, isValidName, isValidState } from "@/utils/validation";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DossierView from "@/components/dossier/DossierView";
@@ -115,6 +116,7 @@ const SearchResults = () => {
   const name = sanitizeInput(rawName);
   const state = isValidState(rawState) ? rawState : "All States / National";
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
+  const [sourceProgress, setSourceProgress] = useState<SourceStatus[]>([]);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading, loading: authLoading } = useAuth();
 
@@ -147,10 +149,14 @@ const SearchResults = () => {
   const nameCheck = isValidName(name);
   const canSearch = !!user && !!subscribed && !authLoading && !subscriptionLoading && nameCheck.valid;
 
+  const handleProgress = useCallback((sources: SourceStatus[]) => {
+    setSourceProgress(sources);
+  }, []);
+
   const { data: searchData, isLoading: loading, isError: error } = useQuery({
     queryKey: ["search-results", name, state, searchOptions],
     queryFn: async () => {
-      const data = await searchAll(name, state, searchOptions);
+      const data = await searchAll(name, state, searchOptions, handleProgress);
       console.log("[SearchResults] searchAll returned", data.results.length, "results, debug:", data.debug);
 
       // Persist search metrics for dashboard previews
@@ -263,7 +269,9 @@ const SearchResults = () => {
         </h1>
 
         {loading ? (
-          <p className="text-muted-foreground mt-3 text-sm">Searching public records…</p>
+          <div className="mt-8">
+            <SearchProgress sources={sourceProgress} isComplete={false} />
+          </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <AlertCircle className="h-8 w-8 text-destructive" />
@@ -388,31 +396,29 @@ const SearchResults = () => {
                   <NewsMentions searchQuery={name} defaultExpanded={false} />
                 </div>
 
-                {/* Dossier deep-dive sections as collapsible */}
+                {/* Dossier — first-class section, auto-visible */}
                 <div id="source-dossier" className="scroll-mt-24">
-                  <Collapsible>
-                    <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Investigative Dossier</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pt-4 pb-2">
+                  <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
+                    <div className="px-5 py-4 border-b border-border">
+                      <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        Investigative Dossier
+                      </h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Timeline, campaign finance, court records & public records directory
+                      </p>
+                    </div>
+                    <div className="p-4">
                       <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
-                    </CollapsibleContent>
-                  </Collapsible>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Deep Research — first-class section, auto-visible */}
                 <div id="source-deep-research" className="scroll-mt-24">
-                  <Collapsible>
-                    <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Deep Research Analyst</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pt-4 pb-2">
-                      <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
-                    </CollapsibleContent>
-                  </Collapsible>
+                  <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
                 </div>
 
+                {/* Reporter's Checklist — collapsible (actionable tools) */}
                 <div id="source-checklist" className="scroll-mt-24">
                   <Collapsible>
                     <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
