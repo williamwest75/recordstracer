@@ -90,21 +90,8 @@ const StateCoverage = () => {
   const totalAll = useMemo(() => states.reduce((sum, s) => sum + totalSources(s), 0), [states]);
   const totalDeep = useMemo(() => states.reduce((sum, s) => sum + deepLinkCount(s), 0), [states]);
 
-  const [hovered, setHovered] = useState<string | null>(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  const stateMap = useMemo(() => {
-    const m: Record<string, { data: StateRecordSet; total: number }> = {};
-    states.forEach(s => { m[s.stateCode] = { data: s, total: totalSources(s) }; });
-    return m;
-  }, [states]);
 
-  const { min, max } = useMemo(() => {
-    const counts = Object.values(stateMap).map(s => s.total);
-    return { min: Math.min(...counts), max: Math.max(...counts) };
-  }, [stateMap]);
-
-  const hoveredState = hovered ? stateMap[hovered] : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
