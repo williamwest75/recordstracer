@@ -66,6 +66,15 @@ const StateCoverage = () => {
           </div>
         </section>
 
+        {/* Map */}
+        <section className="container mx-auto px-4 lg:px-8 py-10 border-b border-border">
+          <h2 className="font-heading text-xl font-semibold text-foreground mb-4">Interactive Coverage Map</h2>
+          <p className="text-sm text-muted-foreground mb-6">Click any state to start a search pre-filled with that state.</p>
+          <div className="max-w-4xl mx-auto">
+            <UsMap states={states} totalSourcesFn={totalSources} />
+          </div>
+        </section>
+
         {/* Grid */}
         <section className="container mx-auto px-4 lg:px-8 py-10">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
