@@ -205,6 +205,11 @@ const Dashboard = () => {
               </span>
             </div>
           )}
+          <Link to="/batch-search">
+            <Button variant="outline" size="sm" className="gap-1.5 ml-auto">
+              <Upload className="h-3.5 w-3.5" /> Batch Search
+            </Button>
+          </Link>
         </div>
 
         {/* Tabs */}
