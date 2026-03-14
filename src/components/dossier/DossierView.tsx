@@ -6,7 +6,6 @@ import DossierTimeline from "./DossierTimeline";
 import DossierCampaignFinance from "./DossierCampaignFinance";
 import DossierCourtRecords from "./DossierCourtRecords";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import NewsMentions from "@/components/NewsMentions";
 import PublicRecordsLinks from "@/components/search/PublicRecordsLinks";
 
 interface Props {
