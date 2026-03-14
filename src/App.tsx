@@ -53,6 +53,7 @@ const App = () => (
             <Route path="/news/:slug" element={<NewsPost />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/batch-search" element={<BatchSearch />} />
+            <Route path="/coverage" element={<StateCoverage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
