@@ -2,41 +2,53 @@ import {
   Building2,
   Vote,
   Scale,
-  Home,
-  BadgeCheck,
-  MoreHorizontal,
+  ShieldAlert,
+  Leaf,
+  HardHat,
+  FileSearch,
+  Globe,
 } from "lucide-react";
 
 const features = [
   {
     icon: Building2,
-    title: "Business Registrations",
-    description: "Search Secretary of State records for corporate filings, LLCs, and registered agents.",
-  },
-  {
-    icon: Vote,
-    title: "Campaign Donations",
-    description: "FEC filings and political contributions at the federal, state, and local level.",
+    title: "Business & Corporate Filings",
+    description: "Secretary of State records, LLCs, registered agents, and UCC filings across all 50 states.",
   },
   {
     icon: Scale,
-    title: "Court Records",
-    description: "Public legal documents including civil, criminal, and bankruptcy filings.",
+    title: "Court & Legal Records",
+    description: "Civil, criminal, and bankruptcy filings via CourtListener and PACER — federal and state.",
   },
   {
-    icon: Home,
-    title: "Property Records",
-    description: "Real estate ownership, deeds, mortgages, and assessment data by county.",
+    icon: Vote,
+    title: "Campaign Finance & Lobbying",
+    description: "FEC donations, PAC networks, dark money trackers via OpenSecrets, and state-level filings.",
   },
   {
-    icon: BadgeCheck,
-    title: "Professional Licenses",
-    description: "State licensing board records for doctors, lawyers, contractors, and more.",
+    icon: ShieldAlert,
+    title: "Sanctions & Watchlists",
+    description: "OFAC SDN list, OpenSanctions, ICIJ Offshore Leaks, and SAM.gov federal debarments.",
   },
   {
-    icon: MoreHorizontal,
-    title: "More Coming Soon",
-    description: "We're expanding our database coverage. New record types added regularly.",
+    icon: HardHat,
+    title: "OSHA Violations",
+    description: "Workplace safety violations, inspections, and penalties tied to companies and individuals.",
+  },
+  {
+    icon: Leaf,
+    title: "EPA & FDA Enforcement",
+    description: "Environmental violations, facility inspections, FDA recalls, and compliance actions.",
+  },
+  {
+    icon: FileSearch,
+    title: "FOIA & Investigative Docs",
+    description: "Search MuckRock's archive of fulfilled FOIA requests and OCCRP Aleph leak databases.",
+  },
+  {
+    icon: Globe,
+    title: "20 Databases — One Search",
+    description: "Property records, professional licenses, SEC insider trades, federal contracts, and more.",
   },
 ];
 
@@ -52,7 +64,7 @@ const FeatureGrid = () => (
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
         {features.map(({ icon: Icon, title, description }) => (
           <div
             key={title}
