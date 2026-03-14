@@ -3,6 +3,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { generateReport, type ReportData } from "@/lib/generateReport";
 import type { MockResult } from "@/lib/recordsApi";
+import SearchAlertButton from "@/components/search/SearchAlertButton";
 
 interface ResultsHeaderProps {
   name: string;
