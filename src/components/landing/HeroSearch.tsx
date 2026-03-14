@@ -69,6 +69,15 @@ const HeroSearch = () => {
   const [name, setName] = useState("");
   const [suffix, setSuffix] = useState("");
   const [state, setState] = useState("All States / National");
+  const [searchParams] = useSearchParams();
+
+  // Pre-fill state from URL param (e.g. from /coverage click)
+  useEffect(() => {
+    const stateParam = searchParams.get("state");
+    if (stateParam && US_STATES.includes(stateParam)) {
+      setState(stateParam);
+    }
+  }, [searchParams]);
 
   // Advanced filters
   const [middleInitial, setMiddleInitial] = useState("");
