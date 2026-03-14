@@ -1,6 +1,6 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, AlertCircle, FileText, ChevronRight, Newspaper, Shield, UserSearch } from "lucide-react";
+import { Building2, Vote, Scale, Home, BadgeCheck, ExternalLink, AlertCircle, FileText, ChevronRight, Newspaper, Shield, UserSearch, ShieldAlert, Leaf, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -46,6 +46,8 @@ const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> =
   assets: { icon: Home, label: "Asset Records" },
   property: { icon: Home, label: "Property Records" },
   licenses: { icon: BadgeCheck, label: "Professional Licenses" },
+  violations: { icon: ShieldAlert, label: "Violations & Enforcement" },
+  foia: { icon: BookOpen, label: "FOIA Archive (MuckRock)" },
 };
 
 const SearchResults = () => {
