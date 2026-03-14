@@ -46,7 +46,7 @@ serve(async (req) => {
       });
     }
 
-    const validSources = ["sec", "propublica", "sunbiz", "fec", "courtlistener", "sanctions", "icij", "lobbying", "faa", "contact-intel", "ofac", "state-campaign-finance", "social-osint", "sec-insider"];
+    const validSources = ["sec", "propublica", "sunbiz", "fec", "courtlistener", "sanctions", "icij", "lobbying", "faa", "contact-intel", "ofac", "state-campaign-finance", "social-osint", "sec-insider", "osha", "epa-echo", "sam-gov", "opensecrets", "muckrock", "fda"];
     if (!validSources.includes(source)) {
       return new Response(JSON.stringify({ error: "Invalid source" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -69,6 +69,12 @@ serve(async (req) => {
     if (source === "state-campaign-finance") result = await searchStateCampaignFinance(searchName, state);
     if (source === "social-osint") result = await searchSocialOSINT(searchName);
     if (source === "sec-insider") result = await searchSECInsider(searchName);
+    if (source === "osha") result = await searchOSHA(searchName);
+    if (source === "epa-echo") result = await searchEPAECHO(searchName);
+    if (source === "sam-gov") result = await searchSAMgov(searchName);
+    if (source === "opensecrets") result = await searchOpenSecrets(searchName);
+    if (source === "muckrock") result = await searchMuckRock(searchName);
+    if (source === "fda") result = await searchFDA(searchName);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
