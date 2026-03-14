@@ -167,7 +167,9 @@ const SearchResults = () => {
 
   const tocItems = useMemo(() => {
     const items: { id: string; label: string; count?: number }[] = [];
+    items.push({ id: "source-profile", label: "Record Profile Summary" });
     items.push({ id: "source-briefing", label: "AI Subject Briefing" });
+    items.push({ id: "source-cross-refs", label: "Connection Alerts" });
     if (entityClusters.length > 0) {
       items.push({ id: "source-entities", label: "Entity Resolution", count: entityClusters.length });
     }
@@ -180,6 +182,7 @@ const SearchResults = () => {
     items.push({ id: "source-news-coverage", label: "News Coverage" });
     items.push({ id: "source-dossier", label: "Investigative Dossier" });
     items.push({ id: "source-deep-research", label: "Deep Research Analyst" });
+    items.push({ id: "source-foia", label: "FOIA Letter Generator" });
     items.push({ id: "source-checklist", label: "Reporter's Checklist" });
     return items;
   }, [results, grouped, entityClusters]);
