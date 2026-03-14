@@ -58,6 +58,9 @@ const Header = () => {
                 <Link to="/news" onClick={() => setAboutOpen(false)} className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted transition-colors">
                   News
                 </Link>
+                <Link to="/coverage" onClick={() => setAboutOpen(false)} className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted transition-colors">
+                  50-State Coverage
+                </Link>
               </div>
             )}
           </div>
