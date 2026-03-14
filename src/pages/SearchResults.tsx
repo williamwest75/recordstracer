@@ -31,6 +31,9 @@ import RecordDetailModal from "@/components/search/RecordDetailModal";
 import SourceRecordSection from "@/components/search/SourceRecordSection";
 import NewResultsBadge from "@/components/search/NewResultsBadge";
 import RelationshipMap from "@/components/search/RelationshipMap";
+import RecordProfileSummary from "@/components/search/RecordProfileSummary";
+import CrossReferenceAlerts from "@/components/search/CrossReferenceAlerts";
+import FoiaLetterGenerator from "@/components/search/FoiaLetterGenerator";
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
   business: { icon: Building2, label: "Business Registrations & Filings" },
