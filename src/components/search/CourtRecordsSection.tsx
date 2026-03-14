@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Scale, ChevronRight, ExternalLink } from "lucide-react";
+import { Scale, ChevronRight, ExternalLink, Info } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import NameMatchBadge from "@/components/search/NameMatchBadge";
