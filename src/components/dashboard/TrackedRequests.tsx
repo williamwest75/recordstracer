@@ -188,9 +188,9 @@ const RequestCard = ({ req, onStatusChange, onDelete }: {
                 const reminderDate = new Date(req.filed_date + "T00:00:00");
                 reminderDate.setDate(reminderDate.getDate() + r.day);
                 return (
-                  <div key={r.day} className={`flex items-center gap-2 text-xs ${r.sent ? "text-green-600" : "text-muted-foreground"}`}>
+                  <div key={r.day} className={`flex items-center gap-2 text-xs ${r.sent ? "text-success" : "text-muted-foreground"}`}>
                     {r.sent
-                      ? <CheckCircle className="h-3 w-3 text-green-600 shrink-0" />
+                      ? <CheckCircle className="h-3 w-3 text-success shrink-0" />
                       : <div className="w-3 h-3 rounded-full border border-border shrink-0" />}
                     <span>{r.label}</span>
                     <span className="ml-auto text-muted-foreground/60">{reminderDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
