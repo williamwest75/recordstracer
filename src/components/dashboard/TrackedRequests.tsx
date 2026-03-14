@@ -292,9 +292,9 @@ const TrackedRequests = () => {
       <div className="grid grid-cols-4 gap-3">
         {[
           { label: "Total", value: requests.length, color: "text-foreground" },
-          { label: "Active", value: active, color: "text-blue-600" },
-          { label: "Overdue", value: overdue, color: overdue > 0 ? "text-red-600" : "text-muted-foreground" },
-          { label: "Closed", value: requests.length - active, color: "text-green-600" },
+          { label: "Active", value: active, color: "text-info" },
+          { label: "Overdue", value: overdue, color: overdue > 0 ? "text-destructive" : "text-muted-foreground" },
+          { label: "Closed", value: requests.length - active, color: "text-success" },
         ].map(stat => (
           <div key={stat.label} className="bg-card border border-border rounded-lg p-3 text-center">
             <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>

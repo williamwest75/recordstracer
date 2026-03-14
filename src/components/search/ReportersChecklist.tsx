@@ -752,11 +752,11 @@ function buildExportText(checkedItems: Set<string>, expandedContents: Map<string
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  offshore: "bg-amber-50 text-amber-700 border-amber-200", donations: "bg-blue-50 text-blue-700 border-blue-200",
-  court: "bg-red-50 text-red-700 border-red-200", business: "bg-purple-50 text-purple-700 border-purple-200",
-  contracts: "bg-green-50 text-green-700 border-green-200", lobbying: "bg-orange-50 text-orange-700 border-orange-200",
-  foia: "bg-cyan-50 text-cyan-700 border-cyan-200", legal: "bg-rose-50 text-rose-700 border-rose-200",
-  always: "bg-gray-50 text-gray-600 border-gray-200", state: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  offshore: "bg-warning-bg text-warning border-warning-border", donations: "bg-info-bg text-info border-info-border",
+  court: "bg-destructive/10 text-destructive border-destructive/30", business: "bg-secondary text-secondary-foreground border-border",
+  contracts: "bg-success-bg text-success border-success-border", lobbying: "bg-warning-bg text-warning border-warning-border",
+  foia: "bg-info-bg text-info border-info-border", legal: "bg-destructive/10 text-destructive border-destructive/30",
+  always: "bg-muted text-muted-foreground border-border", state: "bg-info-bg text-info border-info-border",
 };
 const CATEGORY_LABELS: Record<string, string> = {
   offshore: "Offshore", donations: "Campaign Finance", court: "Court Records", business: "Business",

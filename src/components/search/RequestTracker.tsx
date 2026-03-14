@@ -119,24 +119,24 @@ const RequestTracker = ({
 
   if (saved) {
     return (
-      <div className="border border-green-200 bg-green-50 rounded-lg p-5">
+      <div className="border border-success-border bg-success-bg rounded-lg p-5">
         <div className="flex items-start gap-3">
-          <CheckCircle className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+          <CheckCircle className="h-5 w-5 text-success shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-green-800">Request tracked successfully</p>
-            <p className="text-xs text-green-700 mt-1">
+            <p className="text-sm font-semibold text-success">Request tracked successfully</p>
+            <p className="text-xs text-success mt-1">
               You'll receive email reminders at {form.requesterEmail} on days 3, 10, 20, and 30
               {form.customReminderDate && `, plus your custom reminder on ${formatDate(form.customReminderDate)}`}.
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-green-700">
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-success">
               <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Filed: {formatDate(form.filedDate)}</div>
               <div className="flex items-center gap-1.5"><Bell className="h-3 w-3" /> Deadline: {formatDate(legalDeadline)}</div>
             </div>
-            <p className="text-xs text-green-600 mt-3">
+            <p className="text-xs text-success mt-3">
               Track and update this request in your <strong>Dashboard → My Requests</strong>.
             </p>
             {onClose && (
-              <button onClick={onClose} className="mt-3 text-xs text-green-700 underline hover:text-green-900">Close</button>
+              <button onClick={onClose} className="mt-3 text-xs text-success underline hover:text-foreground">Close</button>
             )}
           </div>
         </div>
