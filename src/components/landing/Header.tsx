@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { FileSearch, Menu, X, ChevronDown } from "lucide-react";
 import BetaBanner from "@/components/BetaBanner";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -79,11 +80,15 @@ const Header = () => {
               </Link>
             </>
           )}
+          <ThemeToggle />
         </nav>
 
-        <button className="md:hidden p-2 text-foreground" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="md:hidden flex items-center gap-1">
+          <ThemeToggle />
+          <button className="p-2 text-foreground" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (

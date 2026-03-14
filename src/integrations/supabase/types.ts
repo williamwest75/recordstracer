@@ -41,6 +41,44 @@ export type Database = {
         }
         Relationships: []
       }
+      investigation_shares: {
+        Row: {
+          accepted: boolean
+          created_at: string
+          id: string
+          investigation_id: string
+          permission: string
+          shared_by: string
+          shared_with_email: string
+        }
+        Insert: {
+          accepted?: boolean
+          created_at?: string
+          id?: string
+          investigation_id: string
+          permission?: string
+          shared_by: string
+          shared_with_email: string
+        }
+        Update: {
+          accepted?: boolean
+          created_at?: string
+          id?: string
+          investigation_id?: string
+          permission?: string
+          shared_by?: string
+          shared_with_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investigation_shares_investigation_id_fkey"
+            columns: ["investigation_id"]
+            isOneToOne: false
+            referencedRelation: "investigations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investigations: {
         Row: {
           created_at: string
@@ -268,6 +306,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      search_alerts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          last_checked_at: string | null
+          last_result_ids: Json | null
+          state: string
+          subject_name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          last_checked_at?: string | null
+          last_result_ids?: Json | null
+          state: string
+          subject_name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          last_checked_at?: string | null
+          last_result_ids?: Json | null
+          state?: string
+          subject_name?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       searches: {
         Row: {

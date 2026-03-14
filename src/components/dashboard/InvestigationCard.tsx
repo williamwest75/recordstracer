@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ChevronUp, ExternalLink, FileText, Search, Trash2, Download } from "lucide-react";
+import ShareInvestigationDialog from "@/components/dashboard/ShareInvestigationDialog";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -85,6 +86,7 @@ const InvestigationCard = ({ investigation, savedResults, onDelete, onDeleteResu
               <Download className="h-4 w-4" />
             </Button>
           )}
+          <ShareInvestigationDialog investigationId={investigation.id} investigationTitle={investigation.title} />
           {expanded ? (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
           ) : (
