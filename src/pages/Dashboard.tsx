@@ -303,6 +303,26 @@ const Dashboard = () => {
                           variant="ghost"
                           size="icon"
                           className="shrink-0 text-muted-foreground hover:text-accent"
+                          title="Re-search (compare changes)"
+                          onClick={() => {
+                            // Store previous result count for comparison, then navigate with fresh query
+                            const key = `prev_results_${s.subject_name}_${s.state}`;
+                            // We don't have the actual result IDs from dashboard, but we store an empty set
+                            // to trigger the "re-search" mode. The search results page will detect this.
+                            try {
+                              // Mark that a re-search is happening — results page will populate IDs on next load
+                              sessionStorage.setItem(key, JSON.stringify([]));
+                            } catch { /* ignore */ }
+                            // Navigate with a cache-bust param to force a fresh search
+                            navigate(`/search-results?name=${encodeURIComponent(s.subject_name)}&state=${encodeURIComponent(s.state)}&t=${Date.now()}`);
+                          }}
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="shrink-0 text-muted-foreground hover:text-accent"
                           title="Save to investigation"
                           onClick={() => openSaveSearchModal(s)}
                         >
