@@ -269,7 +269,9 @@ const SearchResults = () => {
         </h1>
 
         {loading ? (
-          <p className="text-muted-foreground mt-3 text-sm">Searching public records…</p>
+          <div className="mt-8">
+            <SearchProgress sources={sourceProgress} isComplete={false} />
+          </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <AlertCircle className="h-8 w-8 text-destructive" />
