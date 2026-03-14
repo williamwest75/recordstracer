@@ -396,31 +396,29 @@ const SearchResults = () => {
                   <NewsMentions searchQuery={name} defaultExpanded={false} />
                 </div>
 
-                {/* Dossier deep-dive sections as collapsible */}
+                {/* Dossier — first-class section, auto-visible */}
                 <div id="source-dossier" className="scroll-mt-24">
-                  <Collapsible>
-                    <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Investigative Dossier</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pt-4 pb-2">
+                  <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
+                    <div className="px-5 py-4 border-b border-border">
+                      <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        Investigative Dossier
+                      </h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Timeline, campaign finance, court records & public records directory
+                      </p>
+                    </div>
+                    <div className="p-4">
                       <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
-                    </CollapsibleContent>
-                  </Collapsible>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Deep Research — first-class section, auto-visible */}
                 <div id="source-deep-research" className="scroll-mt-24">
-                  <Collapsible>
-                    <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
-                      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Deep Research Analyst</span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pt-4 pb-2">
-                      <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
-                    </CollapsibleContent>
-                  </Collapsible>
+                  <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
                 </div>
 
+                {/* Reporter's Checklist — collapsible (actionable tools) */}
                 <div id="source-checklist" className="scroll-mt-24">
                   <Collapsible>
                     <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-4 border border-border rounded-lg hover:bg-muted/30 transition-colors group">
