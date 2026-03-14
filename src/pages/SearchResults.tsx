@@ -473,6 +473,11 @@ const SearchResults = () => {
         )}
       </main>
 
+      {/* Mobile TOC — floating bottom sheet */}
+      {!loading && results.length > 0 && (
+        <MobileToc items={tocItems} activeSection={activeSection} onNavigate={scrollToSection} />
+      )}
+
       {/* 5. Footer Disclaimer */}
       {!loading && results.length > 0 && (
         <div className="border-t border-border bg-muted/30 px-4 py-6 text-center">
