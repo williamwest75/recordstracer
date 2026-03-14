@@ -28,12 +28,12 @@ interface RecordsRequest {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
-  filed:        { label: "Filed",        color: "text-blue-600 bg-blue-50 border-blue-200",   icon: FileText },
-  acknowledged: { label: "Acknowledged", color: "text-amber-600 bg-amber-50 border-amber-200", icon: Clock },
-  received:     { label: "Records Received", color: "text-green-600 bg-green-50 border-green-200", icon: CheckCircle },
-  denied:       { label: "Denied",       color: "text-red-600 bg-red-50 border-red-200",       icon: XCircle },
-  appealed:     { label: "Appealed",     color: "text-purple-600 bg-purple-50 border-purple-200", icon: AlertCircle },
-  closed:       { label: "Closed",       color: "text-gray-500 bg-gray-50 border-gray-200",    icon: CheckCircle },
+  filed:        { label: "Filed",        color: "text-info bg-info-bg border-info-border",   icon: FileText },
+  acknowledged: { label: "Acknowledged", color: "text-warning bg-warning-bg border-warning-border", icon: Clock },
+  received:     { label: "Records Received", color: "text-success bg-success-bg border-success-border", icon: CheckCircle },
+  denied:       { label: "Denied",       color: "text-destructive bg-destructive/10 border-destructive/30",       icon: XCircle },
+  appealed:     { label: "Appealed",     color: "text-accent bg-accent/10 border-accent/30", icon: AlertCircle },
+  closed:       { label: "Closed",       color: "text-muted-foreground bg-muted border-border",    icon: CheckCircle },
 };
 
 const STATUS_OPTIONS = ["filed", "acknowledged", "received", "denied", "appealed", "closed"];
