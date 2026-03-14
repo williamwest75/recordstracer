@@ -23,6 +23,7 @@ const categoryIcons = [
 ] as const;
 
 const StateCoverage = () => {
+  const navigate = useNavigate();
   const states = useMemo(() => getAllStateRecords(), []);
   const totalAll = useMemo(() => states.reduce((sum, s) => sum + totalSources(s), 0), [states]);
   const totalDeep = useMemo(() => states.reduce((sum, s) => sum + deepLinkCount(s), 0), [states]);
