@@ -555,7 +555,7 @@ const RecordsRequestBuilder = ({ state, results, subjectName, onClose }: {
               <div className="flex items-center gap-2">
                 <button onClick={() => { navigator.clipboard.writeText(generatedLetter); setCopySuccess(true); setTimeout(() => setCopySuccess(false), 2000); }}
                   className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded border border-border hover:bg-muted transition-colors">
-                  {copySuccess ? <CheckSquare className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copySuccess ? <CheckSquare className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
                   {copySuccess ? "Copied!" : "Copy"}
                 </button>
                 <button onClick={handlePrint}
