@@ -285,14 +285,36 @@ const SearchResults = () => {
           </div>
         ) : (
           <>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {results.length} records found across multiple databases
-              {searchTimestamp && (
-                <span className="text-muted-foreground/50 ml-2 text-xs">
-                  · Generated {searchTimestamp.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
-                </span>
-              )}
-            </p>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-muted-foreground text-sm">
+                {results.length} records found across multiple databases
+                {searchTimestamp && (
+                  <span className="text-muted-foreground/50 ml-2 text-xs">
+                    · Generated {searchTimestamp.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                  </span>
+                )}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 shrink-0"
+                onClick={() => {
+                  // Grab briefing data from the DOM/query cache if available
+                  const briefingEl = document.querySelector('[data-briefing-summary]');
+                  const reportData: ReportData = {
+                    name,
+                    state,
+                    results,
+                    briefingSummary: briefingEl?.getAttribute('data-briefing-summary') || undefined,
+                    timestamp: searchTimestamp || new Date(),
+                  };
+                  generateReport(reportData);
+                }}
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download Report
+              </Button>
+            </div>
 
             {/* 2. Editorial Brief — full width, generous spacing */}
             <div id="source-briefing" className="mt-10 mb-12 scroll-mt-24">
