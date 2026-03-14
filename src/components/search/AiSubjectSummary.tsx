@@ -154,7 +154,13 @@ const AiSubjectSummary = ({ name, state, results }: AiSubjectSummaryProps) => {
   if (results.length === 0) return null;
 
   return (
-    <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
+    <div
+      className="border border-border rounded-xl overflow-hidden bg-card shadow-sm"
+      data-briefing-summary={briefing?.summary || fallbackSummary || ""}
+      data-briefing-findings={briefing?.findings ? JSON.stringify(briefing.findings) : ""}
+      data-briefing-nextsteps={briefing?.nextSteps ? JSON.stringify(briefing.nextSteps) : ""}
+      data-briefing-crossrefs={allCrossReferences.length > 0 ? JSON.stringify(allCrossReferences) : ""}
+    >
       {/* Header */}
       <div className="px-5 py-4 border-b border-border">
         <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
