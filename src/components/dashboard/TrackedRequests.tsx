@@ -98,7 +98,7 @@ const RequestCard = ({ req, onStatusChange, onDelete }: {
       <div className="flex items-start justify-between gap-3 px-4 py-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded border ${req.request_type === "sunshine" ? "bg-cyan-50 text-cyan-700 border-cyan-200" : "bg-blue-50 text-blue-700 border-blue-200"}`}>
+            <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded border ${req.request_type === "sunshine" ? "bg-warning-bg text-warning border-warning-border" : "bg-info-bg text-info border-info-border"}`}>
               {req.request_type === "sunshine" ? "Sunshine Law" : "FOIA"}
             </span>
             <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded border flex items-center gap-1 ${STATUS_CONFIG[req.status]?.color}`}>
