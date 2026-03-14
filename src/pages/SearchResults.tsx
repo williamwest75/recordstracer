@@ -25,6 +25,7 @@ import NewsMentions from "@/components/NewsMentions";
 import SaveToInvestigationDropdown from "@/components/search/SaveToInvestigationDropdown";
 import CourtRecordsSection from "@/components/search/CourtRecordsSection";
 import OffshoreLeaksSection from "@/components/search/OffshoreLeaksSection";
+import MobileToc from "@/components/search/MobileToc";
 import { generateReport, type ReportData } from "@/lib/generateReport";
 
 
