@@ -26,6 +26,9 @@ import SaveToInvestigationDropdown from "@/components/search/SaveToInvestigation
 import CourtRecordsSection from "@/components/search/CourtRecordsSection";
 import OffshoreLeaksSection from "@/components/search/OffshoreLeaksSection";
 import MobileToc from "@/components/search/MobileToc";
+import ContactIntelligence from "@/components/search/ContactIntelligence";
+import EntityClusterCard from "@/components/search/EntityClusterCard";
+import { clusterEntities } from "@/lib/entityResolution";
 import { generateReport, type ReportData } from "@/lib/generateReport";
 
 
