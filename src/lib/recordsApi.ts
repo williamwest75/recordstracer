@@ -659,10 +659,168 @@ export async function searchFAA(name: string): Promise<RecordResult[]> {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// OFAC SDN — US Treasury Sanctions List (direct)
+// ═══════════════════════════════════════════════════════════════
+export async function searchOFAC(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("ofac", name);
+    if (data.success && data.results?.length > 0) {
+      results.push({
+        id: "ofac-summary", source: "OFAC SDN List Summary", category: "sanctions",
+        description: `${data.total} OFAC Specially Designated Nationals record(s) found`,
+        details: {
+          "Total Matches": String(data.total),
+          "Source": "US Treasury Office of Foreign Assets Control (OFAC)",
+          "Disclaimer": "Inclusion on OFAC lists has specific legal implications — verify carefully",
+        },
+        sourceUrl: `https://sanctionssearch.ofac.treas.gov/`,
+      });
+      for (const r of data.results.slice(0, 12)) {
+        results.push({
+          id: `ofac-${++id}`, source: "OFAC SDN Record", category: "sanctions",
+          description: `${r.name} — ${r.type} (${r.program || "N/A"})`,
+          details: {
+            Name: r.name || "N/A", Type: r.type || "N/A",
+            Program: r.program || "N/A", Title: r.title || "N/A",
+            Remarks: r.remarks ? r.remarks.slice(0, 300) : "N/A",
+            IDs: r.ids || "N/A",
+            Addresses: (r.addresses || []).join("; ") || "N/A",
+            Aliases: (r.aliases || []).join(", ") || "N/A",
+          },
+          sourceUrl: `https://sanctionssearch.ofac.treas.gov/`,
+        });
+      }
+    }
+  } catch (err) { console.error("[OFAC] Search failed:", err); }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEC EDGAR — Insider Trading (Form 4) specific search
+// ═══════════════════════════════════════════════════════════════
+export async function searchSECInsider(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("sec-insider", name);
+    if (data.success && data.filings?.length > 0) {
+      results.push({
+        id: "sec-insider-summary", source: "SEC Insider Trading Summary", category: "business",
+        description: `${data.totalFilings} insider trading filing(s) (Form 3/4/5) found`,
+        details: {
+          "Total Filings": String(data.totalFilings),
+          "Source": "SEC EDGAR Full-Text Search (EFTS)",
+          "Forms": "Form 3 (Initial), Form 4 (Changes), Form 5 (Annual)",
+        },
+        sourceUrl: `https://efts.sec.gov/LATEST/search-index?q=%22${encodeURIComponent(name)}%22&forms=4,3,5`,
+      });
+      for (const f of data.filings.slice(0, 12)) {
+        results.push({
+          id: `sec-insider-${++id}`, source: "SEC Insider Filing", category: "business",
+          description: `${f.entityName} — ${f.formType} filed ${f.fileDate}`,
+          details: {
+            Entity: f.entityName || "N/A", "Form Type": f.formType || "N/A",
+            "Filing Date": f.fileDate || "N/A", "File Number": f.fileNum || "N/A",
+            "Period of Report": f.periodOfReport || "N/A",
+            "Related Parties": (f.displayNames || []).join(", ") || "N/A",
+          },
+          sourceUrl: `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=${encodeURIComponent(name)}&type=4&dateb=&owner=include&count=40&search_text=&action=getcompany`,
+        });
+      }
+    }
+  } catch (err) { console.error("[SEC Insider] Search failed:", err); }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// State Campaign Finance — FollowTheMoney / OpenSecrets / State portals
+// ═══════════════════════════════════════════════════════════════
+export async function searchStateCampaignFinance(name: string, state: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("state-campaign-finance", name, state);
+    if (data.success && data.results?.length > 0) {
+      // Links to external search tools
+      for (const r of data.results) {
+        if (r.type === "link") {
+          results.push({
+            id: `scf-${++id}`, source: r.source, category: "donations",
+            description: r.description,
+            details: { Source: r.source, "Search URL": r.url },
+            sourceUrl: r.url,
+          });
+        } else if (r.type === "portal") {
+          results.push({
+            id: `scf-portal-${++id}`, source: `${r.source} (State Portal)`, category: "donations",
+            description: r.description,
+            details: { Source: r.source, State: r.state || "N/A" },
+            sourceUrl: r.url,
+          });
+        }
+      }
+    }
+  } catch (err) { console.error("[StateCampaignFinance] Search failed:", err); }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Social/OSINT Footprint — OCCRP Aleph + profile search links
+// ═══════════════════════════════════════════════════════════════
+export async function searchSocialOSINT(name: string): Promise<RecordResult[]> {
+  const results: RecordResult[] = [];
+  let id = 0;
+  try {
+    const data = await proxyFetch("social-osint", name);
+    if (data.success) {
+      // OCCRP Aleph investigative database results
+      if (data.alephResults?.length > 0) {
+        results.push({
+          id: "aleph-summary", source: "OCCRP Aleph Summary", category: "business",
+          description: `${data.alephTotal} record(s) in OCCRP investigative databases`,
+          details: {
+            "Total Records": String(data.alephTotal),
+            "Source": "Organized Crime and Corruption Reporting Project (OCCRP)",
+            "Note": "Contains leaked documents, corporate registries, court records from 100+ countries",
+          },
+          sourceUrl: `https://aleph.occrp.org/search?q=${encodeURIComponent(name)}`,
+        });
+        for (const e of data.alephResults.slice(0, 8)) {
+          results.push({
+            id: `aleph-${++id}`, source: "OCCRP Aleph Record", category: "business",
+            description: `${e.name} — ${e.schema || "Entity"} (${e.collection || "Unknown collection"})`,
+            details: {
+              Name: e.name || "N/A", Type: e.schema || "N/A",
+              Collection: e.collection || "N/A", Countries: e.countries || "N/A",
+            },
+            sourceUrl: e.sourceUrl || `https://aleph.occrp.org/search?q=${encodeURIComponent(name)}`,
+          });
+        }
+      }
+
+      // Social profile search links
+      if (data.profiles?.length > 0) {
+        for (const p of data.profiles) {
+          results.push({
+            id: `social-${++id}`, source: `${p.platform} Profile Search`, category: "business",
+            description: `Search ${p.platform} for "${name}"`,
+            details: { Platform: p.platform },
+            sourceUrl: p.searchUrl,
+          });
+        }
+      }
+    }
+  } catch (err) { console.error("[SocialOSINT] Search failed:", err); }
+  return results;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Search All — with per-source progress callbacks
 // ═══════════════════════════════════════════════════════════════
 export interface SearchOptions {
-  skip?: string[];  // database keys to skip: business, fec, court, contracts, sunbiz, contact, occrp
+  skip?: string[];
   middleInitial?: string;
   dob?: string;
   email?: string;
@@ -690,14 +848,18 @@ export async function searchAll(
   const sourceDefs: { key: string; skipKey: string; label: string; fn: () => Promise<RecordResult[]> }[] = [
     { key: "fec", skipKey: "fec", label: "FEC Campaign Finance", fn: () => searchFEC(name, state) },
     { key: "sec", skipKey: "business", label: "SEC EDGAR", fn: () => searchSEC(name) },
+    { key: "sec-insider", skipKey: "business", label: "SEC Insider Trading", fn: () => searchSECInsider(name) },
     { key: "usaspending", skipKey: "contracts", label: "USASpending.gov", fn: () => searchUSASpending(name, state) },
     { key: "propublica", skipKey: "business", label: "ProPublica Nonprofits", fn: () => searchProPublicaNonprofits(name) },
     { key: "sunbiz", skipKey: "sunbiz", label: "Florida SunBiz", fn: () => searchSunBiz(name) },
     { key: "court", skipKey: "court", label: "CourtListener", fn: () => searchCourtListener(name) },
     { key: "sanctions", skipKey: "", label: "OpenSanctions", fn: () => searchSanctions(name) },
+    { key: "ofac", skipKey: "", label: "OFAC SDN List", fn: () => searchOFAC(name) },
     { key: "icij", skipKey: "", label: "ICIJ Offshore Leaks", fn: () => searchOffshoreLeaks(name) },
     { key: "lobbying", skipKey: "", label: "Senate Lobbying (LDA)", fn: () => searchLobbying(name) },
     { key: "faa", skipKey: "", label: "FAA Aircraft Registry", fn: () => searchFAA(name) },
+    { key: "state-campaign", skipKey: "fec", label: "State Campaign Finance", fn: () => searchStateCampaignFinance(name, state) },
+    { key: "social-osint", skipKey: "", label: "OSINT / OCCRP Aleph", fn: () => searchSocialOSINT(name) },
   ];
 
   const sourceStatuses: SourceStatus[] = sourceDefs.map(s => ({
