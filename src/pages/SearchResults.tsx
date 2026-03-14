@@ -116,6 +116,7 @@ const SearchResults = () => {
   const name = sanitizeInput(rawName);
   const state = isValidState(rawState) ? rawState : "All States / National";
   const [selectedResult, setSelectedResult] = useState<MockResult | null>(null);
+  const [sourceProgress, setSourceProgress] = useState<SourceStatus[]>([]);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading, loading: authLoading } = useAuth();
 
@@ -148,10 +149,14 @@ const SearchResults = () => {
   const nameCheck = isValidName(name);
   const canSearch = !!user && !!subscribed && !authLoading && !subscriptionLoading && nameCheck.valid;
 
+  const handleProgress = useCallback((sources: SourceStatus[]) => {
+    setSourceProgress(sources);
+  }, []);
+
   const { data: searchData, isLoading: loading, isError: error } = useQuery({
     queryKey: ["search-results", name, state, searchOptions],
     queryFn: async () => {
-      const data = await searchAll(name, state, searchOptions);
+      const data = await searchAll(name, state, searchOptions, handleProgress);
       console.log("[SearchResults] searchAll returned", data.results.length, "results, debug:", data.debug);
 
       // Persist search metrics for dashboard previews
