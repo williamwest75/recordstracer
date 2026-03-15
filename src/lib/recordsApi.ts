@@ -1030,6 +1030,21 @@ export type ResultsCallback = (results: RecordResult[], sourceLabel: string) => 
 export async function searchAll(
   name: string, state: string, options?: SearchOptions, onProgress?: ProgressCallback, onResults?: ResultsCallback
 ): Promise<{ results: RecordResult[]; debug: ApiDebugInfo[] }> {
+  // Increment search usage counter (server-side via RPC)
+  try {
+    const { data: session } = await supabase.auth.getSession();
+    if (session?.session?.user?.id) {
+      const { data: newCount, error: usageError } = await supabase.rpc("increment_search_usage", {
+        p_user_id: session.session.user.id,
+      });
+      if (!usageError && newCount !== null) {
+        console.log(`[searchAll] Search usage this month: ${newCount}`);
+      }
+    }
+  } catch (e) {
+    console.warn("[searchAll] Could not increment search usage:", e);
+  }
+
   const debug: ApiDebugInfo[] = [];
   const skip = new Set(options?.skip || []);
 
