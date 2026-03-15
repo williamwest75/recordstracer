@@ -30,11 +30,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, FolderOpen, Clock, Plus, Trash2, Crown, Bookmark, FolderPlus, RefreshCw, Upload } from "lucide-react";
+import { Search, FolderOpen, Clock, Plus, Trash2, Crown, Bookmark, FolderPlus, RefreshCw, Upload, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import InvestigationCard from "@/components/dashboard/InvestigationCard";
 import TrackedRequests from "@/components/dashboard/TrackedRequests";
+import { useTierGating } from "@/hooks/use-tier-gating";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -46,6 +47,9 @@ const Dashboard = () => {
   const [newInvTitle, setNewInvTitle] = useState("");
   const [tab, setTab] = useState<"searches" | "investigations">("searches");
   const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
+  const [searchUsage, setSearchUsage] = useState<number>(0);
+
+  const gating = useTierGating(foundingMemberNumber !== null);
 
   // Save-to-investigation modal state
   const [saveSearch, setSaveSearch] = useState<Tables<"searches"> | null>(null);
@@ -58,6 +62,7 @@ const Dashboard = () => {
     if (!user) return;
     loadData();
     loadFoundingMemberStatus();
+    loadSearchUsage();
   }, [user]);
 
   const loadFoundingMemberStatus = async () => {
@@ -72,6 +77,14 @@ const Dashboard = () => {
     if (!error && data) {
       setFoundingMemberNumber(data.founding_member_number);
     }
+  };
+
+  const loadSearchUsage = async () => {
+    if (!user) return;
+    try {
+      const { data } = await (supabase.rpc as any)("get_search_usage", { p_user_id: user.id });
+      setSearchUsage(data ?? 0);
+    } catch { /* ignore */ }
   };
 
   const loadData = async () => {
@@ -94,6 +107,17 @@ const Dashboard = () => {
 
   const createInvestigation = async () => {
     if (!newInvTitle.trim() || !user) return;
+
+    // Check investigation limit
+    if (investigations.length >= gating.investigationLimit) {
+      toast({
+        title: "Investigation limit reached",
+        description: `Your plan allows ${gating.investigationLimit} investigation${gating.investigationLimit !== 1 ? "s" : ""}. Upgrade for unlimited investigations.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase.from("investigations").insert({ title: newInvTitle.trim(), user_id: user.id });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -211,6 +235,37 @@ const Dashboard = () => {
             </Button>
           </Link>
         </div>
+
+        {/* Search usage indicator */}
+        {gating.tier && (
+          <div className="mb-6 rounded-lg border border-border bg-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Monthly Searches</span>
+              <span className="text-xs text-muted-foreground">
+                {searchUsage} / {gating.searchLimit === Infinity ? "∞" : gating.searchLimit}
+              </span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className={`h-2 rounded-full transition-all ${
+                  gating.searchLimit !== Infinity && searchUsage >= gating.searchLimit
+                    ? "bg-destructive"
+                    : searchUsage >= (gating.searchLimit === Infinity ? Infinity : gating.searchLimit * 0.8)
+                    ? "bg-warning"
+                    : "bg-accent"
+                }`}
+                style={{ width: `${gating.searchLimit === Infinity ? 5 : Math.min(100, (searchUsage / gating.searchLimit) * 100)}%` }}
+              />
+            </div>
+            {gating.searchLimit !== Infinity && searchUsage >= gating.searchLimit && (
+              <div className="flex items-center gap-2 mt-2">
+                <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+                <span className="text-xs text-destructive font-medium">Monthly search limit reached.</span>
+                <Link to="/pricing" className="text-xs text-accent font-medium hover:underline ml-auto">Upgrade</Link>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex gap-1 border-b border-border mb-6">
@@ -378,10 +433,24 @@ const Dashboard = () => {
                 onKeyDown={(e) => e.key === "Enter" && createInvestigation()}
                 className="max-w-sm"
               />
-              <Button variant="accent" size="sm" onClick={createInvestigation} className="gap-1">
+              <Button
+                variant="accent"
+                size="sm"
+                onClick={createInvestigation}
+                className="gap-1"
+                disabled={investigations.length >= gating.investigationLimit}
+              >
                 <Plus className="h-4 w-4" /> Create
               </Button>
             </div>
+            {gating.investigationLimit !== Infinity && (
+              <p className="text-xs text-muted-foreground mb-4">
+                {investigations.length} / {gating.investigationLimit} investigations used
+                {investigations.length >= gating.investigationLimit && (
+                  <Link to="/pricing" className="text-accent font-medium hover:underline ml-2">Upgrade for unlimited</Link>
+                )}
+              </p>
+            )}
 
             {investigations.length === 0 ? (
               <div className="text-center py-16">
@@ -397,6 +466,8 @@ const Dashboard = () => {
                     savedResults={savedResults[inv.id] || []}
                     onDelete={deleteInvestigation}
                     onDeleteResult={deleteSavedResult}
+                    canExport={gating.canExport}
+                    canShare={gating.canShare}
                   />
                 ))}
               </div>

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Download, FileText, FileSpreadsheet } from "lucide-react";
+import { ArrowLeft, Download, FileText, FileSpreadsheet, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { generateReport, type ReportData } from "@/lib/generateReport";
@@ -14,9 +14,10 @@ interface ResultsHeaderProps {
   state: string;
   results: MockResult[];
   searchTimestamp: Date | null;
+  canExport?: boolean;
 }
 
-const ResultsHeader = ({ name, state, results, searchTimestamp }: ResultsHeaderProps) => {
+const ResultsHeader = ({ name, state, results, searchTimestamp, canExport = true }: ResultsHeaderProps) => {
   const [exporting, setExporting] = useState(false);
   const { toast } = useToast();
 
@@ -84,24 +85,33 @@ const ResultsHeader = ({ name, state, results, searchTimestamp }: ResultsHeaderP
         </p>
         <div className="flex items-center gap-2 shrink-0">
           <SearchAlertButton subjectName={name} state={state} />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5" disabled={exporting}>
-                <Download className="h-3.5 w-3.5" />
-                {exporting ? "Exporting\u2026" : "Download Report"}
+          {canExport ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5" disabled={exporting}>
+                  <Download className="h-3.5 w-3.5" />
+                  {exporting ? "Exporting\u2026" : "Download Report"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleDownloadPdf} className="gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4 text-destructive" />
+                  Download as PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownloadDocx} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4 text-primary" />
+                  Download as Word (.docx)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link to="/pricing">
+              <Button variant="outline" size="sm" className="gap-1.5 text-muted-foreground">
+                <Lock className="h-3.5 w-3.5" />
+                Export (Investigator+)
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleDownloadPdf} className="gap-2 cursor-pointer">
-                <FileText className="h-4 w-4 text-destructive" />
-                Download as PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDownloadDocx} className="gap-2 cursor-pointer">
-                <FileSpreadsheet className="h-4 w-4 text-primary" />
-                Download as Word (.docx)
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </Link>
+          )}
         </div>
       </div>
     </>

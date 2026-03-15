@@ -34,6 +34,8 @@ import RelationshipMap from "@/components/search/RelationshipMap";
 import RecordProfileSummary from "@/components/search/RecordProfileSummary";
 import CrossReferenceAlerts from "@/components/search/CrossReferenceAlerts";
 import FoiaLetterGenerator from "@/components/search/FoiaLetterGenerator";
+import UpgradeGate from "@/components/search/UpgradeGate";
+import { useTierGating } from "@/hooks/use-tier-gating";
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
   business: { icon: Building2, label: "Business Registrations & Filings" },
@@ -62,6 +64,20 @@ const SearchResults = () => {
   const [streamedResults, setStreamedResults] = useState<MockResult[]>([]);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading, loading: authLoading } = useAuth();
+
+  // Tier gating
+  const gating = useTierGating();
+  const [searchLimitReached, setSearchLimitReached] = useState(false);
+
+  // Check search limit on mount
+  useEffect(() => {
+    if (!user) return;
+    (supabase.rpc as any)("get_search_usage", { p_user_id: user.id }).then(({ data }: any) => {
+      if (data !== null && gating.searchLimit !== Infinity && data >= gating.searchLimit) {
+        setSearchLimitReached(true);
+      }
+    });
+  }, [user, gating.searchLimit]);
 
   // Re-search change detection: load previous result IDs from sessionStorage
   const previousResultIds = useMemo(() => {
@@ -99,7 +115,7 @@ const SearchResults = () => {
   }), [searchParams]);
 
   const nameCheck = isValidName(name);
-  const canSearch = !!user && !!subscribed && !authLoading && !subscriptionLoading && nameCheck.valid;
+  const canSearch = !!user && !!subscribed && !authLoading && !subscriptionLoading && nameCheck.valid && !searchLimitReached;
 
   const handleProgress = useCallback((sources: SourceStatus[]) => {
     setSourceProgress(sources);
@@ -237,7 +253,16 @@ const SearchResults = () => {
           </div>
         )}
 
-        {error ? (
+        {searchLimitReached ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <AlertCircle className="h-10 w-10 text-destructive" />
+            <h2 className="text-lg font-semibold text-foreground">Monthly search limit reached</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-md">
+              You've used all {gating.searchLimit} searches this month. Upgrade your plan for more searches.
+            </p>
+            <Button variant="default" onClick={() => navigate("/pricing")}>View Plans</Button>
+          </div>
+        ) : error ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <AlertCircle className="h-8 w-8 text-destructive" />
             <p className="text-muted-foreground text-sm">Something went wrong. Please try again.</p>
@@ -249,7 +274,7 @@ const SearchResults = () => {
           </div>
         ) : hasResults ? (
           <>
-            <ResultsHeader name={name} state={state} results={results} searchTimestamp={searchTimestamp} />
+            <ResultsHeader name={name} state={state} results={results} searchTimestamp={searchTimestamp} canExport={gating.canExport} />
 
             {/* Re-search change detection banner */}
             {changeStats && !changeStats.unchanged && (
@@ -350,28 +375,37 @@ const SearchResults = () => {
                   <ErrorBoundary><RelationshipMap results={results} searchName={name} /></ErrorBoundary>
                 </div>
 
+                {/* Contact Intelligence — gated to Investigator+ */}
                 <div id="source-contact-intel" className="scroll-mt-24">
-                  <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
+                  <UpgradeGate requiredTier="investigator" featureName="Contact Intelligence" hasAccess={gating.canUseContactIntel}>
+                    <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
+                  </UpgradeGate>
                 </div>
 
                 <div id="source-news-coverage" className="scroll-mt-24 border border-border rounded-lg p-4">
                   <NewsMentions searchQuery={name} defaultExpanded={false} />
                 </div>
 
+                {/* Investigative Dossier — gated to Investigator+ */}
                 <div id="source-dossier" className="scroll-mt-24">
-                  <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
-                    <div className="px-5 py-4 border-b border-border">
-                      <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Investigative Dossier</h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">Timeline, campaign finance, court records & public records directory</p>
+                  <UpgradeGate requiredTier="investigator" featureName="Investigative Dossier" hasAccess={gating.canUseDossier}>
+                    <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
+                      <div className="px-5 py-4 border-b border-border">
+                        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Investigative Dossier</h2>
+                        <p className="text-xs text-muted-foreground mt-0.5">Timeline, campaign finance, court records & public records directory</p>
+                      </div>
+                      <div className="p-4">
+                        <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
+                      </div>
                     </div>
-                    <div className="p-4">
-                      <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
-                    </div>
-                  </div>
+                  </UpgradeGate>
                 </div>
 
+                {/* Deep Research Analyst — gated to Investigator+ */}
                 <div id="source-deep-research" className="scroll-mt-24">
-                  <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
+                  <UpgradeGate requiredTier="investigator" featureName="Deep Research Analyst" hasAccess={gating.canUseDeepResearch}>
+                    <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
+                  </UpgradeGate>
                 </div>
 
                 <div id="source-foia" className="scroll-mt-24">

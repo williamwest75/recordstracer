@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, ChevronUp, ExternalLink, FileText, Search, Trash2, Download } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, FileText, Search, Trash2, Download, Lock } from "lucide-react";
 import ShareInvestigationDialog from "@/components/dashboard/ShareInvestigationDialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,11 +30,13 @@ interface InvestigationCardProps {
   savedResults: SavedResult[];
   onDelete: (id: string) => void;
   onDeleteResult: (resultId: string) => void;
+  canExport?: boolean;
+  canShare?: boolean;
 }
 
 const MAX_VISIBLE = 5;
 
-const InvestigationCard = ({ investigation, savedResults, onDelete, onDeleteResult }: InvestigationCardProps) => {
+const InvestigationCard = ({ investigation, savedResults, onDelete, onDeleteResult, canExport = true, canShare = true }: InvestigationCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const [showAll, setShowAll] = useState(false);
 
@@ -43,6 +45,7 @@ const InvestigationCard = ({ investigation, savedResults, onDelete, onDeleteResu
 
   const handleExport = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!canExport) return;
     generateInvestigationReport({
       title: investigation.title,
       description: investigation.description,
@@ -76,17 +79,41 @@ const InvestigationCard = ({ investigation, savedResults, onDelete, onDeleteResu
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {resultCount > 0 && (
+            canExport ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-accent"
+                title="Export investigation as PDF"
+                onClick={handleExport}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground cursor-not-allowed opacity-50"
+                title="Export requires Investigator plan"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Lock className="h-4 w-4" />
+              </Button>
+            )
+          )}
+          {canShare ? (
+            <ShareInvestigationDialog investigationId={investigation.id} investigationTitle={investigation.title} />
+          ) : (
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-accent"
-              title="Export investigation as PDF"
-              onClick={handleExport}
+              className="text-muted-foreground cursor-not-allowed opacity-50"
+              title="Sharing requires Newsroom plan"
+              onClick={(e) => e.stopPropagation()}
             >
-              <Download className="h-4 w-4" />
+              <Lock className="h-4 w-4" />
             </Button>
           )}
-          <ShareInvestigationDialog investigationId={investigation.id} investigationTitle={investigation.title} />
           {expanded ? (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
           ) : (
@@ -124,83 +151,89 @@ const InvestigationCard = ({ investigation, savedResults, onDelete, onDeleteResu
         </div>
       </div>
 
-      {/* Expanded saved results */}
+      {/* Expanded body */}
       {expanded && (
-        <div className="border-t border-border">
+        <div className="border-t border-border bg-muted/10">
           {resultCount === 0 ? (
             <div className="p-6 text-center">
-              <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No saved records yet.</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Save results from search to this investigation.
-              </p>
+              <p className="text-sm text-muted-foreground mb-2">No records saved yet.</p>
               <Link to="/">
-                <Button variant="outline" size="sm" className="mt-3 gap-1.5">
+                <Button variant="accent" size="sm" className="gap-1">
                   <Search className="h-3.5 w-3.5" /> Run a Search
                 </Button>
               </Link>
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {visibleResults.map((result) => {
-                const data = result.result_data as Record<string, any> | null;
-                const source = data?.source || "Unknown source";
-                const description = data?.description || "";
-                const sourceUrl = data?.sourceUrl || "";
+              {visibleResults.map((sr) => {
+                const rd = sr.result_data as any;
+                const source = rd?.source || "Unknown Source";
+                const desc = rd?.description || "";
+                const url = rd?.sourceUrl || rd?.url || null;
+                const category = rd?.category || "";
+                const searchName = rd?.searchName;
+                const searchState = rd?.searchState;
 
                 return (
-                  <div key={result.id} className="px-4 py-3 hover:bg-muted/20 transition-colors">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground">{source}</p>
-                        {description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{description}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {sourceUrl && (
-                          <a href={sourceUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                            <span className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2">
-                              View Source ↗
-                            </span>
-                          </a>
-                        )}
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Remove saved record?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will remove "{source}" from this investigation.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => onDeleteResult(result.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Remove
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                  <div key={sr.id} className="flex items-center gap-3 px-4 py-3">
+                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{source}</p>
+                      {desc && <p className="text-xs text-muted-foreground truncate">{desc}</p>}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {category === "search" && searchName ? (
+                        <Link
+                          to={`/search-results?name=${encodeURIComponent(searchName)}&state=${encodeURIComponent(searchState || "")}`}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                        >
+                          View Results <ExternalLink className="h-3 w-3" />
+                        </Link>
+                      ) : url ? (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+                        >
+                          View Source <ExternalLink className="h-3 w-3" />
+                        </a>
+                      ) : null}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove this saved record?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will remove "{source}" from this investigation.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => onDeleteResult(sr.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 );
               })}
-              {resultCount > MAX_VISIBLE && !showAll && (
-                <div className="px-4 py-3 text-center">
+              {resultCount > MAX_VISIBLE && (
+                <div className="px-4 py-2 text-center">
                   <button
-                    onClick={() => setShowAll(true)}
-                    className="text-xs text-accent hover:underline font-medium"
+                    onClick={() => setShowAll(!showAll)}
+                    className="text-xs font-medium text-accent hover:underline"
                   >
-                    View all {resultCount} records
+                    {showAll ? "Show fewer" : `Show all ${resultCount} records`}
                   </button>
                 </div>
               )}
