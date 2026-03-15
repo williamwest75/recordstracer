@@ -30,11 +30,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, FolderOpen, Clock, Plus, Trash2, Crown, Bookmark, FolderPlus, RefreshCw, Upload } from "lucide-react";
+import { Search, FolderOpen, Clock, Plus, Trash2, Crown, Bookmark, FolderPlus, RefreshCw, Upload, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import InvestigationCard from "@/components/dashboard/InvestigationCard";
 import TrackedRequests from "@/components/dashboard/TrackedRequests";
+import { useTierGating, SEARCH_LIMITS } from "@/hooks/use-tier-gating";
+import { supabase as supabaseClient } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { user } = useAuth();
