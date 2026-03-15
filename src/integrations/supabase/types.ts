@@ -343,6 +343,33 @@ export type Database = {
         }
         Relationships: []
       }
+      search_usage: {
+        Row: {
+          created_at: string
+          id: string
+          month_year: string
+          search_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month_year: string
+          search_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month_year?: string
+          search_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       searches: {
         Row: {
           additional_info: string | null
@@ -447,6 +474,7 @@ export type Database = {
     }
     Functions: {
       get_founding_member_count: { Args: never; Returns: number }
+      get_search_usage: { Args: { p_user_id: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -454,6 +482,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_search_usage: { Args: { p_user_id: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
