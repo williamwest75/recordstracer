@@ -48,6 +48,9 @@ const Dashboard = () => {
   const [newInvTitle, setNewInvTitle] = useState("");
   const [tab, setTab] = useState<"searches" | "investigations">("searches");
   const [foundingMemberNumber, setFoundingMemberNumber] = useState<number | null>(null);
+  const [searchUsage, setSearchUsage] = useState<number>(0);
+
+  const gating = useTierGating(foundingMemberNumber !== null);
 
   // Save-to-investigation modal state
   const [saveSearch, setSaveSearch] = useState<Tables<"searches"> | null>(null);
