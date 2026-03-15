@@ -24,34 +24,17 @@ async function checkUrl(
   const start = Date.now();
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
-    // Try HEAD first, fall back to GET if HEAD is rejected
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        method: "HEAD",
-        signal: controller.signal,
-        redirect: "follow",
-        headers: {
-          "User-Agent":
-            "RecordTracer-LinkChecker/1.0 (health-monitoring; +https://recordstracer.lovable.app)",
-        },
-      });
-    } catch {
-      // Some government sites reject HEAD, try GET
-      response = await fetch(url, {
-        method: "GET",
-        signal: controller.signal,
-        redirect: "follow",
-        headers: {
-          "User-Agent":
-            "RecordTracer-LinkChecker/1.0 (health-monitoring; +https://recordstracer.lovable.app)",
-        },
-      });
-      // Consume body to avoid leak
-      await response.text();
-    }
+    const response = await fetch(url, {
+      method: "HEAD",
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "RecordTracer-LinkChecker/1.0 (health-monitoring; +https://recordstracer.lovable.app)",
+      },
+    });
 
     clearTimeout(timeout);
     const elapsed = Date.now() - start;
@@ -109,8 +92,8 @@ Deno.serve(async (req) => {
 
     console.log(`Checking ${sources.length} URLs...`);
 
-    // Process in batches of 10 to avoid overwhelming connections
-    const BATCH_SIZE = 10;
+    // Process in batches of 50 for high concurrency within the edge function timeout
+    const BATCH_SIZE = 50;
     const results: Array<SourceToCheck & { status_code: number | null; is_healthy: boolean; error_message: string | null; response_time_ms: number }> = [];
 
     for (let i = 0; i < sources.length; i += BATCH_SIZE) {

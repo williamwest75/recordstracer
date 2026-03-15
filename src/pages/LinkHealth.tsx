@@ -63,15 +63,25 @@ export default function LinkHealth() {
 
   useEffect(() => { fetchResults(); }, [fetchResults]);
 
+  const [progress, setProgress] = useState("");
+
   const runCheck = async () => {
     setRunning(true);
     try {
       const states = getAllStateRecords();
-      const sources = buildSourceList(states);
-      await supabase.functions.invoke("check-link-health", { body: { sources } });
+      // Process state by state to avoid edge function timeout
+      for (let i = 0; i < states.length; i++) {
+        const st = states[i];
+        setProgress(`Checking ${st.stateName} (${i + 1}/${states.length})...`);
+        const sources = buildSourceList([st]);
+        if (sources.length === 0) continue;
+        await supabase.functions.invoke("check-link-health", { body: { sources } });
+      }
+      setProgress("");
       await fetchResults();
     } catch (err) {
       console.error("Run check failed:", err);
+      setProgress("Error — check console");
     } finally {
       setRunning(false);
     }
@@ -109,7 +119,7 @@ export default function LinkHealth() {
           </div>
           <Button onClick={runCheck} disabled={running} className="gap-2">
             {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            {running ? "Checking..." : "Run Check Now"}
+            {running ? (progress || "Checking...") : "Run Check Now"}
           </Button>
         </div>
 
