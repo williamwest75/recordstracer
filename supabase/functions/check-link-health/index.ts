@@ -24,34 +24,17 @@ async function checkUrl(
   const start = Date.now();
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
-    // Try HEAD first, fall back to GET if HEAD is rejected
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        method: "HEAD",
-        signal: controller.signal,
-        redirect: "follow",
-        headers: {
-          "User-Agent":
-            "RecordTracer-LinkChecker/1.0 (health-monitoring; +https://recordstracer.lovable.app)",
-        },
-      });
-    } catch {
-      // Some government sites reject HEAD, try GET
-      response = await fetch(url, {
-        method: "GET",
-        signal: controller.signal,
-        redirect: "follow",
-        headers: {
-          "User-Agent":
-            "RecordTracer-LinkChecker/1.0 (health-monitoring; +https://recordstracer.lovable.app)",
-        },
-      });
-      // Consume body to avoid leak
-      await response.text();
-    }
+    const response = await fetch(url, {
+      method: "HEAD",
+      signal: controller.signal,
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "RecordTracer-LinkChecker/1.0 (health-monitoring; +https://recordstracer.lovable.app)",
+      },
+    });
 
     clearTimeout(timeout);
     const elapsed = Date.now() - start;
