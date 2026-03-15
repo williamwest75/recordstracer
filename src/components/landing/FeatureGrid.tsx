@@ -7,6 +7,10 @@ import {
   HardHat,
   FileSearch,
   Globe,
+  Brain,
+  UserSearch,
+  Network,
+  FileText,
 } from "lucide-react";
 
 const features = [
@@ -32,23 +36,43 @@ const features = [
   },
   {
     icon: HardHat,
-    title: "OSHA Violations",
-    description: "Workplace safety violations, inspections, and penalties tied to companies and individuals.",
+    title: "OSHA, EPA & FDA Enforcement",
+    description: "Workplace safety violations, environmental actions, FDA recalls, and compliance records.",
   },
   {
-    icon: Leaf,
-    title: "EPA & FDA Enforcement",
-    description: "Environmental violations, facility inspections, FDA recalls, and compliance actions.",
+    icon: Brain,
+    title: "AI-Powered Analysis",
+    description: "Subject briefings, Deep Research Analyst, entity resolution, and cross-reference alerts — all automated.",
   },
   {
     icon: FileSearch,
     title: "FOIA & Investigative Docs",
-    description: "Search MuckRock's archive of fulfilled FOIA requests and OCCRP Aleph leak databases.",
+    description: "Search MuckRock's FOIA archive, generate custom FOIA letters, and browse OCCRP Aleph leak databases.",
+  },
+  {
+    icon: Network,
+    title: "Relationship Mapping",
+    description: "Visual network maps showing connections between people, companies, and organizations across records.",
+  },
+  {
+    icon: UserSearch,
+    title: "Contact Intelligence",
+    description: "Locate professional profiles, organizational affiliations, and contact pathways for subjects.",
+  },
+  {
+    icon: FileText,
+    title: "Investigative Dossier",
+    description: "Auto-generated dossiers with timelines, campaign finance analysis, court record summaries, and export to PDF/DOCX.",
+  },
+  {
+    icon: Leaf,
+    title: "Property & License Records",
+    description: "Property ownership, professional licenses, SEC insider trades, and government contracts.",
   },
   {
     icon: Globe,
-    title: "20 Databases — One Search",
-    description: "Property records, professional licenses, SEC insider trades, federal contracts, and more.",
+    title: "20+ Databases — One Search",
+    description: "Batch search up to 50 names, set email alerts for new records, and collaborate with your newsroom team.",
   },
 ];
 
@@ -64,7 +88,7 @@ const FeatureGrid = () => (
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {features.map(({ icon: Icon, title, description }) => (
           <div
             key={title}

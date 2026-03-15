@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
-import { Bell, BellOff, BellRing, Loader2 } from "lucide-react";
+import { Bell, BellOff, BellRing, Loader2, Lock } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTierGating } from "@/hooks/use-tier-gating";
 
 interface SearchAlertButtonProps {
   subjectName: string;
@@ -21,6 +23,8 @@ interface SearchAlertButtonProps {
 export default function SearchAlertButton({ subjectName, state }: SearchAlertButtonProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const gating = useTierGating();
+  const hasAlertAccess = gating.hasAccess("investigator");
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -87,6 +91,16 @@ export default function SearchAlertButton({ subjectName, state }: SearchAlertBut
     toast({ title: "Alert disabled", description: `Notifications for ${subjectName} have been turned off.` });
     setOpen(false);
   }, [alertId, subjectName, toast]);
+
+  if (!hasAlertAccess) {
+    return (
+      <Link to="/pricing">
+        <Button variant="outline" size="sm" className="gap-1.5 text-muted-foreground">
+          <Lock className="h-3.5 w-3.5" /> Alerts (Investigator+)
+        </Button>
+      </Link>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>

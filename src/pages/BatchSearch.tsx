@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Upload, FileText, Search, X, Loader2, Download, AlertCircle } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Upload, FileText, Search, X, Loader2, Download, AlertCircle, Lock } from "lucide-react";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { searchAll, type RecordResult, type SourceStatus } from "@/lib/recordsApi";
 import { sanitizeInput, isValidName } from "@/utils/validation";
+import { useTierGating } from "@/hooks/use-tier-gating";
 
 interface BatchEntry {
   name: string;
@@ -59,6 +60,8 @@ const BatchSearch = () => {
   const { user, subscribed } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const gating = useTierGating();
+  const hasBatchAccess = gating.hasAccess("investigator");
   const [entries, setEntries] = useState<BatchEntry[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [defaultState, setDefaultState] = useState("Florida");
@@ -184,6 +187,18 @@ const BatchSearch = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
+        {!hasBatchAccess ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <Lock className="h-10 w-10 text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-foreground">Batch Search requires Investigator plan</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-md">
+              Upgrade to the Investigator plan to search up to 50 names at once with CSV upload and export.
+            </p>
+            <Link to="/pricing">
+              <Button>View Plans</Button>
+            </Link>
+          </div>
+        ) : (
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Batch Search</h1>
@@ -309,6 +324,7 @@ const BatchSearch = () => {
             </div>
           )}
         </div>
+        )}
       </main>
       <Footer />
     </div>
