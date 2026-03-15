@@ -190,6 +190,18 @@ const BatchSearch = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
+        {!hasBatchAccess ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <Lock className="h-10 w-10 text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-foreground">Batch Search requires Investigator plan</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-md">
+              Upgrade to the Investigator plan to search up to 50 names at once with CSV upload and export.
+            </p>
+            <Link to="/pricing">
+              <Button>View Plans</Button>
+            </Link>
+          </div>
+        ) : (
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Batch Search</h1>
