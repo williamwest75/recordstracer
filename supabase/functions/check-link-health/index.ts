@@ -92,8 +92,8 @@ Deno.serve(async (req) => {
 
     console.log(`Checking ${sources.length} URLs...`);
 
-    // Process in batches of 10 to avoid overwhelming connections
-    const BATCH_SIZE = 10;
+    // Process in batches of 50 for high concurrency within the edge function timeout
+    const BATCH_SIZE = 50;
     const results: Array<SourceToCheck & { status_code: number | null; is_healthy: boolean; error_message: string | null; response_time_ms: number }> = [];
 
     for (let i = 0; i < sources.length; i += BATCH_SIZE) {
