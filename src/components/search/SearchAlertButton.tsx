@@ -23,6 +23,8 @@ interface SearchAlertButtonProps {
 export default function SearchAlertButton({ subjectName, state }: SearchAlertButtonProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const gating = useTierGating();
+  const hasAlertAccess = gating.hasAccess("investigator");
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
