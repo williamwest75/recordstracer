@@ -108,6 +108,17 @@ const Dashboard = () => {
 
   const createInvestigation = async () => {
     if (!newInvTitle.trim() || !user) return;
+
+    // Check investigation limit
+    if (investigations.length >= gating.investigationLimit) {
+      toast({
+        title: "Investigation limit reached",
+        description: `Your plan allows ${gating.investigationLimit} investigation${gating.investigationLimit !== 1 ? "s" : ""}. Upgrade for unlimited investigations.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase.from("investigations").insert({ title: newInvTitle.trim(), user_id: user.id });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
