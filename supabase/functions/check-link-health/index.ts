@@ -90,12 +90,20 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     // Accept sources list from the request body
-    const { sources } = (await req.json()) as { sources: SourceToCheck[] };
+    // If sources is empty/missing, this was triggered by cron — return early with instructions
+    let sources: SourceToCheck[] = [];
+    try {
+      const body = await req.json();
+      sources = body.sources ?? [];
+    } catch {
+      // No body (cron trigger) — we can't build source list in edge function
+      // The admin UI sends sources; cron should be set up to call via the admin UI or a separate script
+    }
 
-    if (!sources || !Array.isArray(sources) || sources.length === 0) {
+    if (!sources || sources.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No sources provided" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ message: "No sources provided. Use the admin UI to run a check, or POST sources in the body." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
