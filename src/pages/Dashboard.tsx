@@ -453,6 +453,8 @@ const Dashboard = () => {
                     savedResults={savedResults[inv.id] || []}
                     onDelete={deleteInvestigation}
                     onDeleteResult={deleteSavedResult}
+                    canExport={gating.canExport}
+                    canShare={gating.canShare}
                   />
                 ))}
               </div>
