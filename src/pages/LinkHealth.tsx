@@ -119,7 +119,7 @@ export default function LinkHealth() {
           </div>
           <Button onClick={runCheck} disabled={running} className="gap-2">
             {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            {running ? "Checking..." : "Run Check Now"}
+            {running ? (progress || "Checking...") : "Run Check Now"}
           </Button>
         </div>
 
