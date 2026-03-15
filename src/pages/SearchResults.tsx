@@ -72,7 +72,7 @@ const SearchResults = () => {
   // Check search limit on mount
   useEffect(() => {
     if (!user) return;
-    supabase.rpc("get_search_usage", { p_user_id: user.id }).then(({ data }) => {
+    (supabase.rpc as any)("get_search_usage", { p_user_id: user.id }).then(({ data }: any) => {
       if (data !== null && gating.searchLimit !== Infinity && data >= gating.searchLimit) {
         setSearchLimitReached(true);
       }

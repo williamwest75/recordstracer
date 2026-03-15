@@ -82,7 +82,7 @@ const Dashboard = () => {
   const loadSearchUsage = async () => {
     if (!user) return;
     try {
-      const { data } = await supabase.rpc("get_search_usage", { p_user_id: user.id });
+      const { data } = await (supabase.rpc as any)("get_search_usage", { p_user_id: user.id });
       setSearchUsage(data ?? 0);
     } catch { /* ignore */ }
   };

@@ -1034,7 +1034,7 @@ export async function searchAll(
   try {
     const { data: session } = await supabase.auth.getSession();
     if (session?.session?.user?.id) {
-      const { data: newCount, error: usageError } = await supabase.rpc("increment_search_usage", {
+      const { data: newCount, error: usageError } = await (supabase.rpc as any)("increment_search_usage", {
         p_user_id: session.session.user.id,
       });
       if (!usageError && newCount !== null) {
