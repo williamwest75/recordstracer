@@ -15,13 +15,22 @@ const ResetPassword = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check hash fragment for recovery token
     const hash = window.location.hash;
     if (hash && hash.includes("type=recovery")) {
       setIsRecovery(true);
     }
 
+    // Listen for PASSWORD_RECOVERY event
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
+        setIsRecovery(true);
+      }
+    });
+
+    // Also check if there's already an active session (recovery link auto-signs in)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && hash.includes("type=recovery")) {
         setIsRecovery(true);
       }
     });
