@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Upload, FileText, Search, X, Loader2, Download, AlertCircle } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Upload, FileText, Search, X, Loader2, Download, AlertCircle, Lock } from "lucide-react";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import { Button } from "@/components/ui/button";
