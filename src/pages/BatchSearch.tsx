@@ -19,7 +19,6 @@ import { sanitizeInput, isValidName } from "@/utils/validation";
 import { useTierGating } from "@/hooks/use-tier-gating";
 import { Link } from "react-router-dom";
 import { Lock } from "lucide-react";
-import { sanitizeInput, isValidName } from "@/utils/validation";
 
 interface BatchEntry {
   name: string;
