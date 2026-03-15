@@ -57,6 +57,7 @@ const App = () => (
             <Route path="/batch-search" element={<BatchSearch />} />
             <Route path="/coverage" element={<StateCoverage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/admin/link-health" element={<LinkHealth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
