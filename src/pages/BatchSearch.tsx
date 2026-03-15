@@ -327,6 +327,7 @@ const BatchSearch = () => {
             </div>
           )}
         </div>
+        )}
       </main>
       <Footer />
     </div>
