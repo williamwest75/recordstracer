@@ -106,6 +106,51 @@ export type Database = {
         }
         Relationships: []
       }
+      link_health: {
+        Row: {
+          category: string
+          checked_at: string
+          created_at: string
+          error_message: string | null
+          id: string
+          is_healthy: boolean
+          response_time_ms: number | null
+          source_id: string
+          source_name: string
+          state_code: string
+          status_code: number | null
+          url: string
+        }
+        Insert: {
+          category: string
+          checked_at?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_healthy?: boolean
+          response_time_ms?: number | null
+          source_id: string
+          source_name: string
+          state_code: string
+          status_code?: number | null
+          url: string
+        }
+        Update: {
+          category?: string
+          checked_at?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_healthy?: boolean
+          response_time_ms?: number | null
+          source_id?: string
+          source_name?: string
+          state_code?: string
+          status_code?: number | null
+          url?: string
+        }
+        Relationships: []
+      }
       news_posts: {
         Row: {
           content: string
