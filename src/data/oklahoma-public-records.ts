@@ -11,7 +11,7 @@ export const OK_STATEWIDE_SOURCES: RecordSource[] = [
 
 export const OK_LICENSE_SOURCES: RecordSource[] = [
   { id: "ok_medical", name: "Medical License Verification", agency: "OK Medical Board", description: "Physicians licensed in Oklahoma", searchUrl: "https://www.okmedicalboard.org/search", icon: "Stethoscope" },
-  { id: "ok_bar", name: "Attorney Search", agency: "OK Bar Association", description: "Licensed attorneys in Oklahoma", searchUrl: "https://www.okbar.org/freelegalinfo/findanattorney/", icon: "Scale" },
+  { id: "ok_bar", name: "Attorney Search", agency: "OK Bar Association", description: "Licensed attorneys in Oklahoma", searchUrl: "https://www.okbar.org/public/findanattorney/", icon: "Scale" },
 ];
 
 export const OK_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
@@ -22,6 +22,6 @@ export const OK_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "Oklahoma", label: "Oklahoma County Assessor", url: "https://assessor.oklahomacounty.org/" },
   { county: "Tulsa", label: "Tulsa County Assessor", url: "https://assessor.tulsacounty.org/" },
   { county: "Cleveland", label: "Cleveland County Assessor", url: "https://www.clevelandcountyassessor.us/" },
-  { county: "Canadian", label: "Canadian County Assessor", url: "https://www.canadiancounty.us/assessor/" },
-  { county: "Comanche", label: "Comanche County Assessor", url: "https://www.comanchecountyok.us/assessor" },
+  { county: "Canadian", label: "Canadian County Assessor", url: "https://www.canadiancountyok.gov/assessor/" },
+  { county: "Comanche", label: "Comanche County Assessor", url: "https://www.comanchecounty.org/assessor" },
 ];

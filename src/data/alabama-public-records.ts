@@ -3,15 +3,15 @@ import type { RecordSource, CountyPropertySource } from "@/data/florida-public-r
 export const AL_STATEWIDE_SOURCES: RecordSource[] = [
   { id: "al_sos_corps", name: "Business Entity Search", agency: "AL Secretary of State", description: "Corporations, LLCs, LPs, and trade names", searchUrl: "", icon: "Building2", deepLinkable: true, urlTemplate: "https://arc-sos.state.al.us/CGI/CORPNAME.MBR/INPUT?ESSION=${name}" },
   { id: "al_courts", name: "Court Case Search (Alacourt)", agency: "AL Administrative Office of Courts", description: "Civil, criminal, traffic, and domestic court records", searchUrl: "https://pa.alacourt.com/", icon: "Gavel" },
-  { id: "al_doc", name: "Inmate Search", agency: "AL DOC", description: "Current inmates in Alabama state prisons", searchUrl: "http://www.doc.state.al.us/InmateSearch", icon: "ShieldAlert" },
-  { id: "al_sex_offenders", name: "Sex Offender Registry", agency: "AL ALEA", description: "Registered sex offenders in Alabama", searchUrl: "https://community.alabamaleo.gov/", icon: "AlertTriangle" },
+  { id: "al_doc", name: "Inmate Search", agency: "AL DOC", description: "Current inmates in Alabama state prisons", searchUrl: "https://doc.alabama.gov/inmates/search", icon: "ShieldAlert" },
+  { id: "al_sex_offenders", name: "Sex Offender Registry", agency: "AL ALEA", description: "Registered sex offenders in Alabama", searchUrl: "https://app.alea.gov/Community/wfSearch.aspx", icon: "AlertTriangle" },
   { id: "al_voter", name: "Voter Registration", agency: "AL Secretary of State", description: "Voter registration status lookup", searchUrl: "https://myinfo.alabamavotes.gov/voterview", icon: "Vote" },
   { id: "al_ucc", name: "UCC Filings", agency: "AL Secretary of State", description: "Uniform Commercial Code financing statements", searchUrl: "https://www.sos.alabama.gov/government-records/ucc", icon: "FileText" },
 ];
 
 export const AL_LICENSE_SOURCES: RecordSource[] = [
-  { id: "al_medical", name: "Medical License Verification", agency: "AL Board of Medical Examiners", description: "Physicians licensed in Alabama", searchUrl: "https://www.albme.org/look-up-a-doctor/", icon: "Stethoscope" },
-  { id: "al_bar", name: "Attorney Search", agency: "AL State Bar", description: "Licensed attorneys in Alabama", searchUrl: "https://www.alabar.org/find-a-member/", icon: "Scale" },
+  { id: "al_medical", name: "Medical License Verification", agency: "AL Board of Medical Examiners", description: "Physicians licensed in Alabama", searchUrl: "https://www.albme.org/licensing/licensee-lookup/", icon: "Stethoscope" },
+  { id: "al_bar", name: "Attorney Search", agency: "AL State Bar", description: "Licensed attorneys in Alabama", searchUrl: "https://www.alabar.org/public-resources/find-an-attorney/", icon: "Scale" },
 ];
 
 export const AL_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [

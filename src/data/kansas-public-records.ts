@@ -11,7 +11,7 @@ export const KS_STATEWIDE_SOURCES: RecordSource[] = [
 
 export const KS_LICENSE_SOURCES: RecordSource[] = [
   { id: "ks_ksbha", name: "Medical License Verification", agency: "KS Board of Healing Arts", description: "Physicians and other medical licenses", searchUrl: "https://www.ksbha.org/verify.shtml", icon: "Stethoscope" },
-  { id: "ks_bar", name: "Attorney Search", agency: "KS Judicial Branch", description: "Licensed attorneys in Kansas", searchUrl: "https://www.kscourts.org/Attorneys-and-Judges/Attorney-Directory", icon: "Scale" },
+  { id: "ks_bar", name: "Attorney Search", agency: "KS Judicial Branch", description: "Licensed attorneys in Kansas", searchUrl: "https://www.kscourts.org/for-legal-professionals/attorney-registration/attorney-directory/", icon: "Scale" },
 ];
 
 export const KS_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
@@ -19,9 +19,9 @@ export const KS_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 ];
 
 export const KS_PROPERTY_SOURCES: CountyPropertySource[] = [
-  { county: "Johnson", label: "Johnson County Appraiser", url: "https://www.jocogov.org/dept/appraiser/search-property-information" },
+  { county: "Johnson", label: "Johnson County Appraiser", url: "https://www.jocogov.org/department/appraiser/property-search" },
   { county: "Sedgwick", label: "Sedgwick County Appraiser", url: "https://www.sedgwickcounty.org/appraiser/" },
-  { county: "Shawnee", label: "Shawnee County Appraiser", url: "https://www.snco.us/appraiser/" },
+  { county: "Shawnee", label: "Shawnee County Appraiser", url: "https://www.snco.us/government/appraiser/" },
   { county: "Douglas", label: "Douglas County Appraiser", url: "https://www.douglascountyks.org/depts/appraiser" },
-  { county: "Wyandotte", label: "Wyandotte County", url: "https://www.wycokck.org/Departments/Appraiser" },
+  { county: "Wyandotte", label: "Wyandotte County", url: "https://www.wycokck.org/government/appraiser" },
 ];

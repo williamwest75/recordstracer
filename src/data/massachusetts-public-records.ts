@@ -24,7 +24,7 @@ export const MA_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Inmate Search",
     agency: "MA DOC",
     description: "Current inmates in Massachusetts state prisons",
-    searchUrl: "https://www.mass.gov/find-an-inmate",
+    searchUrl: "https://www.mass.gov/how-to/find-an-inmate",
     icon: "ShieldAlert",
   },
   {
@@ -32,7 +32,7 @@ export const MA_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Sex Offender Registry",
     agency: "MA SORB",
     description: "Registered sex offenders in Massachusetts",
-    searchUrl: "https://www.mass.gov/check-a-sex-offender",
+    searchUrl: "https://www.mass.gov/how-to/check-a-sex-offender",
     icon: "AlertTriangle",
   },
   {
@@ -48,7 +48,7 @@ export const MA_STATEWIDE_SOURCES: RecordSource[] = [
     name: "UCC Filings",
     agency: "MA Secretary of the Commonwealth",
     description: "Uniform Commercial Code financing statements",
-    searchUrl: "https://corp.sec.state.ma.us/UCCSearch/UCCSearch.aspx",
+    searchUrl: "https://corp.sec.state.ma.us/CorpWeb/CorpSearch/CorpSearch.aspx",
     icon: "FileText",
   },
 ];
@@ -67,7 +67,7 @@ export const MA_LICENSE_SOURCES: RecordSource[] = [
     name: "Attorney Search",
     agency: "MA Board of Bar Overseers",
     description: "Licensed attorneys in Massachusetts",
-    searchUrl: "https://www.massbbo.org/AttorneySearch",
+    searchUrl: "https://massbbo.org/bboPublic/FindAttorney.aspx",
     icon: "Scale",
   },
   {
@@ -100,7 +100,7 @@ export const MA_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 ];
 
 export const MA_PROPERTY_SOURCES: CountyPropertySource[] = [
-  { county: "Suffolk (Boston)", label: "City of Boston", url: "https://www.boston.gov/departments/assessing/property-assessment" },
+  { county: "Suffolk (Boston)", label: "City of Boston", url: "https://www.boston.gov/departments/assessing" },
   { county: "Middlesex", label: "Middlesex Registry", url: "https://www.middlesexsouthregistry.com/" },
   { county: "Worcester", label: "Worcester Registry", url: "https://www.worcesterdeeds.com/" },
   { county: "Essex", label: "Essex Registry", url: "https://www.salemdeeds.com/" },

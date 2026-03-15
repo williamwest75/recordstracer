@@ -48,7 +48,7 @@ export const KY_STATEWIDE_SOURCES: RecordSource[] = [
     name: "UCC Filings",
     agency: "KY Secretary of State",
     description: "Uniform Commercial Code financing statements",
-    searchUrl: "https://web.sos.ky.gov/uccsearch/",
+    searchUrl: "https://web.sos.ky.gov/ucc/",
     icon: "FileText",
   },
 ];
@@ -67,7 +67,7 @@ export const KY_LICENSE_SOURCES: RecordSource[] = [
     name: "Attorney Search",
     agency: "KY Bar Association",
     description: "Licensed attorneys in Kentucky",
-    searchUrl: "https://www.kybar.org/search/custom.asp?id=2948",
+    searchUrl: "https://www.kybar.org/public/find-a-lawyer",
     icon: "Scale",
   },
 ];
@@ -95,7 +95,7 @@ export const KY_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "Jefferson", label: "Jefferson County PVA", url: "https://jeffersonpva.ky.gov/" },
   { county: "Fayette", label: "Fayette County PVA", url: "https://fayettepva.com/" },
   { county: "Kenton", label: "Kenton County PVA", url: "https://www.kentoncounty.org/167/Property-Valuation" },
-  { county: "Boone", label: "Boone County PVA", url: "https://www.boonecountypva.com/" },
+  { county: "Boone", label: "Boone County PVA", url: "https://pva.boone.ky.gov/" },
   { county: "Warren", label: "Warren County PVA", url: "https://warrencountypva.com/" },
   { county: "Hardin", label: "Hardin County PVA", url: "https://www.hardincountypva.com/" },
 ];

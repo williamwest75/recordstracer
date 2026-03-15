@@ -10,8 +10,8 @@ export const WA_STATEWIDE_SOURCES: RecordSource[] = [
 ];
 
 export const WA_LICENSE_SOURCES: RecordSource[] = [
-  { id: "wa_dol", name: "Professional License Lookup", agency: "WA Dept. of Licensing", description: "Various professional and business licenses", searchUrl: "https://fortress.wa.gov/dol/dolprod/bpdLicenseQuery.asp", icon: "Briefcase" },
-  { id: "wa_bar", name: "Attorney Search", agency: "WA State Bar Association", description: "Licensed attorneys in Washington", searchUrl: "https://www.mywsba.org/LawyerDirectory/LawyerDirectorySimpleSearch.aspx", icon: "Scale" },
+  { id: "wa_dol", name: "Professional License Lookup", agency: "WA Dept. of Licensing", description: "Various professional and business licenses", searchUrl: "https://www.dol.wa.gov/professional-licenses/verify-a-license", icon: "Briefcase" },
+  { id: "wa_bar", name: "Attorney Search", agency: "WA State Bar Association", description: "Licensed attorneys in Washington", searchUrl: "https://www.mywsba.org/for-the-public/find-a-lawyer/", icon: "Scale" },
 ];
 
 export const WA_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
@@ -20,11 +20,11 @@ export const WA_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 
 export const WA_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "King", label: "King County Assessor", url: "https://blue.kingcounty.com/Assessor/eRealProperty/default.aspx" },
-  { county: "Pierce", label: "Pierce County Assessor", url: "https://www.piercecountywa.gov/140/Assessor-Treasurer" },
-  { county: "Snohomish", label: "Snohomish County Assessor", url: "https://snohomishcountywa.gov/249/Assessor" },
-  { county: "Spokane", label: "Spokane County Assessor", url: "https://www.spokanecounty.org/188/Assessor" },
+  { county: "Pierce", label: "Pierce County Assessor", url: "https://www.piercecountywa.gov/assessortreasurer" },
+  { county: "Snohomish", label: "Snohomish County Assessor", url: "https://snohomishcountywa.gov/1342/Property-Search" },
+  { county: "Spokane", label: "Spokane County Assessor", url: "https://www.spokanecounty.org/assessor" },
   { county: "Clark", label: "Clark County Assessor", url: "https://www.clark.wa.gov/assessor" },
   { county: "Thurston", label: "Thurston County Assessor", url: "https://www.thurstoncountywa.gov/departments/assessor" },
   { county: "Kitsap", label: "Kitsap County Assessor", url: "https://www.kitsapgov.com/assessor/" },
-  { county: "Whatcom", label: "Whatcom County Assessor", url: "https://www.whatcomcounty.us/474/Assessor" },
+  { county: "Whatcom", label: "Whatcom County Assessor", url: "https://www.whatcomcounty.us/assessor" },
 ];

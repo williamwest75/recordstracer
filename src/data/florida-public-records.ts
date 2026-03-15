@@ -150,7 +150,7 @@ export const FEDERAL_RECORD_SOURCES: RecordSource[] = [
     name: "IRS Tax Exempt Organizations",
     agency: "Internal Revenue Service",
     description: "Nonprofit 990 filings & tax-exempt status",
-    searchUrl: "https://apps.irs.gov/app/eos/",
+    searchUrl: "https://www.irs.gov/charities-non-profits/tax-exempt-organization-search",
     icon: "FileText",
     deepLinkable: false,
   },
@@ -188,7 +188,7 @@ export const STATEWIDE_SOURCES: RecordSource[] = [
     name: "Inmate / Offender Search",
     agency: "FL Dept. of Corrections",
     description: "Current and released inmates",
-    searchUrl: "http://www.dc.state.fl.us/offenderSearch/",
+    searchUrl: "https://fdc.myflorida.com/offenders/offenderSearch.aspx",
     icon: "ShieldAlert",
   },
   {
@@ -204,7 +204,7 @@ export const STATEWIDE_SOURCES: RecordSource[] = [
     name: "Voter Registration Lookup",
     agency: "FL Division of Elections",
     description: "Voter registration status and history",
-    searchUrl: "https://registration.elections.myflorida.com/en/CheckVoterStatus/Index",
+    searchUrl: "https://registration.elections.myflorida.com/CheckVoterStatus",
     icon: "Vote",
   },
   {
@@ -219,7 +219,7 @@ export const STATEWIDE_SOURCES: RecordSource[] = [
 
 // ── County Property Appraiser Links ──
 export const COUNTY_PROPERTY_SOURCES: CountyPropertySource[] = [
-  { county: "Miami-Dade", label: "Miami-Dade Property Appraiser", url: "https://www.miamidade.gov/pa/property-search.asp" },
+  { county: "Miami-Dade", label: "Miami-Dade Property Appraiser", url: "https://www.miamidade.gov/pa/property_search.asp" },
   { county: "Broward", label: "Broward County Property Appraiser", url: "https://web.bcpa.net/BcpaClient/" },
   { county: "Palm Beach", label: "Palm Beach County Property Appraiser", url: "https://www.pbcgov.org/papa/" },
   { county: "Orange", label: "Orange County Property Appraiser", url: "https://www.ocpafl.org/Searches/ParcelSearch.aspx" },
@@ -249,9 +249,9 @@ export const COUNTY_PROPERTY_SOURCES: CountyPropertySource[] = [
 
 // ── County Clerk of Court / Official Records ──
 export const COUNTY_CLERK_SOURCES: CountyPropertySource[] = [
-  { county: "Miami-Dade", label: "Miami-Dade Clerk Official Records", url: "https://www2.miami-dadeclerk.com/officialrecords/StandardSearch.aspx" },
+  { county: "Miami-Dade", label: "Miami-Dade Clerk Official Records", url: "https://onlineservices.miami-dadeclerk.com/officialrecords/StandardSearch.aspx" },
   { county: "Broward", label: "Broward Clerk Official Records", url: "https://recordsearch.browardclerk.org/AcclaimWeb/search/SearchTypeDocType" },
-  { county: "Palm Beach", label: "Palm Beach Clerk Official Records", url: "https://oris.co.palm-beach.fl.us/or_web1/new_sch.asp" },
+  { county: "Palm Beach", label: "Palm Beach Clerk Official Records", url: "https://www.mypalmbeachclerk.com/official-records" },
   { county: "Orange", label: "Orange County Comptroller Official Records", url: "https://or.occompt.com/" },
   { county: "Hillsborough", label: "Hillsborough Clerk Official Records", url: "https://pubrec6.hillsclerk.com/ORIPublicAccess/" },
   { county: "Duval", label: "Duval County Clerk Official Records", url: "https://core.duvalclerk.com/CoreCms.aspx" },

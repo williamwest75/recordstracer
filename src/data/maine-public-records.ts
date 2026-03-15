@@ -16,7 +16,7 @@ export const ME_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Court Case Search",
     agency: "ME Judicial Branch",
     description: "Civil, criminal, and family court records",
-    searchUrl: "https://portal.courts.maine.gov/",
+    searchUrl: "https://www.courts.maine.gov/",
     icon: "Gavel",
   },
   {
@@ -24,7 +24,7 @@ export const ME_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Inmate Search",
     agency: "ME DOC",
     description: "Current inmates in Maine state facilities",
-    searchUrl: "https://www.maine.gov/corrections/home/inmate-search",
+    searchUrl: "https://www.maine.gov/corrections/offender-info/search",
     icon: "ShieldAlert",
   },
   {
@@ -40,7 +40,7 @@ export const ME_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Voter Registration",
     agency: "ME Secretary of State",
     description: "Voter registration status lookup",
-    searchUrl: "https://www.maine.gov/sos/cec/elec/voter-info/voterregcheck.html",
+    searchUrl: "https://www.maine.gov/sos/cec/elec/voter-info/index.html",
     icon: "Vote",
   },
   {
@@ -48,7 +48,7 @@ export const ME_STATEWIDE_SOURCES: RecordSource[] = [
     name: "UCC Filings",
     agency: "ME Secretary of State",
     description: "Uniform Commercial Code financing statements",
-    searchUrl: "https://icrs.informe.org/nei-sos-icrs/ICRS?MainPage=x&Command=SEARCH&SearchType=ucc",
+    searchUrl: "https://www.maine.gov/sos/corp/uccsearch.html",
     icon: "FileText",
   },
 ];
@@ -67,7 +67,7 @@ export const ME_LICENSE_SOURCES: RecordSource[] = [
     name: "Attorney Search",
     agency: "ME Board of Overseers of the Bar",
     description: "Licensed attorneys in Maine",
-    searchUrl: "https://www.mebaroverseers.org/attorney_services/bar_directory.html",
+    searchUrl: "https://www.mebaroverseers.org/attorney_services/",
     icon: "Scale",
   },
 ];
@@ -92,9 +92,9 @@ export const ME_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 ];
 
 export const ME_PROPERTY_SOURCES: CountyPropertySource[] = [
-  { county: "Cumberland", label: "Cumberland County", url: "https://me-cumberland-assessor.publicaccessnow.com/" },
-  { county: "York", label: "York County", url: "https://www.yorkcountyme.gov/departments/registry_of_deeds/index.php" },
-  { county: "Penobscot", label: "Penobscot County", url: "https://www.penobscot-county.net/deeds" },
+  { county: "Cumberland", label: "Cumberland County", url: "https://gis.cumberlandcounty.org/assessor/" },
+  { county: "York", label: "York County", url: "https://www.yorkcountymaine.gov/register-of-deeds" },
+  { county: "Penobscot", label: "Penobscot County", url: "https://www.penobscotcounty.net/registry-of-deeds" },
   { county: "Kennebec", label: "Kennebec County", url: "https://www.kennebeccounty.org/deeds" },
-  { county: "Androscoggin", label: "Androscoggin County", url: "https://www.androscoggincountymaine.gov/departments/registry-of-deeds/" },
+  { county: "Androscoggin", label: "Androscoggin County", url: "https://www.androscoggincounty.me/registry-of-deeds" },
 ];

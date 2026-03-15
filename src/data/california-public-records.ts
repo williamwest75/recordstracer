@@ -16,7 +16,7 @@ export const CA_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Court Case Search",
     agency: "CA Courts",
     description: "Superior court case information across California",
-    searchUrl: "https://www.courts.ca.gov/find-a-court.htm",
+    searchUrl: "https://www.courts.ca.gov/find-my-court.htm",
     icon: "Gavel",
   },
   {
@@ -40,7 +40,7 @@ export const CA_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Voter Registration",
     agency: "CA Secretary of State",
     description: "Voter registration status verification",
-    searchUrl: "https://voterstatus.sos.ca.gov/",
+    searchUrl: "https://www.sos.ca.gov/elections/voter-registration/check-voter-registration",
     icon: "Vote",
   },
   {
@@ -103,11 +103,11 @@ export const CA_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 
 export const CA_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "Los Angeles", label: "LA County Assessor", url: "https://portal.assessor.lacounty.gov/" },
-  { county: "San Diego", label: "San Diego Assessor", url: "https://arcc-services.sdcounty.ca.gov/assessor/asmtinquiry/" },
+  { county: "San Diego", label: "San Diego Assessor", url: "https://www.sandiegocounty.gov/content/sdc/assessor.html" },
   { county: "Orange", label: "OC Assessor", url: "https://www.ocgov.com/assessor" },
   { county: "San Francisco", label: "SF Assessor-Recorder", url: "https://sfassessor.org/" },
   { county: "Santa Clara", label: "Santa Clara Assessor", url: "https://www.sccassessor.org/" },
   { county: "Alameda", label: "Alameda Assessor", url: "https://www.acassessor.org/" },
   { county: "Sacramento", label: "Sacramento Assessor", url: "https://www.assessor.saccounty.gov/" },
-  { county: "Riverside", label: "Riverside Assessor", url: "https://www.rivcoassessor.org/" },
+  { county: "Riverside", label: "Riverside Assessor", url: "https://www.countyofriverside.us/government/assessor" },
 ];

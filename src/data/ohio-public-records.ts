@@ -16,7 +16,7 @@ export const OH_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Court Case Search",
     agency: "OH Supreme Court",
     description: "Statewide case information via Ohio Courts Network",
-    searchUrl: "https://www.supremecourt.ohio.gov/JudSystem/OhioCourts/",
+    searchUrl: "https://www.supremecourt.ohio.gov/courts/",
     icon: "Gavel",
   },
   {
@@ -48,7 +48,7 @@ export const OH_STATEWIDE_SOURCES: RecordSource[] = [
     name: "UCC Filings",
     agency: "OH Secretary of State",
     description: "Uniform Commercial Code financing statements",
-    searchUrl: "https://www5.sos.state.oh.us/ords/f?p=UCC:SEARCH",
+    searchUrl: "https://www.ohiosos.gov/businesses/ucc-filing/ucc-search/",
     icon: "FileText",
   },
 ];
@@ -67,7 +67,7 @@ export const OH_LICENSE_SOURCES: RecordSource[] = [
     name: "Attorney Search",
     agency: "OH Supreme Court",
     description: "Licensed attorneys in Ohio",
-    searchUrl: "https://www.supremecourt.ohio.gov/AttySvcs/AttyReg/Public_Attorney_Search.aspx",
+    searchUrl: "https://www.supremecourt.ohio.gov/attorneys/attySearch/",
     icon: "Scale",
   },
 ];
@@ -86,7 +86,7 @@ export const OH_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
     name: "OH Lobbyist Search",
     agency: "Joint Legislative Ethics Committee",
     description: "Registered lobbyists and their employers",
-    searchUrl: "https://www.jlec-olig.state.oh.us/olac/Reports/AgentSearch.aspx",
+    searchUrl: "https://jlec.ohio.gov/wps/portal/gov/jlec/Lobbying",
     icon: "Building2",
   },
 ];
@@ -97,7 +97,7 @@ export const OH_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "Hamilton", label: "Hamilton County Auditor", url: "https://wedge1.hcauditor.org/" },
   { county: "Summit", label: "Summit County Fiscal Office", url: "https://fiscaloffice.summitoh.net/real-property-search/" },
   { county: "Montgomery", label: "Montgomery County Auditor", url: "https://www.mcrealestate.org/" },
-  { county: "Lucas", label: "Lucas County Auditor", url: "https://www.co.lucas.oh.us/auditor/" },
+  { county: "Lucas", label: "Lucas County Auditor", url: "https://lucascountyauditor.com/property-search/" },
   { county: "Stark", label: "Stark County Auditor", url: "https://www.starkcountyohio.gov/auditor" },
   { county: "Butler", label: "Butler County Auditor", url: "https://www.butlercountyauditor.org/" },
 ];

@@ -34,7 +34,7 @@ export const WI_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Sex Offender Registry",
     agency: "WI DOC",
     description: "Registered sex offenders in Wisconsin",
-    searchUrl: "https://appsdoc.wi.gov/sexoffender/",
+    searchUrl: "https://sexoffender.wi.gov/",
     icon: "AlertTriangle",
   },
   {
@@ -50,7 +50,7 @@ export const WI_STATEWIDE_SOURCES: RecordSource[] = [
     name: "UCC Filings",
     agency: "WI DFI",
     description: "Uniform Commercial Code financing statements",
-    searchUrl: "https://www.wdfi.org/ucc/search/",
+    searchUrl: "https://www.wdfi.org/fi/securities/ucc/",
     icon: "FileText",
   },
 ];
@@ -69,7 +69,7 @@ export const WI_LICENSE_SOURCES: RecordSource[] = [
     name: "Attorney Search",
     agency: "State Bar of Wisconsin",
     description: "Licensed attorneys in Wisconsin",
-    searchUrl: "https://www.wisbar.org/forPublic/FindALawyer/Pages/Find-a-Lawyer.aspx",
+    searchUrl: "https://www.wisbar.org/public/find-a-lawyer",
     icon: "Scale",
   },
 ];
@@ -94,10 +94,10 @@ export const WI_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 ];
 
 export const WI_PROPERTY_SOURCES: CountyPropertySource[] = [
-  { county: "Milwaukee", label: "Milwaukee County", url: "https://www.mclio.org/" },
+  { county: "Milwaukee", label: "Milwaukee County", url: "https://assessments.milwaukee.gov/" },
   { county: "Dane", label: "Dane County", url: "https://accessdane.countyofdane.com/" },
-  { county: "Waukesha", label: "Waukesha County", url: "https://www.waukeshacounty.gov/landandparks/real-property-listing/" },
+  { county: "Waukesha", label: "Waukesha County", url: "https://www.waukeshacounty.gov/assessor/real-property-listing/" },
   { county: "Brown", label: "Brown County", url: "https://www.browncountywi.gov/departments/land-information-office/" },
-  { county: "Racine", label: "Racine County", url: "https://www.racinecounty.com/government/real-property-lister" },
-  { county: "Outagamie", label: "Outagamie County", url: "https://tax.outagamie.org/" },
+  { county: "Racine", label: "Racine County", url: "https://www.racinecounty.com/real-property-lister" },
+  { county: "Outagamie", label: "Outagamie County", url: "https://www.outagamiecounty.net/departments/landrecords/" },
 ];

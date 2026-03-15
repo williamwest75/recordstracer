@@ -78,7 +78,7 @@ export const MI_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
     name: "MI Campaign Finance",
     agency: "MI Secretary of State",
     description: "Campaign contributions and expenditure reports",
-    searchUrl: "https://cfrs.sos.state.mi.us/sos/campaign/",
+    searchUrl: "https://www.michigan.gov/sos/elections/disclosure/cfr",
     icon: "Vote",
   },
   {
@@ -94,10 +94,10 @@ export const MI_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 export const MI_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "Wayne", label: "Wayne County", url: "https://www.waynecounty.com/elected/treasurer/property-search.aspx" },
   { county: "Oakland", label: "Oakland County", url: "https://www.oakgov.com/advantageoakland/property" },
-  { county: "Macomb", label: "Macomb County", url: "https://gis.macombgov.org/propertysearch/" },
+  { county: "Macomb", label: "Macomb County", url: "https://macombgis.macombgov.org/macombpropertysearch/" },
   { county: "Kent", label: "Kent County", url: "https://www.accesskent.com/Property/" },
   { county: "Washtenaw", label: "Washtenaw County", url: "https://www.ewashtenaw.org/government/departments/equalization/online-property-search" },
-  { county: "Genesee", label: "Genesee County", url: "https://www.gc4me.com/online_services/equalization/parcel_search.php" },
+  { county: "Genesee", label: "Genesee County", url: "https://www.geneseecounty.gov/departments/equalization/parcel-search" },
   { county: "Ingham", label: "Ingham County", url: "https://eq.ingham.org/" },
   { county: "Kalamazoo", label: "Kalamazoo County", url: "https://www.kalcounty.com/equalization/" },
 ];

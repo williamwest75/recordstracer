@@ -20,9 +20,9 @@ export const OR_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 
 export const OR_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "Multnomah", label: "Multnomah County", url: "https://multcoproptax.com/" },
-  { county: "Washington", label: "Washington County", url: "https://www.washingtoncountyor.gov/at/property-assessment-taxation" },
+  { county: "Washington", label: "Washington County", url: "https://www.washingtoncountyor.gov/at/property-search" },
   { county: "Clackamas", label: "Clackamas County", url: "https://www.clackamas.us/at/" },
-  { county: "Lane", label: "Lane County", url: "https://www.lanecounty.org/government/county_departments/assessment_and_taxation" },
+  { county: "Lane", label: "Lane County", url: "https://www.lanecounty.org/departments/assessment-taxation" },
   { county: "Marion", label: "Marion County", url: "https://www.co.marion.or.us/AO" },
   { county: "Jackson", label: "Jackson County", url: "https://www.jacksoncountyor.gov/assessor" },
 ];
