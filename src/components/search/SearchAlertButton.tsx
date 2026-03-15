@@ -92,6 +92,16 @@ export default function SearchAlertButton({ subjectName, state }: SearchAlertBut
     setOpen(false);
   }, [alertId, subjectName, toast]);
 
+  if (!hasAlertAccess) {
+    return (
+      <Link to="/pricing">
+        <Button variant="outline" size="sm" className="gap-1.5 text-muted-foreground">
+          <Lock className="h-3.5 w-3.5" /> Alerts (Investigator+)
+        </Button>
+      </Link>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
