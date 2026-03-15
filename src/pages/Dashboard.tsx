@@ -35,8 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 import InvestigationCard from "@/components/dashboard/InvestigationCard";
 import TrackedRequests from "@/components/dashboard/TrackedRequests";
-import { useTierGating, SEARCH_LIMITS } from "@/hooks/use-tier-gating";
-import { supabase as supabaseClient } from "@/integrations/supabase/client";
+import { useTierGating } from "@/hooks/use-tier-gating";
 
 const Dashboard = () => {
   const { user } = useAuth();
