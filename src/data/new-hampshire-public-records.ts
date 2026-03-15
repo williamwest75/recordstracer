@@ -16,7 +16,7 @@ export const NH_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Court Case Search",
     agency: "NH Judicial Branch",
     description: "Civil, criminal, and family court records",
-    searchUrl: "https://www.courts.nh.gov/resources/case-information",
+    searchUrl: "https://www.courts.nh.gov/our-courts/supreme-court/case-lookup",
     icon: "Gavel",
   },
   {
@@ -24,7 +24,7 @@ export const NH_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Inmate Search",
     agency: "NH DOC",
     description: "Current inmates in New Hampshire facilities",
-    searchUrl: "https://www.nh.gov/nhdoc/divisions/field/inmate_locator.html",
+    searchUrl: "https://www.nh.gov/nhdoc/search/",
     icon: "ShieldAlert",
   },
   {
@@ -48,7 +48,7 @@ export const NH_STATEWIDE_SOURCES: RecordSource[] = [
     name: "UCC Filings",
     agency: "NH Secretary of State",
     description: "Uniform Commercial Code financing statements",
-    searchUrl: "https://quickstart.sos.nh.gov/online/UCCInquire/Search",
+    searchUrl: "https://quickstart.sos.nh.gov/online/Account/LandingPage",
     icon: "FileText",
   },
 ];
@@ -94,7 +94,7 @@ export const NH_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 export const NH_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "Hillsborough", label: "Hillsborough County", url: "https://nhdeeds.com/" },
   { county: "Rockingham", label: "Rockingham County", url: "https://www.nhdeeds.org/" },
-  { county: "Merrimack", label: "Merrimack County", url: "https://www.merrimackcountynh.gov/departments/registry-of-deeds/" },
-  { county: "Strafford", label: "Strafford County", url: "https://co.strafford.nh.us/registry-of-deeds" },
-  { county: "Cheshire", label: "Cheshire County", url: "https://www.co.cheshire.nh.us/register-of-deeds/" },
+  { county: "Merrimack", label: "Merrimack County", url: "https://www.merrimackcounty.net/departments/registry_of_deeds/" },
+  { county: "Strafford", label: "Strafford County", url: "https://www.straffordcounty.com/registry-of-deeds" },
+  { county: "Cheshire", label: "Cheshire County", url: "https://www.cheshirecountynh.com/register-of-deeds/" },
 ];

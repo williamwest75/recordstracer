@@ -16,7 +16,7 @@ export const NC_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Court Case Search",
     agency: "NC Courts",
     description: "Civil, criminal, and traffic court records",
-    searchUrl: "https://www.nccourts.gov/court-dates-calendars-and-ும",
+    searchUrl: "https://www.nccourts.gov/court-dates-calendars-and-information",
     icon: "Gavel",
   },
   {
@@ -67,7 +67,7 @@ export const NC_LICENSE_SOURCES: RecordSource[] = [
     name: "Attorney Search",
     agency: "NC State Bar",
     description: "Licensed attorneys in North Carolina",
-    searchUrl: "https://portal.ncbar.gov/Membership/MemberSearch",
+    searchUrl: "https://www.ncbar.gov/for-the-public/find-a-lawyer/",
     icon: "Scale",
   },
 ];
@@ -92,12 +92,12 @@ export const NC_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 ];
 
 export const NC_PROPERTY_SOURCES: CountyPropertySource[] = [
-  { county: "Mecklenburg", label: "Mecklenburg County", url: "https://property.mecklenburgcountync.gov/" },
+  { county: "Mecklenburg", label: "Mecklenburg County", url: "https://polaris3g.mecklenburgcountync.gov/" },
   { county: "Wake", label: "Wake County", url: "https://services.wakegov.com/realestate/" },
-  { county: "Guilford", label: "Guilford County", url: "https://www.guilfordcountync.gov/our-county/tax/real-property-search" },
+  { county: "Guilford", label: "Guilford County", url: "https://www.guilfordcountync.gov/government/departments/tax/real-property-search" },
   { county: "Forsyth", label: "Forsyth County", url: "https://www.cityofws.org/421/Tax-Assessor" },
-  { county: "Cumberland", label: "Cumberland County", url: "https://www.cumberlandcountync.gov/departments/tax-group/tax/real-property-listing" },
-  { county: "Durham", label: "Durham County", url: "https://www.dconc.gov/county-departments/departments-a-e/tax-administration/real-property-records" },
+  { county: "Cumberland", label: "Cumberland County", url: "https://www.co.cumberland.nc.us/departments/tax/real-property" },
+  { county: "Durham", label: "Durham County", url: "https://www.dconc.gov/government/departments-a-h/tax-administration/real-property-records" },
   { county: "Buncombe", label: "Buncombe County", url: "https://www.buncombecounty.org/governing/depts/tax/default.aspx" },
   { county: "New Hanover", label: "New Hanover County", url: "https://etax.nhcgov.com/PT/search/commonsearch.aspx?mode=OWNER" },
 ];

@@ -6,7 +6,7 @@ export const UT_STATEWIDE_SOURCES: RecordSource[] = [
   { id: "ut_doc", name: "Offender Search", agency: "UT DOC", description: "Current inmates in Utah facilities", searchUrl: "https://corrections.utah.gov/index.php/offender-search", icon: "ShieldAlert" },
   { id: "ut_sex_offenders", name: "Sex Offender Registry", agency: "UT DPS", description: "Registered sex offenders in Utah", searchUrl: "https://www.icrimewatch.net/index.php?AgencyID=54438", icon: "AlertTriangle" },
   { id: "ut_voter", name: "Voter Registration", agency: "UT Lt. Governor", description: "Voter registration status", searchUrl: "https://votesearch.utah.gov/voter-search/search/search-by-voter/voter-info", icon: "Vote" },
-  { id: "ut_ucc", name: "UCC Filings", agency: "UT Division of Corporations", description: "Uniform Commercial Code financing statements", searchUrl: "https://secure.utah.gov/uccs/", icon: "FileText" },
+  { id: "ut_ucc", name: "UCC Filings", agency: "UT Division of Corporations", description: "Uniform Commercial Code financing statements", searchUrl: "https://business.utah.gov/ucc/", icon: "FileText" },
 ];
 
 export const UT_LICENSE_SOURCES: RecordSource[] = [

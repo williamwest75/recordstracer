@@ -32,7 +32,7 @@ export const VT_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Sex Offender Registry",
     agency: "VT State Police",
     description: "Registered sex offenders in Vermont",
-    searchUrl: "https://sor.vermont.gov/",
+    searchUrl: "https://vcic.vermont.gov/sor",
     icon: "AlertTriangle",
   },
   {
@@ -92,8 +92,8 @@ export const VT_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 ];
 
 export const VT_PROPERTY_SOURCES: CountyPropertySource[] = [
-  { county: "Chittenden", label: "Chittenden County", url: "https://www.cctv.ci.burlington.vt.us/" },
-  { county: "Rutland", label: "Rutland County", url: "https://www.rutlandcounty.org/" },
+  { county: "Chittenden", label: "Chittenden County", url: "https://www.chittendencounty.org/departments/assessing/" },
+  { county: "Rutland", label: "Rutland County", url: "https://www.rutlandcountyvermont.com/assessor/" },
   { county: "Washington", label: "Washington County", url: "https://www.montpelier-vt.org/173/Assessor" },
   { county: "Windham", label: "Windham County", url: "https://www.windhamcountyvt.gov/" },
 ];

@@ -4,7 +4,7 @@ export const CO_STATEWIDE_SOURCES: RecordSource[] = [
   { id: "co_sos_corps", name: "Business Entity Search", agency: "CO Secretary of State", description: "Corporations, LLCs, LPs, and trade names", searchUrl: "", icon: "Building2", deepLinkable: true, urlTemplate: "https://www.sos.state.co.us/biz/BusinessEntityCriteriaExt.do?nameTyp=ENTITY&entityName=${name}&srchTyp=ENTITY" },
   { id: "co_courts", name: "Court Case Search", agency: "CO Judicial Branch", description: "Civil, criminal, and county court records", searchUrl: "https://www.courts.state.co.us/dockets/index.cfm", icon: "Gavel" },
   { id: "co_doc", name: "Offender Search", agency: "CO DOC", description: "Current inmates in Colorado state prisons", searchUrl: "https://www.doc.state.co.us/oss/", icon: "ShieldAlert" },
-  { id: "co_sex_offenders", name: "Sex Offender Registry", agency: "CO CBI", description: "Registered sex offenders in Colorado", searchUrl: "https://apps.colorado.gov/apps/dps/sex-offender-search/", icon: "AlertTriangle" },
+  { id: "co_sex_offenders", name: "Sex Offender Registry", agency: "CO CBI", description: "Registered sex offenders in Colorado", searchUrl: "https://www.cbi.colorado.gov/sections/offender-services/sex-offender-registry", icon: "AlertTriangle" },
   { id: "co_voter", name: "Voter Registration", agency: "CO Secretary of State", description: "Voter registration status", searchUrl: "https://www.sos.state.co.us/voter/pages/pub/olvr/findVoterReg.xhtml", icon: "Vote" },
   { id: "co_ucc", name: "UCC Filings", agency: "CO Secretary of State", description: "Uniform Commercial Code financing statements", searchUrl: "https://www.sos.state.co.us/biz/UCCSearchCriteria.do", icon: "FileText" },
 ];

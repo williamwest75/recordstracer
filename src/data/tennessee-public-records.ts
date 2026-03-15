@@ -20,9 +20,9 @@ export const TN_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 
 export const TN_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "Davidson", label: "Davidson County (Nashville)", url: "https://www.padctn.org/" },
-  { county: "Shelby", label: "Shelby County (Memphis)", url: "https://assessor.shelby.tn.us/" },
-  { county: "Knox", label: "Knox County (Knoxville)", url: "https://www.knoxcounty.org/apps/property_search/" },
+  { county: "Shelby", label: "Shelby County (Memphis)", url: "https://www.shelbycountytn.gov/property-assessment-appeals-tax-office" },
+  { county: "Knox", label: "Knox County (Knoxville)", url: "https://www.knoxcounty.org/assessor/property_search.php" },
   { county: "Hamilton", label: "Hamilton County (Chattanooga)", url: "https://assessor.hamiltontn.gov/" },
   { county: "Rutherford", label: "Rutherford County", url: "https://www.rutherfordcountytn.gov/assessor" },
-  { county: "Williamson", label: "Williamson County", url: "https://www.williamsoncounty-tn.gov/173/Property-Assessor" },
+  { county: "Williamson", label: "Williamson County", url: "https://www.williamsoncounty-tn.gov/government/property-assessor" },
 ];

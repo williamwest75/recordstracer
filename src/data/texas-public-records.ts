@@ -32,7 +32,7 @@ export const TX_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Sex Offender Registry",
     agency: "TX DPS",
     description: "Registered sex offenders in Texas",
-    searchUrl: "https://records.txdps.state.tx.us/SexOffenderRegistry",
+    searchUrl: "https://publicsite.dps.texas.gov/SexOffenderRegistry/Search/Rapsheet",
     icon: "AlertTriangle",
   },
   {
@@ -48,7 +48,7 @@ export const TX_STATEWIDE_SOURCES: RecordSource[] = [
     name: "UCC Filings",
     agency: "TX Secretary of State",
     description: "Uniform Commercial Code financing statements",
-    searchUrl: "https://direct.sos.state.tx.us/ucc/Search.asp",
+    searchUrl: "https://direct.sos.state.tx.us/ucc/",
     icon: "FileText",
   },
 ];

@@ -10,8 +10,8 @@ export const MD_STATEWIDE_SOURCES: RecordSource[] = [
 ];
 
 export const MD_LICENSE_SOURCES: RecordSource[] = [
-  { id: "md_health", name: "Professional License Lookup", agency: "MD DHMH", description: "Doctors, nurses, and health professionals", searchUrl: "https://mdbnc.health.maryland.gov/bphp/Pages/verify.aspx", icon: "Stethoscope" },
-  { id: "md_bar", name: "Attorney Search", agency: "MD Courts", description: "Licensed attorneys in Maryland", searchUrl: "https://www.courts.state.md.us/attorneys", icon: "Scale" },
+  { id: "md_health", name: "Professional License Lookup", agency: "MD DHMH", description: "Doctors, nurses, and health professionals", searchUrl: "https://mhcc.maryland.gov/MHCC/pages/hit/hit_con/hit_con_license_verify.aspx", icon: "Stethoscope" },
+  { id: "md_bar", name: "Attorney Search", agency: "MD Courts", description: "Licensed attorneys in Maryland", searchUrl: "https://www.courts.state.md.us/attorneys/search", icon: "Scale" },
 ];
 
 export const MD_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [

@@ -26,7 +26,7 @@ export const MO_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Offender Search",
     agency: "MO DOC",
     description: "Current and released offenders in Missouri",
-    searchUrl: "https://doc.mo.gov/media-center/offender-search",
+    searchUrl: "https://doc.mo.gov/divisions/probation-parole/offender-information/offender-search",
     icon: "ShieldAlert",
   },
   {
@@ -34,7 +34,7 @@ export const MO_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Sex Offender Registry",
     agency: "MO Highway Patrol",
     description: "Registered sex offenders in Missouri",
-    searchUrl: "https://www.mshp.dps.missouri.gov/CJ38/search",
+    searchUrl: "https://www.mshp.dps.missouri.gov/MSHPWeb/PatrolDivisions/CRID/SexOffenderRegistry/SORPage.html",
     icon: "AlertTriangle",
   },
   {
@@ -42,7 +42,7 @@ export const MO_STATEWIDE_SOURCES: RecordSource[] = [
     name: "Voter Registration",
     agency: "MO Secretary of State",
     description: "Voter registration status lookup",
-    searchUrl: "https://s1.sos.mo.gov/elections/voterlookup/",
+    searchUrl: "https://voteroutreach.sos.mo.gov/",
     icon: "Vote",
   },
   {
@@ -69,7 +69,7 @@ export const MO_LICENSE_SOURCES: RecordSource[] = [
     name: "Attorney Search",
     agency: "Missouri Bar",
     description: "Licensed attorneys in Missouri",
-    searchUrl: "https://mobar.org/public/LegalResources/Find-a-Lawyer.aspx",
+    searchUrl: "https://mobar.org/public/Find-a-Lawyer/Find-a-Lawyer.aspx",
     icon: "Scale",
   },
 ];
@@ -95,7 +95,7 @@ export const MO_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
 
 export const MO_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "St. Louis County", label: "St. Louis County", url: "https://revenue.stlouisco.com/ias/" },
-  { county: "Jackson", label: "Jackson County", url: "https://www.jacksongov.org/423/Property-Search" },
+  { county: "Jackson", label: "Jackson County", url: "https://www.jacksongov.org/government/departments/assessment/property-search" },
   { county: "St. Louis City", label: "St. Louis City", url: "https://www.stlouis-mo.gov/government/departments/assessor/" },
   { county: "St. Charles", label: "St. Charles County", url: "https://www.sccmo.org/assessor" },
   { county: "Greene", label: "Greene County", url: "https://greenecountymo.gov/assessor/" },

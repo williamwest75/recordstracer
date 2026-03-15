@@ -3,7 +3,7 @@ import type { RecordSource, CountyPropertySource } from "@/data/florida-public-r
 export const NM_STATEWIDE_SOURCES: RecordSource[] = [
   { id: "nm_sos_corps", name: "Business Entity Search", agency: "NM Secretary of State", description: "Corporations, LLCs, LPs, and trade names", searchUrl: "", icon: "Building2", deepLinkable: true, urlTemplate: "https://portal.sos.state.nm.us/BFS/online/CorporationBusinessSearch/CorporationBusinessSearch?searchTerm=${name}" },
   { id: "nm_courts", name: "Court Case Search", agency: "NM Courts", description: "District and magistrate court records", searchUrl: "https://caselookup.nmcourts.gov/caselookup/", icon: "Gavel" },
-  { id: "nm_doc", name: "Offender Search", agency: "NM Corrections Dept.", description: "Current inmates in New Mexico", searchUrl: "https://cd.nm.gov/offender-search/", icon: "ShieldAlert" },
+  { id: "nm_doc", name: "Offender Search", agency: "NM Corrections Dept.", description: "Current inmates in New Mexico", searchUrl: "https://cd.nm.gov/adult-prisons-parole/offender-search/", icon: "ShieldAlert" },
   { id: "nm_sex_offenders", name: "Sex Offender Registry", agency: "NM DPS", description: "Registered sex offenders in New Mexico", searchUrl: "https://www.nmsexoffender.dps.state.nm.us/", icon: "AlertTriangle" },
   { id: "nm_voter", name: "Voter Registration", agency: "NM Secretary of State", description: "Voter registration status", searchUrl: "https://voterportal.servis.sos.state.nm.us/WhereToVote.aspx", icon: "Vote" },
   { id: "nm_ucc", name: "UCC Filings", agency: "NM Secretary of State", description: "Uniform Commercial Code financing statements", searchUrl: "https://portal.sos.state.nm.us/BFS/online/UCCSearch", icon: "FileText" },
@@ -22,5 +22,5 @@ export const NM_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "Bernalillo", label: "Bernalillo County Assessor", url: "https://www.bernco.gov/assessor/" },
   { county: "Doña Ana", label: "Doña Ana County Assessor", url: "https://www.donaanacounty.org/assessor" },
   { county: "Santa Fe", label: "Santa Fe County Assessor", url: "https://www.santafecountynm.gov/assessor" },
-  { county: "Sandoval", label: "Sandoval County Assessor", url: "https://www.sandovalcountynm.gov/assessor/" },
+  { county: "Sandoval", label: "Sandoval County Assessor", url: "https://www.sandovalcounty.com/assessor/" },
 ];

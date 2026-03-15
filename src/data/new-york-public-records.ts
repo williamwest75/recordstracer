@@ -86,7 +86,7 @@ export const NY_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
     name: "NY Lobbyist Search",
     agency: "NY JCOPE / COELIG",
     description: "Registered lobbyists, clients, and activity reports",
-    searchUrl: "https://onlineapps.jcope.ny.gov/LobbyWatch/Menu",
+    searchUrl: "https://extapps2.oog.ny.gov/Ethics/EnterpriseSpecialIntegrityRisk/Public/SearchLobbyistIndex.aspx",
     icon: "Building2",
   },
 ];
@@ -99,5 +99,5 @@ export const NY_PROPERTY_SOURCES: CountyPropertySource[] = [
   { county: "Richmond (Staten Island)", label: "NYC ACRIS", url: "https://a836-acris.nyc.gov/DS/DocumentSearch/PartyName" },
   { county: "Nassau", label: "Nassau County Clerk", url: "https://i2f.uslandrecords.com/NY/Nassau/" },
   { county: "Suffolk", label: "Suffolk County Clerk", url: "https://clerk.suffolkcountyny.gov/" },
-  { county: "Westchester", label: "Westchester County Clerk", url: "https://land-records.westchestergov.com/" },
+  { county: "Westchester", label: "Westchester County Clerk", url: "https://www.westchesterclerks.com/" },
 ];

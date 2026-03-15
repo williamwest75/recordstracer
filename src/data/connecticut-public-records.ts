@@ -6,7 +6,7 @@ export const CT_STATEWIDE_SOURCES: RecordSource[] = [
   { id: "ct_doc", name: "Inmate Search", agency: "CT DOC", description: "Current inmates in Connecticut facilities", searchUrl: "http://www.ctinmateinfo.state.ct.us/", icon: "ShieldAlert" },
   { id: "ct_sex_offenders", name: "Sex Offender Registry", agency: "CT DESPP", description: "Registered sex offenders in Connecticut", searchUrl: "https://www.communitynotification.com/cap_office_disclaimer.php?office=54567", icon: "AlertTriangle" },
   { id: "ct_voter", name: "Voter Registration", agency: "CT Secretary of State", description: "Voter registration status", searchUrl: "https://portaldir.ct.gov/sots/LookUp.aspx", icon: "Vote" },
-  { id: "ct_ucc", name: "UCC Filings", agency: "CT Secretary of State", description: "Uniform Commercial Code financing statements", searchUrl: "https://service.ct.gov/business/s/onlineuccsearch", icon: "FileText" },
+  { id: "ct_ucc", name: "UCC Filings", agency: "CT Secretary of State", description: "Uniform Commercial Code financing statements", searchUrl: "https://www.concord-sots.ct.gov/CONCORD/online?sn=PublicInquiry&eid=9730", icon: "FileText" },
 ];
 
 export const CT_LICENSE_SOURCES: RecordSource[] = [
@@ -15,12 +15,12 @@ export const CT_LICENSE_SOURCES: RecordSource[] = [
 ];
 
 export const CT_CAMPAIGN_FINANCE_SOURCES: RecordSource[] = [
-  { id: "ct_seec", name: "CT Campaign Finance", agency: "CT SEEC", description: "Campaign contributions and expenditures", searchUrl: "https://seec.ct.gov/eCRIS/eCRISsearch/", icon: "Vote" },
+  { id: "ct_seec", name: "CT Campaign Finance", agency: "CT SEEC", description: "Campaign contributions and expenditures", searchUrl: "https://seec.ct.gov/Portal/eCRIS/eCRISsearch/", icon: "Vote" },
 ];
 
 export const CT_PROPERTY_SOURCES: CountyPropertySource[] = [
-  { county: "Hartford", label: "City of Hartford", url: "https://www.hartfordct.gov/Government/Departments/Assessment-Department" },
+  { county: "Hartford", label: "City of Hartford", url: "https://www.hartfordct.gov/Government/City-Departments/Assessor" },
   { county: "New Haven", label: "City of New Haven", url: "https://www.newhavenct.gov/assessors-office" },
-  { county: "Fairfield (Bridgeport)", label: "City of Bridgeport", url: "https://www.bridgeportct.gov/assessor" },
+  { county: "Fairfield (Bridgeport)", label: "City of Bridgeport", url: "https://www.bridgeportct.gov/departments/assessors-office" },
   { county: "Fairfield (Stamford)", label: "City of Stamford", url: "https://www.stamfordct.gov/assessor" },
 ];
