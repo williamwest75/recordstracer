@@ -69,15 +69,17 @@ const SearchResults = () => {
   const gating = useTierGating();
   const [searchLimitReached, setSearchLimitReached] = useState(false);
 
-  // Check search limit on mount
+  // Check search limit on mount (wait for subscription to load)
   useEffect(() => {
-    if (!user) return;
+    if (!user || subscriptionLoading) return;
+    if (gating.isAdmin) { setSearchLimitReached(false); return; }
+    if (gating.searchLimit === Infinity) { setSearchLimitReached(false); return; }
     (supabase.rpc as any)("get_search_usage", { p_user_id: user.id }).then(({ data }: any) => {
-      if (data !== null && gating.searchLimit !== Infinity && data >= gating.searchLimit) {
+      if (data !== null && data >= gating.searchLimit) {
         setSearchLimitReached(true);
       }
     });
-  }, [user, gating.searchLimit]);
+  }, [user, gating.searchLimit, gating.isAdmin, subscriptionLoading]);
 
   // Re-search change detection: load previous result IDs from sessionStorage
   const previousResultIds = useMemo(() => {
