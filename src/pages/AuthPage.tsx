@@ -115,6 +115,14 @@ const AuthPage = () => {
             </Button>
           </form>
 
+          {!isSignUp && (
+            <div className="text-center mt-3">
+              <button onClick={() => setShowForgot(true)} className="text-sm text-accent hover:underline">
+                Forgot your password?
+              </button>
+            </div>
+          )}
+
           <p className="text-center text-sm text-muted-foreground mt-4">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
             <button onClick={() => setIsSignUp(!isSignUp)} className="text-accent hover:underline font-medium">
