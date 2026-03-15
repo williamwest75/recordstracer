@@ -80,6 +80,14 @@ const Dashboard = () => {
     }
   };
 
+  const loadSearchUsage = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase.rpc("get_search_usage", { p_user_id: user.id });
+      setSearchUsage(data ?? 0);
+    } catch { /* ignore */ }
+  };
+
   const loadData = async () => {
     const [s, i, sr] = await Promise.all([
       supabase.from("searches").select("*").order("created_at", { ascending: false }),
