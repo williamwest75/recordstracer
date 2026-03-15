@@ -17,8 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import { searchAll, type RecordResult, type SourceStatus } from "@/lib/recordsApi";
 import { sanitizeInput, isValidName } from "@/utils/validation";
 import { useTierGating } from "@/hooks/use-tier-gating";
-import { Link } from "react-router-dom";
-import { Lock } from "lucide-react";
 
 interface BatchEntry {
   name: string;
