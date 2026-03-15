@@ -434,10 +434,24 @@ const Dashboard = () => {
                 onKeyDown={(e) => e.key === "Enter" && createInvestigation()}
                 className="max-w-sm"
               />
-              <Button variant="accent" size="sm" onClick={createInvestigation} className="gap-1">
+              <Button
+                variant="accent"
+                size="sm"
+                onClick={createInvestigation}
+                className="gap-1"
+                disabled={investigations.length >= gating.investigationLimit}
+              >
                 <Plus className="h-4 w-4" /> Create
               </Button>
             </div>
+            {gating.investigationLimit !== Infinity && (
+              <p className="text-xs text-muted-foreground mb-4">
+                {investigations.length} / {gating.investigationLimit} investigations used
+                {investigations.length >= gating.investigationLimit && (
+                  <Link to="/pricing" className="text-accent font-medium hover:underline ml-2">Upgrade for unlimited</Link>
+                )}
+              </p>
+            )}
 
             {investigations.length === 0 ? (
               <div className="text-center py-16">

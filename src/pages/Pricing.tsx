@@ -10,23 +10,30 @@ import Footer from "@/components/landing/Footer";
 
 const tierFeatures: Record<TierKey, string[]> = {
   solo: [
-    "50 searches per month",
-    "Basic public records",
-    "AI subject summaries",
+    "30 searches per month",
+    "Full public records search (all sources)",
+    "AI subject summaries & briefings",
+    "Record profile & connection alerts",
+    "3 saved investigations",
+    "FOIA letter generator",
     "Email support",
   ],
   investigator: [
     "200 searches per month",
-    "Full public records suite",
-    "Deep research analyst",
-    "Contact intelligence",
+    "Everything in Solo, plus:",
+    "Deep Research Analyst (AI)",
+    "Contact Intelligence",
+    "Investigative Dossier & Timeline",
+    "PDF & Word report exports",
+    "Unlimited saved investigations",
+    "Search alerts & monitoring",
     "Priority support",
   ],
   newsroom: [
     "Unlimited searches",
-    "Everything in Investigator",
-    "Team collaboration tools",
-    "API access",
+    "Everything in Investigator, plus:",
+    "Team investigation sharing",
+    "Batch / bulk search",
     "Dedicated account manager",
   ],
 };
@@ -176,7 +183,6 @@ const Pricing = () => {
                     </Button>
                   ) : (
                     <Button
-                      className={isPopular ? "" : ""}
                       variant={isPopular ? "default" : "outline"}
                       onClick={() => handleCheckout(key)}
                       disabled={loadingTier === key}
