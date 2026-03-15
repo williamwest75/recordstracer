@@ -20,6 +20,7 @@ import Pricing from "./pages/Pricing";
 import BatchSearch from "./pages/BatchSearch";
 import StateCoverage from "./pages/StateCoverage";
 import ResetPassword from "./pages/ResetPassword";
+import LinkHealth from "./pages/LinkHealth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/batch-search" element={<BatchSearch />} />
             <Route path="/coverage" element={<StateCoverage />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/admin/link-health" element={<LinkHealth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
