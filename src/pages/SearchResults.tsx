@@ -34,6 +34,8 @@ import RelationshipMap from "@/components/search/RelationshipMap";
 import RecordProfileSummary from "@/components/search/RecordProfileSummary";
 import CrossReferenceAlerts from "@/components/search/CrossReferenceAlerts";
 import FoiaLetterGenerator from "@/components/search/FoiaLetterGenerator";
+import UpgradeGate from "@/components/search/UpgradeGate";
+import { useTierGating } from "@/hooks/use-tier-gating";
 
 const CATEGORY_META: Record<string, { icon: typeof Building2; label: string }> = {
   business: { icon: Building2, label: "Business Registrations & Filings" },
@@ -62,6 +64,9 @@ const SearchResults = () => {
   const [streamedResults, setStreamedResults] = useState<MockResult[]>([]);
   const { toast } = useToast();
   const { user, subscribed, subscriptionLoading, loading: authLoading } = useAuth();
+
+  // Tier gating
+  const gating = useTierGating();
 
   // Re-search change detection: load previous result IDs from sessionStorage
   const previousResultIds = useMemo(() => {
@@ -249,7 +254,7 @@ const SearchResults = () => {
           </div>
         ) : hasResults ? (
           <>
-            <ResultsHeader name={name} state={state} results={results} searchTimestamp={searchTimestamp} />
+            <ResultsHeader name={name} state={state} results={results} searchTimestamp={searchTimestamp} canExport={gating.canExport} />
 
             {/* Re-search change detection banner */}
             {changeStats && !changeStats.unchanged && (
@@ -350,28 +355,37 @@ const SearchResults = () => {
                   <ErrorBoundary><RelationshipMap results={results} searchName={name} /></ErrorBoundary>
                 </div>
 
+                {/* Contact Intelligence — gated to Investigator+ */}
                 <div id="source-contact-intel" className="scroll-mt-24">
-                  <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
+                  <UpgradeGate requiredTier="investigator" featureName="Contact Intelligence" hasAccess={gating.canUseContactIntel}>
+                    <ErrorBoundary><ContactIntelligence searchName={name} state={state} /></ErrorBoundary>
+                  </UpgradeGate>
                 </div>
 
                 <div id="source-news-coverage" className="scroll-mt-24 border border-border rounded-lg p-4">
                   <NewsMentions searchQuery={name} defaultExpanded={false} />
                 </div>
 
+                {/* Investigative Dossier — gated to Investigator+ */}
                 <div id="source-dossier" className="scroll-mt-24">
-                  <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
-                    <div className="px-5 py-4 border-b border-border">
-                      <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Investigative Dossier</h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">Timeline, campaign finance, court records & public records directory</p>
+                  <UpgradeGate requiredTier="investigator" featureName="Investigative Dossier" hasAccess={gating.canUseDossier}>
+                    <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
+                      <div className="px-5 py-4 border-b border-border">
+                        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Investigative Dossier</h2>
+                        <p className="text-xs text-muted-foreground mt-0.5">Timeline, campaign finance, court records & public records directory</p>
+                      </div>
+                      <div className="p-4">
+                        <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
+                      </div>
                     </div>
-                    <div className="p-4">
-                      <ErrorBoundary><DossierView searchName={name} state={state} /></ErrorBoundary>
-                    </div>
-                  </div>
+                  </UpgradeGate>
                 </div>
 
+                {/* Deep Research Analyst — gated to Investigator+ */}
                 <div id="source-deep-research" className="scroll-mt-24">
-                  <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
+                  <UpgradeGate requiredTier="investigator" featureName="Deep Research Analyst" hasAccess={gating.canUseDeepResearch}>
+                    <ErrorBoundary><DeepResearchAnalyst name={name} state={state} results={results} /></ErrorBoundary>
+                  </UpgradeGate>
                 </div>
 
                 <div id="source-foia" className="scroll-mt-24">
