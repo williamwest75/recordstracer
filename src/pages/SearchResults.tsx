@@ -67,6 +67,17 @@ const SearchResults = () => {
 
   // Tier gating
   const gating = useTierGating();
+  const [searchLimitReached, setSearchLimitReached] = useState(false);
+
+  // Check search limit on mount
+  useEffect(() => {
+    if (!user) return;
+    supabase.rpc("get_search_usage", { p_user_id: user.id }).then(({ data }) => {
+      if (data !== null && gating.searchLimit !== Infinity && data >= gating.searchLimit) {
+        setSearchLimitReached(true);
+      }
+    });
+  }, [user, gating.searchLimit]);
 
   // Re-search change detection: load previous result IDs from sessionStorage
   const previousResultIds = useMemo(() => {
