@@ -19,6 +19,7 @@ import NewsPost from "./pages/NewsPost";
 import Pricing from "./pages/Pricing";
 import BatchSearch from "./pages/BatchSearch";
 import StateCoverage from "./pages/StateCoverage";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/batch-search" element={<BatchSearch />} />
             <Route path="/coverage" element={<StateCoverage />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
