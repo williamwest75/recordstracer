@@ -63,6 +63,8 @@ const BatchSearch = () => {
   const { user, subscribed } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const gating = useTierGating();
+  const hasBatchAccess = gating.hasAccess("investigator");
   const [entries, setEntries] = useState<BatchEntry[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [defaultState, setDefaultState] = useState("Florida");
