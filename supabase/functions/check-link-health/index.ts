@@ -26,15 +26,33 @@ async function checkUrl(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
 
-    const response = await fetch(url, {
+    const headers = {
+      "User-Agent":
+        "RecordTracer-LinkChecker/1.0 (health-monitoring; +https://recordstracer.lovable.app)",
+    };
+
+    let response = await fetch(url, {
       method: "HEAD",
       signal: controller.signal,
       redirect: "follow",
-      headers: {
-        "User-Agent":
-          "RecordTracer-LinkChecker/1.0 (health-monitoring; +https://recordstracer.lovable.app)",
-      },
+      headers,
     });
+
+    // Retry with GET if HEAD returns 405 (Method Not Allowed) or 503 (Service Unavailable)
+    if (response.status === 405 || response.status === 503) {
+      const retryController = new AbortController();
+      const retryTimeout = setTimeout(() => retryController.abort(), 10000);
+      try {
+        response = await fetch(url, {
+          method: "GET",
+          signal: retryController.signal,
+          redirect: "follow",
+          headers,
+        });
+      } finally {
+        clearTimeout(retryTimeout);
+      }
+    }
 
     clearTimeout(timeout);
     const elapsed = Date.now() - start;
