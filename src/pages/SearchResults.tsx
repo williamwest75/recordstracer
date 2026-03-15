@@ -115,7 +115,7 @@ const SearchResults = () => {
   }), [searchParams]);
 
   const nameCheck = isValidName(name);
-  const canSearch = !!user && !!subscribed && !authLoading && !subscriptionLoading && nameCheck.valid;
+  const canSearch = !!user && !!subscribed && !authLoading && !subscriptionLoading && nameCheck.valid && !searchLimitReached;
 
   const handleProgress = useCallback((sources: SourceStatus[]) => {
     setSourceProgress(sources);
