@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
