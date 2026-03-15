@@ -63,6 +63,7 @@ const Dashboard = () => {
     if (!user) return;
     loadData();
     loadFoundingMemberStatus();
+    loadSearchUsage();
   }, [user]);
 
   const loadFoundingMemberStatus = async () => {
