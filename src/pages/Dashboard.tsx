@@ -237,6 +237,37 @@ const Dashboard = () => {
           </Link>
         </div>
 
+        {/* Search usage indicator */}
+        {gating.tier && (
+          <div className="mb-6 rounded-lg border border-border bg-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Monthly Searches</span>
+              <span className="text-xs text-muted-foreground">
+                {searchUsage} / {gating.searchLimit === Infinity ? "∞" : gating.searchLimit}
+              </span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className={`h-2 rounded-full transition-all ${
+                  gating.searchLimit !== Infinity && searchUsage >= gating.searchLimit
+                    ? "bg-destructive"
+                    : searchUsage >= (gating.searchLimit === Infinity ? Infinity : gating.searchLimit * 0.8)
+                    ? "bg-warning"
+                    : "bg-accent"
+                }`}
+                style={{ width: `${gating.searchLimit === Infinity ? 5 : Math.min(100, (searchUsage / gating.searchLimit) * 100)}%` }}
+              />
+            </div>
+            {gating.searchLimit !== Infinity && searchUsage >= gating.searchLimit && (
+              <div className="flex items-center gap-2 mt-2">
+                <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+                <span className="text-xs text-destructive font-medium">Monthly search limit reached.</span>
+                <Link to="/pricing" className="text-xs text-accent font-medium hover:underline ml-auto">Upgrade</Link>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex gap-1 border-b border-border mb-6">
           <button
