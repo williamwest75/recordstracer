@@ -253,7 +253,16 @@ const SearchResults = () => {
           </div>
         )}
 
-        {error ? (
+        {searchLimitReached ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <AlertCircle className="h-10 w-10 text-destructive" />
+            <h2 className="text-lg font-semibold text-foreground">Monthly search limit reached</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-md">
+              You've used all {gating.searchLimit} searches this month. Upgrade your plan for more searches.
+            </p>
+            <Button variant="default" onClick={() => navigate("/pricing")}>View Plans</Button>
+          </div>
+        ) : error ? (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <AlertCircle className="h-8 w-8 text-destructive" />
             <p className="text-muted-foreground text-sm">Something went wrong. Please try again.</p>
