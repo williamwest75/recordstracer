@@ -67,7 +67,7 @@ RULES:
    - If multiple categories → address to the single most relevant agency
 
 3. Structure the letter with:
-   - Date
+   - Date: USE EXACTLY "${currentDate}" as the date — do NOT generate or guess a different date
    - "To: [Agency Name]" with generic placeholder for address
    - "Re: Public Records Request — [Subject Name]"
    - Opening paragraph citing the specific law
