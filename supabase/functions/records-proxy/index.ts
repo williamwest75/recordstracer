@@ -816,24 +816,18 @@ async function searchStateCampaignFinance(name: string, state: string) {
   const results: any[] = [];
   const stateCode = toStateAbbr(state);
 
-  // FollowTheMoney + OpenSecrets search links
-  results.push({
-    type: "link",
-    source: "FollowTheMoney Donor Search",
-    url: `https://www.followthemoney.org/search/contributions/?d-cntrbr=${encodeURIComponent(name)}${stateCode ? `&s=${stateCode}` : ""}`,
-    description: `Search state-level contributions by ${name}`,
-  });
-  results.push({
-    type: "link",
-    source: "FollowTheMoney Candidate Search",
-    url: `https://www.followthemoney.org/search/candidates/?c-t-eid=1&c-r-ot=${encodeURIComponent(name)}${stateCode ? `&s=${stateCode}` : ""}`,
-    description: `Search state-level candidates matching ${name}`,
-  });
+  // OpenSecrets search links (formerly FollowTheMoney, now merged)
   results.push({
     type: "link",
     source: "OpenSecrets Donor Lookup",
     url: `https://www.opensecrets.org/search?q=${encodeURIComponent(name)}&type=donors`,
-    description: `Federal + state influence data for ${name}`,
+    description: `Federal + state donor/influence data for ${name}`,
+  });
+  results.push({
+    type: "link",
+    source: "OpenSecrets Candidate Search",
+    url: `https://www.opensecrets.org/search?q=${encodeURIComponent(name)}&type=candidates`,
+    description: `Search candidates matching ${name}`,
   });
 
   // State-specific campaign finance portals
