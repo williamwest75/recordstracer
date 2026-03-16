@@ -30,8 +30,12 @@ const FoiaLetterGenerator = ({ name, state, results }: Props) => {
         .map(([cat, count]) => `${cat}: ${count}`)
         .join(", ");
 
+      const currentDate = new Date().toLocaleDateString("en-US", {
+        weekday: undefined, year: "numeric", month: "long", day: "numeric",
+      });
+
       const { data, error } = await supabase.functions.invoke("generate-foia-letter", {
-        body: { name, state, categorySummary, resultCount: results.length },
+        body: { name, state, categorySummary, resultCount: results.length, currentDate },
       });
 
       if (error) throw error;

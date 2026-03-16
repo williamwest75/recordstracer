@@ -36,6 +36,7 @@ serve(async (req) => {
     const state = typeof body.state === "string" ? body.state.trim().slice(0, 50) : "";
     const categorySummary = typeof body.categorySummary === "string" ? body.categorySummary.slice(0, 2000) : "";
     const resultCount = typeof body.resultCount === "number" ? body.resultCount : 0;
+    const currentDate = typeof body.currentDate === "string" ? body.currentDate.slice(0, 50) : new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
     if (!name) {
       return new Response(JSON.stringify({ error: "name is required" }), {
@@ -66,7 +67,7 @@ RULES:
    - If multiple categories → address to the single most relevant agency
 
 3. Structure the letter with:
-   - Date
+   - Date: USE EXACTLY "${currentDate}" as the date — do NOT generate or guess a different date
    - "To: [Agency Name]" with generic placeholder for address
    - "Re: Public Records Request — [Subject Name]"
    - Opening paragraph citing the specific law
