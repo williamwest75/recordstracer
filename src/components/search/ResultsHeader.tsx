@@ -77,11 +77,9 @@ const ResultsHeader = ({ name, state, results, searchTimestamp, canExport = true
       <div className="flex items-center justify-between mt-1">
         <p className="text-muted-foreground text-sm">
           {results.length} records found across multiple databases
-          {searchTimestamp && (
-            <span className="text-muted-foreground/50 ml-2 text-xs">
-              · Generated {searchTimestamp.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
-            </span>
-          )}
+          <span className="text-muted-foreground/50 ml-2 text-xs">
+            · Generated {(searchTimestamp || new Date()).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+          </span>
         </p>
         <div className="flex items-center gap-2 shrink-0">
           <SearchAlertButton subjectName={name} state={state} />
