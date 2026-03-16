@@ -200,50 +200,88 @@ export async function searchSEC(name: string): Promise<RecordResult[]> {
 export async function searchUSASpending(name: string, state: string): Promise<RecordResult[]> {
   const results: RecordResult[] = [];
   let id = 0;
-  try {
-    const endpoint = "https://api.usaspending.gov/api/v2/search/spending_by_award/";
-    const baseFields = ["Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount",
-      "Awarding Agency", "Awarding Sub Agency", "Award Type", "Description", "internal_id"];
+  const endpoint = "https://api.usaspending.gov/api/v2/search/spending_by_award/";
+  const baseFields = ["Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount",
+    "Awarding Agency", "Awarding Sub Agency", "Award Type", "Description", "internal_id"];
 
+  // Helper to fetch with timeout and error handling
+  const safeFetch = async (body: object): Promise<any[] | null> => {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
+      const res = await fetch(endpoint, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body), signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.results || [];
+    } catch {
+      return null;
+    }
+  };
+
+  try {
     // Contracts
-    const res = await fetch(endpoint, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        filters: { recipient_search_text: [name], award_type_codes: ["A", "B", "C", "D"],
+    let awards = await safeFetch({
+      filters: { recipient_search_text: [name], award_type_codes: ["A", "B", "C", "D"],
+        time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }] },
+      fields: baseFields, page: 1, limit: 15, sort: "Award Amount", order: "desc",
+    });
+
+    // Fallback to keyword search if recipient search returned nothing
+    if (awards !== null && awards.length === 0) {
+      awards = await safeFetch({
+        filters: { keywords: [name], award_type_codes: ["A", "B", "C", "D"],
           time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }] },
         fields: baseFields, page: 1, limit: 15, sort: "Award Amount", order: "desc",
-      }),
-    });
-    let awards: any[] = [];
-    if (res.ok) {
-      const data = await res.json();
-      awards = data.results || [];
-    }
-    if (awards.length === 0) {
-      const fallbackRes = await fetch(endpoint, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filters: { keywords: [name], award_type_codes: ["A", "B", "C", "D"],
-            time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }] },
-          fields: baseFields, page: 1, limit: 15, sort: "Award Amount", order: "desc",
-        }),
       });
-      if (fallbackRes.ok) {
-        const fallbackData = await fallbackRes.json();
-        awards = fallbackData.results || [];
-      }
     }
 
-    if (awards.length > 0) {
-      const totalAmount = awards.reduce((sum: number, a: any) => sum + (parseFloat(a["Award Amount"]) || 0), 0);
-      const agencies = new Set(awards.map((a: any) => a["Awarding Agency"])).size;
+    // Grants
+    let grants = await safeFetch({
+      filters: { recipient_search_text: [name], award_type_codes: ["02", "03", "04", "05"],
+        time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }] },
+      fields: ["Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount",
+        "Awarding Agency", "Award Type", "Description", "internal_id"],
+      page: 1, limit: 10, sort: "Award Amount", order: "desc",
+    });
+
+    if (grants !== null && grants.length === 0) {
+      grants = await safeFetch({
+        filters: { keywords: [name], award_type_codes: ["02", "03", "04", "05"],
+          time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }] },
+        fields: ["Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount",
+          "Awarding Agency", "Award Type", "Description", "internal_id"],
+        page: 1, limit: 10, sort: "Award Amount", order: "desc",
+      });
+    }
+
+    // If ALL requests failed (API is down), show a fallback link
+    if (awards === null && grants === null) {
       results.push({
-        id: "usa-summary", source: "Federal Contracts Summary", category: "contracts",
-        description: `${awards.length} federal contract(s) worth ${formatMoney(totalAmount)} from ${agencies} agency/agencies`,
-        details: { "Total Awards": String(awards.length), "Total Value": formatMoney(totalAmount), "Awarding Agencies": String(agencies) },
+        id: "usa-unavailable", source: "USASpending.gov", category: "contracts",
+        description: "USASpending.gov API is temporarily unavailable — click to search directly on their site",
+        details: { Status: "API temporarily unavailable", Note: "The USASpending.gov API is returning errors. You can search directly on their website." },
         sourceUrl: `https://www.usaspending.gov/search/?hash=recipient-${encodeURIComponent(name)}`,
       });
-      for (const a of awards.slice(0, 10)) {
+      return results;
+    }
+
+    const safeAwards = awards || [];
+    const safeGrants = grants || [];
+
+    if (safeAwards.length > 0) {
+      const totalAmount = safeAwards.reduce((sum: number, a: any) => sum + (parseFloat(a["Award Amount"]) || 0), 0);
+      const agencies = new Set(safeAwards.map((a: any) => a["Awarding Agency"])).size;
+      results.push({
+        id: "usa-summary", source: "Federal Contracts Summary", category: "contracts",
+        description: `${safeAwards.length} federal contract(s) worth ${formatMoney(totalAmount)} from ${agencies} agency/agencies`,
+        details: { "Total Awards": String(safeAwards.length), "Total Value": formatMoney(totalAmount), "Awarding Agencies": String(agencies) },
+        sourceUrl: `https://www.usaspending.gov/search/?hash=recipient-${encodeURIComponent(name)}`,
+      });
+      for (const a of safeAwards.slice(0, 10)) {
         const amount = parseFloat(a["Award Amount"]) || 0;
         results.push({
           id: `usa-${++id}`, source: "Federal Contract", category: "contracts",
@@ -259,39 +297,7 @@ export async function searchUSASpending(name: string, state: string): Promise<Re
       }
     }
 
-    // Grants
-    const grantRes = await fetch(endpoint, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        filters: { recipient_search_text: [name], award_type_codes: ["02", "03", "04", "05"],
-          time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }] },
-        fields: ["Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount",
-          "Awarding Agency", "Award Type", "Description", "internal_id"],
-        page: 1, limit: 10, sort: "Award Amount", order: "desc",
-      }),
-    });
-    let grants: any[] = [];
-    if (grantRes.ok) {
-      const grantData = await grantRes.json();
-      grants = grantData.results || [];
-    }
-    if (grants.length === 0) {
-      const grantFallback = await fetch(endpoint, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filters: { keywords: [name], award_type_codes: ["02", "03", "04", "05"],
-            time_period: [{ start_date: "2015-10-01", end_date: "2026-09-30" }] },
-          fields: ["Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount",
-            "Awarding Agency", "Award Type", "Description", "internal_id"],
-          page: 1, limit: 10, sort: "Award Amount", order: "desc",
-        }),
-      });
-      if (grantFallback.ok) {
-        const grantFallbackData = await grantFallback.json();
-        grants = grantFallbackData.results || [];
-      }
-    }
-    for (const a of grants.slice(0, 5)) {
+    for (const a of safeGrants.slice(0, 5)) {
       const amount = parseFloat(a["Award Amount"]) || 0;
       results.push({
         id: `usa-grant-${++id}`, source: "Federal Grant", category: "contracts",
